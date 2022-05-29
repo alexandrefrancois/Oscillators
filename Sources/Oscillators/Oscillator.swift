@@ -9,11 +9,9 @@ public class Oscillator : OscillatorProtocol {
 
     init(targetFrequency: Float, sampleDuration: Float) {
         self.sampleDuration = sampleDuration
-        let maxNumSamplesInPeriod = floor(1.0 / (sampleDuration * targetFrequency))
-        self.frequency = 1.0 / (maxNumSamplesInPeriod * sampleDuration)
-        self.numSamplesInPeriod = Int(maxNumSamplesInPeriod)
+        (self.numSamplesInPeriod, self.frequency) = Frequencies.closestFrequency(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
         self.amplitude = 0.0
         
-        print("New Oscillator: target frequency: \(targetFrequency), max num samples in period: \(maxNumSamplesInPeriod) -> \(frequency)")
+        print("New Oscillator: target frequency: \(targetFrequency), num samples in period: \(numSamplesInPeriod) -> \(frequency)")
     }
 }

@@ -61,74 +61,21 @@ public class Resonator : Oscillator {
     }
     
     func updateAllPhases(sample: Float) {
-                
-        // print("Phase: \(phaseIdx) | \(alphaSampleAmplitude)")
-        
         var alphaSample : Float = alpha * sample
 
         leftTermPtr!.initialize(repeating: 0)
         vDSP_vsmul(allPhasesPtr!.baseAddress!, 1, &omAlpha, leftTermPtr!.baseAddress!, 1, vDSP_Length(numSamplesInPeriod))
 
-         
-//            for (index, element) in leftTermPtr.enumerated() {
-//                print("\(index): \(element)")
-//            }
-
         rightTermPtr!.initialize(repeating: 0)
-
         vDSP_vsmul(kernelPtr!.baseAddress! + phaseIdx, 1, &alphaSample, rightTermPtr!.baseAddress!, 1, vDSP_Length(numSamplesInPeriod - phaseIdx))
-
-//            for (index, element) in rightTermPtr.enumerated() {
-//                print("\(index): \(element)")
-//            }
-        
         vDSP_vsmul(kernelPtr!.baseAddress!, 1, &alphaSample, rightTermPtr!.baseAddress! + (numSamplesInPeriod - phaseIdx), 1, vDSP_Length(phaseIdx))
-
-//            for (index, element) in rightTermPtr.enumerated() {
-//                print("\(index): \(element)")
-//            }
-
         
         vDSP_vadd(leftTermPtr!.baseAddress!, 1, rightTermPtr!.baseAddress!, 1, allPhasesPtr!.baseAddress!, 1, vDSP_Length(numSamplesInPeriod))
-        
-//            for (index, element) in allPhasesPtr.enumerated() {
-//                print("\(index): \(element)")
-//            }
-        
         phaseIdx = (phaseIdx + 1) % numSamplesInPeriod
         
     }
     
-//    func update(amplitude: Float) {
-//        // input amplitude is in [-1. 1]
-//        var alphaSampleAmplitude = alpha * amplitude
-////        let phaseCosines = vDSP.linearInterpolate(lookupTable: cosines, withOffsets: phaseCosineIndices)
-////        allPhases = vDSP.add(multiplication:(a: allPhases, b: omAlpha), multiplication: (c: phaseCosines, d: alphaSampleAmplitude))
-////        phaseCosineIndices.append(phaseCosineIndices.removeFirst())
-//
-////        let cosines1 = UnsafeMutablePointer(start: cosinesPtr + phaseIdx, count: numCosines - phaseIdx)
-//
-//
-//
-//
-//        let count = vDSP_Length(numCosines)
-//        var omAlpha : Float = Float(1) - alpha
-//        vDSP_vsmul(&omAlpha, 1, allPhasesPtr.baseAddress!, leftTermPtr.baseAddress!, 1, count)
-//        vDSP_vsmul(&alphaSampleAmplitude, 1, cosinesPtr.baseAddress!, rightTermPtr.baseAddress!, 1, count)
-//        vDSP_vadd(leftTermPtr.baseAddress!, 1, rightTermPtr.baseAddress!, 1, allPhasesPtr.baseAddress!, 1, count)
-//
-//
-////        allPhases = vDSP.add(multiplication:(a: allPhases, b: omAlpha), multiplication: (c: cosines, d: alphaSampleAmplitude))
-////        cosines.append(cosines.removeFirst())
-////        self.amplitude = vDSP.maximum(allPhasesPtr)
-//
-//        var max : Float = 0
-//        vDSP_maxv(allPhasesPtr.baseAddress!, 1, &max, count)
-//        self.amplitude = max
-//    }
-    
     public func update(sample: Float) {
-        // input amplitude is in [-1. 1]
         updateAllPhases(sample: sample)
         vDSP_maxv(allPhasesPtr!.baseAddress!, 1, &amplitude, vDSP_Length(numSamplesInPeriod))
    }
@@ -141,69 +88,42 @@ public class Resonator : Oscillator {
     }
 
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
-        
-//        for (index, element) in cosinesPtr.enumerated() {
-//            print("\(index): \(element)")
-//        }
-
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateAllPhases(sample: frameData[sampleIndex])
         }
-
-//        for (index, element) in allPhasesPtr.enumerated() {
-//            print("\(index): \(element)")
-//        }
-
         vDSP_maxv(allPhasesPtr!.baseAddress!, 1, &amplitude, vDSP_Length(numSamplesInPeriod))
     }
     
     public func updateAndTrack(sample: Float) {
-        // input amplitude is in [-1. 1]
         updateAllPhases(sample: sample)
-        
         var idx: vDSP_Length = 0
         vDSP_maxvi(allPhasesPtr!.baseAddress!, 1, &amplitude, &idx, vDSP_Length(numSamplesInPeriod))
-        
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(newMaxIdx: idx, numSamples: 1)
         } else {
             trackedFrequency = frequency
         }
-   }
-
+    }
+    
     public func updateAndTrack(samples: [Float]) {
         for sample in samples {
             updateAllPhases(sample: sample)
         }
-        
         var idx: vDSP_Length = 0
         vDSP_maxvi(allPhasesPtr!.baseAddress!, 1, &amplitude, &idx, vDSP_Length(numSamplesInPeriod))
-        
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(newMaxIdx: idx, numSamples: samples.count)
         } else {
             trackedFrequency = frequency
         }
-
     }
 
     public func updateAndTrack(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
-        
-//        for (index, element) in cosinesPtr.enumerated() {
-//            print("\(index): \(element)")
-//        }
-
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateAllPhases(sample: frameData[sampleIndex])
         }
-
-//        for (index, element) in allPhasesPtr.enumerated() {
-//            print("\(index): \(element)")
-//        }
-
         var idx: vDSP_Length = 0
         vDSP_maxvi(allPhasesPtr!.baseAddress!, 1, &amplitude, &idx, vDSP_Length(numSamplesInPeriod))
-        
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(newMaxIdx: idx, numSamples: frameLength)
         } else {

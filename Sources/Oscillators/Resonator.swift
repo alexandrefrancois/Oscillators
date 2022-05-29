@@ -24,8 +24,8 @@ public class Resonator : Oscillator {
     public private(set) var kernelPtr: UnsafeMutableBufferPointer<Float>?
     private var phaseIdx: Int = 0
 
-    private var leftTermPtr: UnsafeMutableBufferPointer<Float>?
-    private var rightTermPtr: UnsafeMutableBufferPointer<Float>?
+    public private(set) var leftTermPtr: UnsafeMutableBufferPointer<Float>?
+    public private(set) var rightTermPtr: UnsafeMutableBufferPointer<Float>?
     
     public init(targetFrequency: Float, sampleDuration: Float, alpha: Float = 0.0001) {
         self.alpha = alpha

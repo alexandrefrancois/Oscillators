@@ -1,6 +1,5 @@
 import Foundation
 import Accelerate
-import UIKit
 
 fileprivate let twoPi = Float.pi * 2.0
 

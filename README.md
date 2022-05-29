@@ -1,3 +1,5 @@
 # Oscillators
 
-A description of this package.
+This package implements simple oscillator models for signal generation and analysis.
+
+

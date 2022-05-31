@@ -41,8 +41,10 @@ public class Resonator : Oscillator {
         allPhasesPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInPeriod)
         allPhasesPtr!.initialize(repeating: 0)
         leftTermPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInPeriod)
+        leftTermPtr!.initialize(repeating: 0)
         rightTermPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInPeriod)
-        
+        rightTermPtr!.initialize(repeating: 0)
+
         kernelPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInPeriod)
         kernelPtr!.initialize(repeating: 0)
         
@@ -60,8 +62,11 @@ public class Resonator : Oscillator {
     deinit {
         allPhasesPtr!.baseAddress?.deinitialize(count: numSamplesInPeriod)
         allPhasesPtr!.deallocate()
+        leftTermPtr!.baseAddress?.deinitialize(count: numSamplesInPeriod)
         leftTermPtr!.deallocate()
+        rightTermPtr!.baseAddress?.deinitialize(count: numSamplesInPeriod)
         rightTermPtr!.deallocate()
+        kernelPtr!.baseAddress?.deinitialize(count: numSamplesInPeriod)
         kernelPtr!.deallocate()
     }
     

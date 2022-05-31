@@ -54,7 +54,7 @@ public class ResonatorBank {
         self.frequencies = [Float](repeating: 0, count: numOscillators)
         maxima = [Float](repeating: 0, count: numOscillators)
         
-        print("Number of oscillators: \(numOscillators)")
+        print("Number of resonators: \(numOscillators)")
         
         // setup an oscillator for each frequency
         samplesPerPeriodPtr = UnsafeMutableBufferPointer<Int>.allocate(capacity: numOscillators)

@@ -140,7 +140,7 @@ public class ResonatorBank {
 
         leftTermPtr.initialize(repeating: 0)
         vDSP_vsmul(allPhasesPtr.baseAddress!, 1, &omAlpha, leftTermPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
-         
+        
         rightTermPtr.initialize(repeating: 0)
         vDSP_vadd(phaseIndicesPtr.baseAddress!, 1, periodOffsetsPtr.baseAddress!, 1, phaseKernelOffsetsPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
         var zero : Float = 0

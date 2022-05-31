@@ -4,19 +4,26 @@ import Accelerate
 fileprivate let twoPi = Float.pi * 2.0
 fileprivate let trackFrequencyThreshold = Float(0.001)
 
-public class ResonatorSimple : Oscillator {
-    
-    public var alpha: Float
+/**
+    A single oscillator, computations use the Accelerate framework with swift arrays
+ */
+public class ResonatorSafe : Oscillator, ResonatorProtocol {
+    public var alpha: Float {
+        didSet {
+            omAlpha = 1.0 - alpha
+        }
+    }
+    private(set) var omAlpha : Float = 0.0
     public var trackedFrequency: Float = 0.0
-    
+
+    private var maxIdx: UInt = 0
+
     public private(set) var allPhases = [Float]()
     public private(set) var kernel = [Float]()
     private var phaseIdx: Int = 0
     private var leftTerm = [Float]()
     private var rightTerm = [Float]()
     
-    private var maxIdx: UInt = 0
-
     public init(targetFrequency: Float, sampleDuration: Float, alpha: Float) {
         self.alpha = alpha
         print("time constant: \(sampleDuration / alpha) s")
@@ -37,8 +44,7 @@ public class ResonatorSimple : Oscillator {
         vForce.sin(angles, result: &kernel)
     }
     
-    func updateAllPhases(sample: Float, alpha: Float, omAlpha: Float) {
-        
+    func updateAllPhases(sample: Float) {
         let alphaSample : Float = alpha * sample
         
         // print("Phase: \(phaseIdx) | \(alphaSampleAmplitude)")
@@ -73,33 +79,43 @@ public class ResonatorSimple : Oscillator {
 //        }
         
         phaseIdx = (phaseIdx + 1) % numSamplesInPeriod
-        
     }
     
     public func update(sample: Float) {
         // input amplitude is in [-1. 1]
-        updateAllPhases(sample: sample, alpha: alpha, omAlpha: 1.0 - alpha)
-        
+        updateAllPhases(sample: sample)
+   }
+    
+    public func update(samples: [Float]) {
+        for sample in samples {
+            updateAllPhases(sample: sample)
+        }
+    }
+    
+    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
+        for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
+            updateAllPhases(sample: frameData[sampleIndex])
+        }
+    }
+    
+    public func updateAndTrack(sample: Float) {
+        // input amplitude is in [-1. 1]
+        updateAllPhases(sample: sample)
         var maxIdx: UInt
         (maxIdx, self.amplitude) = vDSP.indexOfMaximum(allPhases)
-        
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(newMaxIdx: maxIdx, numSamples: 1)
         } else {
             trackedFrequency = frequency
         }
-   }
+    }
     
-    public func update(samples: [Float]) {
-        let omAlpha : Float = Float(1) - alpha
-
+    public func updateAndTrack(samples: [Float]) {
         for sample in samples {
-            updateAllPhases(sample: sample, alpha: alpha, omAlpha: omAlpha)
+            updateAllPhases(sample: sample)
         }
-        
         var maxIdx: UInt
         (maxIdx, self.amplitude) = vDSP.indexOfMaximum(allPhases)
-        
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(newMaxIdx: maxIdx, numSamples: samples.count)
         } else {
@@ -107,23 +123,19 @@ public class ResonatorSimple : Oscillator {
         }
     }
     
-    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
-        let omAlpha : Float = Float(1) - alpha
-
+    public func updateAndTrack(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
-            updateAllPhases(sample: frameData[sampleIndex], alpha: alpha, omAlpha: omAlpha)
+            updateAllPhases(sample: frameData[sampleIndex])
         }
-        
         var maxIdx: UInt
         (maxIdx, self.amplitude) = vDSP.indexOfMaximum(allPhases)
-
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(newMaxIdx: maxIdx, numSamples: frameLength)
         } else {
             trackedFrequency = frequency
         }
     }
-    
+
     func updateTrackedFrequency(newMaxIdx: UInt, numSamples: Int) {
         let numSamplesDrift = (Int(newMaxIdx) - Int(maxIdx)) % numSamplesInPeriod
         let periodCorrection = Float(numSamplesInPeriod) * Float(numSamplesDrift) / Float(numSamples)

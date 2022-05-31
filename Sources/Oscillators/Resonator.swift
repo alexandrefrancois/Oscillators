@@ -5,10 +5,9 @@ fileprivate let twoPi = Float.pi * 2.0
 fileprivate let trackFrequencyThreshold = Float(0.001)
 
 /**
-    A single oscillator, computations use the Accelerate framework
+    A single oscillator, computations use the Accelerate framework with manual memory management (unsafe pointers)
  */
 public class Resonator : Oscillator {
-    
     public var alpha: Float {
         didSet {
             omAlpha = 1.0 - alpha
@@ -17,10 +16,16 @@ public class Resonator : Oscillator {
     private(set) var omAlpha : Float = 0.0
     public var trackedFrequency: Float = 0.0
 
-    private var maxIdx: UInt = 0
+    private var maxIdx: Int = 0
 
+    public var allPhases: [Float] {
+        allPhasesPtr!.map { $0 }
+    }
     public private(set) var allPhasesPtr: UnsafeMutableBufferPointer<Float>?
     
+    public var kernel: [Float] {
+        kernelPtr!.map { $0 }
+    }
     public private(set) var kernelPtr: UnsafeMutableBufferPointer<Float>?
     private var phaseIdx: Int = 0
 
@@ -99,7 +104,7 @@ public class Resonator : Oscillator {
         var idx: vDSP_Length = 0
         vDSP_maxvi(allPhasesPtr!.baseAddress!, 1, &amplitude, &idx, vDSP_Length(numSamplesInPeriod))
         if amplitude > trackFrequencyThreshold {
-            updateTrackedFrequency(newMaxIdx: idx, numSamples: 1)
+            updateTrackedFrequency(newMaxIdx: Int(idx), numSamples: 1)
         } else {
             trackedFrequency = frequency
         }
@@ -112,7 +117,7 @@ public class Resonator : Oscillator {
         var idx: vDSP_Length = 0
         vDSP_maxvi(allPhasesPtr!.baseAddress!, 1, &amplitude, &idx, vDSP_Length(numSamplesInPeriod))
         if amplitude > trackFrequencyThreshold {
-            updateTrackedFrequency(newMaxIdx: idx, numSamples: samples.count)
+            updateTrackedFrequency(newMaxIdx: Int(idx), numSamples: samples.count)
         } else {
             trackedFrequency = frequency
         }
@@ -125,14 +130,14 @@ public class Resonator : Oscillator {
         var idx: vDSP_Length = 0
         vDSP_maxvi(allPhasesPtr!.baseAddress!, 1, &amplitude, &idx, vDSP_Length(numSamplesInPeriod))
         if amplitude > trackFrequencyThreshold {
-            updateTrackedFrequency(newMaxIdx: idx, numSamples: frameLength)
+            updateTrackedFrequency(newMaxIdx: Int(idx), numSamples: frameLength)
         } else {
             trackedFrequency = frequency
         }
     }
     
-    func updateTrackedFrequency(newMaxIdx: UInt, numSamples: Int) {
-        let numSamplesDrift = (Int(newMaxIdx) - Int(maxIdx)) % numSamplesInPeriod
+    func updateTrackedFrequency(newMaxIdx: Int, numSamples: Int) {
+        let numSamplesDrift = (newMaxIdx - maxIdx) % numSamplesInPeriod
         let periodCorrection = Float(numSamplesInPeriod) * Float(numSamplesDrift) / Float(numSamples)
         trackedFrequency = 1.0 / (sampleDuration * (Float(numSamplesInPeriod) - periodCorrection))
         maxIdx = newMaxIdx

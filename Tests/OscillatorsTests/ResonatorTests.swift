@@ -2,8 +2,6 @@ import XCTest
 @testable import Oscillators
 
 fileprivate let sampleDuration44100 : Float = 1.0 / 44100.0
-fileprivate let windowRatio3 : Float = 1.0 / 3.0
-fileprivate let sigmaRatio6 : Float = 1.0 / 6.0
 
 final class ResonatorTests: XCTestCase {
     
@@ -27,5 +25,26 @@ final class ResonatorTests: XCTestCase {
         for i in 0..<resonator.numSamplesInPeriod {
             XCTAssertEqual(resonator.allPhasesPtr![i], 0.0)
         }
+    }
+    
+    func testUpdatePerf() throws {
+        let resonator = Resonator(targetFrequency: 10.0, sampleDuration: sampleDuration44100, alpha: 0.001)
+        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
+        frame.initialize(repeating: 0.5, count: 1024)
+        measure {
+            resonator.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+        }
+        frame.deallocate()
+    }
+    
+    func testUpdateSafePerf() throws {
+        let resonator = ResonatorSafe(targetFrequency: 10.0, sampleDuration: sampleDuration44100, alpha: 0.001)
+        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
+        frame.initialize(repeating: 0.5, count: 1024)
+        measure {
+            resonator.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+        }
+        frame.deallocate()
+
     }
 }

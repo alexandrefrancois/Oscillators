@@ -4,7 +4,7 @@ import Accelerate
 fileprivate let twoPi = Float.pi * 2.0
 
 /**
-    A bank of independent oscillators, computations use the Accelerate framework
+    A bank of independent oscillators, computations use the Accelerate framework with manual memory management (unsafe pointers)
  */
 public class ResonatorBank {
     public var alpha: Float {
@@ -36,8 +36,8 @@ public class ResonatorBank {
     public private(set) var periodOffsetsPtr: UnsafeMutableBufferPointer<Float>
     public private(set) var phaseIndicesPtr: UnsafeMutableBufferPointer<Float>
 
-    private var leftTermPtr: UnsafeMutableBufferPointer<Float>
-    private var rightTermPtr: UnsafeMutableBufferPointer<Float>
+    public private(set) var leftTermPtr: UnsafeMutableBufferPointer<Float>
+    public private(set) var rightTermPtr: UnsafeMutableBufferPointer<Float>
 
     private var phaseKernelPtr: UnsafeMutableBufferPointer<Float>
     private var phaseKernelOffsetsPtr: UnsafeMutableBufferPointer<Float>
@@ -135,38 +135,13 @@ public class ResonatorBank {
     }
     
     func update(sample: Float) {
-        
         var alphaSample = alpha * sample
-        
-        // this is o(n) in the size of the array
-        // using individual read pointers could be more efficient?
-        
-        // all phases increment and modulus
-        var numValues32 = Int32(sumSamplesPerPeriod)
         var one : Float = 1
-        vDSP_vsadd(phaseIndicesPtr.baseAddress!, 1, &one, phaseIndicesPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
-        vvfmodf(phaseIndicesPtr.baseAddress!, phaseIndicesPtr.baseAddress!, periodSampleCountsPtr.baseAddress!, &numValues32)
-                
-        
-//        // alphaCosines computation
-//        // lookup alphaCosines by phase+offset
-//        let phaseCosines = vDSP.linearInterpolate(lookupTable: cosines,
-//                                            withOffsets: vDSP.add(phaseIndices, cosineOffsets))
-//
-//
-//        vDSP.add(multiplication:(a: self.allPhases, b: omAlpha), multiplication: (c: phaseCosines, d: alphaSampleAmplitude), result: &self.allPhases)
-//
-//
-        
+
         leftTermPtr.initialize(repeating: 0)
         vDSP_vsmul(allPhasesPtr.baseAddress!, 1, &omAlpha, leftTermPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
          
-//            for (index, element) in leftTermPtr.enumerated() {
-//                print("\(index): \(element)")
-//            }
-
         rightTermPtr.initialize(repeating: 0)
-        
         vDSP_vadd(phaseIndicesPtr.baseAddress!, 1, periodOffsetsPtr.baseAddress!, 1, phaseKernelOffsetsPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
         var zero : Float = 0
         vDSP_vtabi(phaseKernelOffsetsPtr.baseAddress!, 1, &one, &zero, kernelsPtr.baseAddress!, vDSP_Length(sumSamplesPerPeriod), phaseKernelPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
@@ -179,6 +154,10 @@ public class ResonatorBank {
 //                print("\(index): \(element)")
 //            }
 
+        // all phases increment and modulus
+        var numValues32 = Int32(sumSamplesPerPeriod)
+        vDSP_vsadd(phaseIndicesPtr.baseAddress!, 1, &one, phaseIndicesPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
+        vvfmodf(phaseIndicesPtr.baseAddress!, phaseIndicesPtr.baseAddress!, periodSampleCountsPtr.baseAddress!, &numValues32)
     }
     
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {

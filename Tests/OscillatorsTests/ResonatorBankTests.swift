@@ -33,10 +33,10 @@ final class ResonatorBankTests: XCTestCase {
         XCTAssertEqual(Int(bitPattern: resonatorBank.allPhasesPtr.baseAddress) % MemoryLayout<Float>.alignment, 0)
         XCTAssertEqual(resonatorBank.allPhasesPtr.count, resonatorBank.sumSamplesPerPeriod)
 
-        XCTAssertNotNil(resonatorBank.kernelsPtr)
-        print("kernelsPtr base Address: \(String(describing: resonatorBank.kernelsPtr.baseAddress)) = \(Int(bitPattern: resonatorBank.kernelsPtr.baseAddress))")
-        XCTAssertEqual(Int(bitPattern: resonatorBank.kernelsPtr.baseAddress) % MemoryLayout<Float>.alignment, 0)
-        XCTAssertEqual(resonatorBank.kernelsPtr.count, resonatorBank.sumSamplesPerPeriod)
+        XCTAssertNotNil(resonatorBank.waveformsPtr)
+        print("kernelsPtr base Address: \(String(describing: resonatorBank.waveformsPtr.baseAddress)) = \(Int(bitPattern: resonatorBank.waveformsPtr.baseAddress))")
+        XCTAssertEqual(Int(bitPattern: resonatorBank.waveformsPtr.baseAddress) % MemoryLayout<Float>.alignment, 0)
+        XCTAssertEqual(resonatorBank.waveformsPtr.count, resonatorBank.sumSamplesPerPeriod)
 
         XCTAssertNotNil(resonatorBank.leftTermPtr)
         print("leftTermPtr base Address: \(String(describing: resonatorBank.leftTermPtr.baseAddress)) = \(Int(bitPattern: resonatorBank.leftTermPtr.baseAddress))")
@@ -53,7 +53,7 @@ final class ResonatorBankTests: XCTestCase {
         let resonatorBank = ResonatorBank(targetFrequencies: targetFrequencies, sampleDuration: sampleDuration44100, alpha: 1.0)
         resonatorBank.update(sample: 1.0)
         for i in 0..<resonatorBank.sumSamplesPerPeriod {
-            XCTAssertEqual(resonatorBank.allPhasesPtr[i], resonatorBank.kernelsPtr[i])
+            XCTAssertEqual(resonatorBank.allPhasesPtr[i], resonatorBank.waveformsPtr[i])
         }
         resonatorBank.update(sample: 0.0)
         for i in 0..<resonatorBank.sumSamplesPerPeriod {

@@ -29,9 +29,8 @@ public class ResonatorBank {
     /// Aplitude values for each phase for each oscillator
     public private(set) var allPhasesPtr: UnsafeMutableBufferPointer<Float>
     
-    /// Kernel values for each phase index for each oscillator
-    public private(set) var kernelsPtr: UnsafeMutableBufferPointer<Float>
-    
+    /// Waveform values for each phase index for each oscillator
+    public private(set) var waveformsPtr: UnsafeMutableBufferPointer<Float>
     public private(set) var periodSampleCountsPtr: UnsafeMutableBufferPointer<Float>
     public private(set) var periodOffsetsPtr: UnsafeMutableBufferPointer<Float>
     public private(set) var phaseIndicesPtr: UnsafeMutableBufferPointer<Float>
@@ -39,8 +38,8 @@ public class ResonatorBank {
     public private(set) var leftTermPtr: UnsafeMutableBufferPointer<Float>
     public private(set) var rightTermPtr: UnsafeMutableBufferPointer<Float>
 
-    private var phaseKernelPtr: UnsafeMutableBufferPointer<Float>
-    private var phaseKernelOffsetsPtr: UnsafeMutableBufferPointer<Float>
+    private var phaseWaveformPtr: UnsafeMutableBufferPointer<Float>
+    private var phaseWaveformOffsetsPtr: UnsafeMutableBufferPointer<Float>
 
     
     // TODO: make initializers with different ways of specifying number of oscillators and frequencies
@@ -75,31 +74,31 @@ public class ResonatorBank {
         allPhasesPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
         allPhasesPtr.initialize(repeating: 0)
 
-        kernelsPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
+        waveformsPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
         periodSampleCountsPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
         periodOffsetsPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
         phaseIndicesPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
         leftTermPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
         rightTermPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
-        phaseKernelPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
-        phaseKernelOffsetsPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
+        phaseWaveformPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
+        phaseWaveformOffsetsPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
 
         var nextOffset:Int = 0
         for index in 0..<numOscillators {
-            let kernelPtr = kernelsPtr.baseAddress! + nextOffset
+            let waveformPtr = waveformsPtr.baseAddress! + nextOffset
             let numSamplesPerPeriod = samplesPerPeriodPtr[index]
             
             let frequency = frequencies[index]
             
-            // prepare input values for kernel computation
+            // prepare input values for waveform computation
             var zero : Float = 0
             let twoPiFrequency : Float = twoPi * frequency
             var delta : Float = twoPiFrequency * sampleDuration
-            vDSP_vramp(&zero, &delta, kernelPtr, 1, vDSP_Length(numSamplesPerPeriod))
+            vDSP_vramp(&zero, &delta, waveformPtr, 1, vDSP_Length(numSamplesPerPeriod))
             
-            // compute kernel values
+            // compute waveform values
             var count : Int32 = Int32(numSamplesPerPeriod)
-            vvsinf(kernelPtr, kernelPtr, &count)
+            vvsinf(waveformPtr, waveformPtr, &count)
             
             // samples per period counts
             var numSamples : Float = Float(numSamplesPerPeriod)
@@ -121,7 +120,7 @@ public class ResonatorBank {
         allPhasesPtr.baseAddress?.deinitialize(count: sumSamplesPerPeriod)
         allPhasesPtr.deallocate()
         samplesPerPeriodPtr.deallocate()
-        kernelsPtr.deallocate()
+        waveformsPtr.deallocate()
         
         periodSampleCountsPtr.deallocate()
         periodOffsetsPtr.deallocate()
@@ -130,8 +129,8 @@ public class ResonatorBank {
         leftTermPtr.deallocate()
         rightTermPtr.deallocate()
         
-        phaseKernelPtr.deallocate()
-        phaseKernelOffsetsPtr.deallocate()
+        phaseWaveformPtr.deallocate()
+        phaseWaveformOffsetsPtr.deallocate()
     }
     
     func update(sample: Float) {
@@ -142,11 +141,11 @@ public class ResonatorBank {
         vDSP_vsmul(allPhasesPtr.baseAddress!, 1, &omAlpha, leftTermPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
         
         rightTermPtr.initialize(repeating: 0)
-        vDSP_vadd(phaseIndicesPtr.baseAddress!, 1, periodOffsetsPtr.baseAddress!, 1, phaseKernelOffsetsPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
+        vDSP_vadd(phaseIndicesPtr.baseAddress!, 1, periodOffsetsPtr.baseAddress!, 1, phaseWaveformOffsetsPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
         var zero : Float = 0
-        vDSP_vtabi(phaseKernelOffsetsPtr.baseAddress!, 1, &one, &zero, kernelsPtr.baseAddress!, vDSP_Length(sumSamplesPerPeriod), phaseKernelPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
+        vDSP_vtabi(phaseWaveformOffsetsPtr.baseAddress!, 1, &one, &zero, waveformsPtr.baseAddress!, vDSP_Length(sumSamplesPerPeriod), phaseWaveformPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
         
-        vDSP_vsmul(phaseKernelPtr.baseAddress!, 1, &alphaSample, rightTermPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
+        vDSP_vsmul(phaseWaveformPtr.baseAddress!, 1, &alphaSample, rightTermPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
         
         vDSP_vadd(leftTermPtr.baseAddress!, 1, rightTermPtr.baseAddress!, 1, allPhasesPtr.baseAddress!, 1, vDSP_Length(sumSamplesPerPeriod))
         

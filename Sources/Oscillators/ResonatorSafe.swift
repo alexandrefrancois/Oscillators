@@ -14,13 +14,15 @@ public class ResonatorSafe : Oscillator, ResonatorProtocol {
         }
     }
     private(set) var omAlpha : Float = 0.0
-    public var trackedFrequency: Float = 0.0
+    
+    public var timeConstant : Float {
+        sampleDuration / alpha
+    }
 
+    public var trackedFrequency: Float = 0.0
     private var maxIdx: UInt = 0
 
     public private(set) var allPhases = [Float]()
-    public private(set) var kernel = [Float]()
-    private var phaseIdx: Int = 0
     private var leftTerm = [Float]()
     private var rightTerm = [Float]()
     
@@ -33,16 +35,15 @@ public class ResonatorSafe : Oscillator, ResonatorProtocol {
         leftTerm = [Float](repeating: 0, count: numSamplesInPeriod)
         rightTerm = [Float](repeating: 0, count: numSamplesInPeriod)
         
-        kernel = [Float](repeating: 0, count: numSamplesInPeriod)
-        initSineKernel()
+        setWaveform(waveShape: .sine)
     }
     
-    public func initSineKernel() {
-        let twoPiFrequency = twoPi * frequency
-        let delta = twoPiFrequency * sampleDuration
-        let angles = vDSP.ramp(withInitialValue: 0.0, increment: delta, count: numSamplesInPeriod)
-        vForce.sin(angles, result: &kernel)
-    }
+//    public func initSineKernel() {
+//        let twoPiFrequency = twoPi * frequency
+//        let delta = twoPiFrequency * sampleDuration
+//        let angles = vDSP.ramp(withInitialValue: 0.0, increment: delta, count: numSamplesInPeriod)
+//        vForce.sin(angles, result: &kernel)
+//    }
     
     func updateAllPhases(sample: Float) {
         let alphaSample : Float = alpha * sample
@@ -60,10 +61,10 @@ public class ResonatorSafe : Oscillator, ResonatorProtocol {
         let complement = numSamplesInPeriod - phaseIdx
 
         vDSP.clear(&rightTerm)
-        vDSP.multiply(alphaSample, kernel[..<complement], result: &rightTerm[phaseIdx...])
+        vDSP.multiply(alphaSample, waveformPtr[..<complement], result: &rightTerm[phaseIdx...])
 //        vDSP_vsmul(&(kernel[phaseIdx]), 1, &alphaSampleAmplitude, &rightTerm, 1, vDSP_Length(numSamplesInPeriod - phaseIdx))
         
-        vDSP.multiply(alphaSample, kernel[complement...], result: &rightTerm[..<phaseIdx])
+        vDSP.multiply(alphaSample, waveformPtr[complement...], result: &rightTerm[..<phaseIdx])
 //        vDSP_vsmul(&kernel, 1, &alphaSampleAmplitude, &(rightTerm[numSamplesInPeriod - phaseIdx]), 1, vDSP_Length(phaseIdx))
         
 //        print("Right term:")

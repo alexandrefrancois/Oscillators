@@ -15,11 +15,6 @@ final class ResonatorTests: XCTestCase {
         XCTAssertEqual(Int(bitPattern: resonator.allPhasesPtr!.baseAddress) % MemoryLayout<Float>.alignment, 0)
         XCTAssertEqual(resonator.allPhasesPtr!.count, resonator.numSamplesInPeriod)
 
-        XCTAssertNotNil(resonator.kernelPtr)
-        print("kernelsPtr base Address: \(String(describing: resonator.kernelPtr!.baseAddress)) = \(Int(bitPattern: resonator.kernelPtr!.baseAddress))")
-        XCTAssertEqual(Int(bitPattern: resonator.kernelPtr!.baseAddress) % MemoryLayout<Float>.alignment, 0)
-        XCTAssertEqual(resonator.kernelPtr!.count, resonator.numSamplesInPeriod)
-
         XCTAssertNotNil(resonator.leftTermPtr)
         print("leftTermPtr base Address: \(String(describing: resonator.leftTermPtr!.baseAddress)) = \(Int(bitPattern: resonator.leftTermPtr!.baseAddress))")
         XCTAssertEqual(Int(bitPattern: resonator.leftTermPtr!.baseAddress) % MemoryLayout<Float>.alignment, 0)
@@ -35,7 +30,7 @@ final class ResonatorTests: XCTestCase {
         let resonator = Resonator(targetFrequency: 440.0, sampleDuration: sampleDuration44100, alpha: 1.0)
         resonator.updateAllPhases(sample: 1.0)
         for i in 0..<resonator.numSamplesInPeriod {
-            XCTAssertEqual(resonator.allPhasesPtr![i], resonator.kernelPtr![i])
+            XCTAssertEqual(resonator.allPhasesPtr![i], resonator.waveformPtr[i])
         }
         resonator.updateAllPhases(sample: 0.0)
         for i in 0..<resonator.numSamplesInPeriod {

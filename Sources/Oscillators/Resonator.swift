@@ -14,8 +14,12 @@ public class Resonator : Oscillator {
         }
     }
     private(set) var omAlpha : Float = 0.0
+    
+    public var timeConstant : Float {
+        sampleDuration / alpha
+    }
+    
     public var trackedFrequency: Float = 0.0
-
     private var maxIdx: Int = 0
 
     public var allPhases: [Float] {
@@ -23,12 +27,6 @@ public class Resonator : Oscillator {
     }
     public private(set) var allPhasesPtr: UnsafeMutableBufferPointer<Float>?
     
-    public var kernel: [Float] {
-        kernelPtr!.map { $0 }
-    }
-    public private(set) var kernelPtr: UnsafeMutableBufferPointer<Float>?
-    private var phaseIdx: Int = 0
-
     public private(set) var leftTermPtr: UnsafeMutableBufferPointer<Float>?
     public private(set) var rightTermPtr: UnsafeMutableBufferPointer<Float>?
     
@@ -37,26 +35,13 @@ public class Resonator : Oscillator {
         self.omAlpha = 1.0 - alpha
         print("time constant: \(sampleDuration / alpha) s")
         super.init(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
-
+        setWaveform(waveShape: .sine)
         allPhasesPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInPeriod)
         allPhasesPtr!.initialize(repeating: 0)
         leftTermPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInPeriod)
         leftTermPtr!.initialize(repeating: 0)
         rightTermPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInPeriod)
         rightTermPtr!.initialize(repeating: 0)
-
-        kernelPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInPeriod)
-        kernelPtr!.initialize(repeating: 0)
-        
-       // prepare input values for kernel computation
-        var zero : Float = 0
-        let twoPiFrequency : Float = twoPi * frequency
-        var delta : Float = twoPiFrequency * sampleDuration
-        vDSP_vramp(&zero, &delta, kernelPtr!.baseAddress!, 1, vDSP_Length(numSamplesInPeriod))
-
-        // compute kernel values
-        var count : Int32 = Int32(numSamplesInPeriod)
-        vvsinf(kernelPtr!.baseAddress!, kernelPtr!.baseAddress!, &count)
     }
     
     deinit {
@@ -66,8 +51,6 @@ public class Resonator : Oscillator {
         leftTermPtr!.deallocate()
         rightTermPtr!.baseAddress?.deinitialize(count: numSamplesInPeriod)
         rightTermPtr!.deallocate()
-        kernelPtr!.baseAddress?.deinitialize(count: numSamplesInPeriod)
-        kernelPtr!.deallocate()
     }
     
     func updateAllPhases(sample: Float) {
@@ -77,8 +60,8 @@ public class Resonator : Oscillator {
         vDSP_vsmul(allPhasesPtr!.baseAddress!, 1, &omAlpha, leftTermPtr!.baseAddress!, 1, vDSP_Length(numSamplesInPeriod))
 
         rightTermPtr!.initialize(repeating: 0)
-        vDSP_vsmul(kernelPtr!.baseAddress! + phaseIdx, 1, &alphaSample, rightTermPtr!.baseAddress!, 1, vDSP_Length(numSamplesInPeriod - phaseIdx))
-        vDSP_vsmul(kernelPtr!.baseAddress!, 1, &alphaSample, rightTermPtr!.baseAddress! + (numSamplesInPeriod - phaseIdx), 1, vDSP_Length(phaseIdx))
+        vDSP_vsmul(waveformPtr.baseAddress! + phaseIdx, 1, &alphaSample, rightTermPtr!.baseAddress!, 1, vDSP_Length(waveformPtr.count - phaseIdx))
+        vDSP_vsmul(waveformPtr.baseAddress!, 1, &alphaSample, rightTermPtr!.baseAddress! + (waveformPtr.count - phaseIdx), 1, vDSP_Length(phaseIdx))
         
         vDSP_vadd(leftTermPtr!.baseAddress!, 1, rightTermPtr!.baseAddress!, 1, allPhasesPtr!.baseAddress!, 1, vDSP_Length(numSamplesInPeriod))
         phaseIdx = (phaseIdx + 1) % numSamplesInPeriod

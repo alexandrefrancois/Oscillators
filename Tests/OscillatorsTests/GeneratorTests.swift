@@ -24,24 +24,24 @@ final class GeneratorTests: XCTestCase {
     func testGetNextSamples1() throws {
         let amplitude : Float = 0.5
         let generator = Generator(targetFrequency: 440.0, sampleDuration: sampleDuration44100, waveShape: .square, amplitude: amplitude)
-        let numSamples = 3 * generator.numSamplesInPeriod
+        let numSamples = 3 * generator.numSamplesInWaveform
         let samples = generator.getNextSamples(numSamples: numSamples)
         XCTAssertEqual(samples.count, numSamples)
         XCTAssertEqual(samples[0], amplitude, accuracy: epsilon)
-        XCTAssertEqual(samples[generator.numSamplesInPeriod / 2 - 1], amplitude, accuracy: epsilon)
-        XCTAssertEqual(samples[generator.numSamplesInPeriod / 2 + 1], -amplitude, accuracy: epsilon)
-        XCTAssertEqual(samples[generator.numSamplesInPeriod], amplitude, accuracy: epsilon)
+        XCTAssertEqual(samples[Int(generator.numSamplesInPeriod) / 2 - 1], amplitude, accuracy: epsilon)
+        XCTAssertEqual(samples[Int(generator.numSamplesInPeriod) / 2 + 1], -amplitude, accuracy: epsilon)
+        XCTAssertEqual(samples[Int(generator.numSamplesInPeriod)], amplitude, accuracy: epsilon)
     }
 
     func testGetNextSamples2() throws {
         let amplitude : Float = 0.5
         let generator = Generator(targetFrequency: 440.0, sampleDuration: sampleDuration44100, waveShape: .square, amplitude: amplitude)
-        let numSamples = 3 * generator.numSamplesInPeriod
+        let numSamples = 3 * generator.numSamplesInWaveform
         var samples = [Float](repeating: 0.0, count: numSamples)
         generator.getNextSamples(samples: &samples)
         XCTAssertEqual(samples[0], amplitude, accuracy: epsilon)
-        XCTAssertEqual(samples[generator.numSamplesInPeriod / 2 - 1], amplitude, accuracy: epsilon)
-        XCTAssertEqual(samples[generator.numSamplesInPeriod / 2 + 1], -amplitude, accuracy: epsilon)
-        XCTAssertEqual(samples[generator.numSamplesInPeriod], amplitude, accuracy: epsilon)
+        XCTAssertEqual(samples[Int(generator.numSamplesInPeriod) / 2 - 1], amplitude, accuracy: epsilon)
+        XCTAssertEqual(samples[Int(generator.numSamplesInPeriod) / 2 + 1], -amplitude, accuracy: epsilon)
+        XCTAssertEqual(samples[Int(generator.numSamplesInPeriod)], amplitude, accuracy: epsilon)
     }
 }

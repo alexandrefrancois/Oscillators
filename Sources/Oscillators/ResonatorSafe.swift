@@ -31,9 +31,9 @@ public class ResonatorSafe : Oscillator, ResonatorProtocol {
         print("time constant: \(sampleDuration / alpha) s")
         super.init(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
 
-        self.allPhases = [Float](repeating: 0, count: numSamplesInPeriod)
-        leftTerm = [Float](repeating: 0, count: numSamplesInPeriod)
-        rightTerm = [Float](repeating: 0, count: numSamplesInPeriod)
+        self.allPhases = [Float](repeating: 0, count: numSamplesInWaveform)
+        leftTerm = [Float](repeating: 0, count: numSamplesInWaveform)
+        rightTerm = [Float](repeating: 0, count: numSamplesInWaveform)
         
         setWaveform(waveShape: .sine)
     }
@@ -58,7 +58,7 @@ public class ResonatorSafe : Oscillator, ResonatorProtocol {
 //            print("\(index): \(element)")
 //        }
         
-        let complement = numSamplesInPeriod - phaseIdx
+        let complement = numSamplesInWaveform - phaseIdx
 
         vDSP.clear(&rightTerm)
         vDSP.multiply(alphaSample, waveformPtr[..<complement], result: &rightTerm[phaseIdx...])
@@ -79,7 +79,7 @@ public class ResonatorSafe : Oscillator, ResonatorProtocol {
 //            print("\(index): \(element)")
 //        }
         
-        phaseIdx = (phaseIdx + 1) % numSamplesInPeriod
+        phaseIdx = (phaseIdx + 1) % numSamplesInWaveform
     }
     
     public func update(sample: Float) {
@@ -138,9 +138,9 @@ public class ResonatorSafe : Oscillator, ResonatorProtocol {
     }
 
     func updateTrackedFrequency(newMaxIdx: UInt, numSamples: Int) {
-        let numSamplesDrift = (Int(newMaxIdx) - Int(maxIdx)) % numSamplesInPeriod
-        let periodCorrection = Float(numSamplesInPeriod) * Float(numSamplesDrift) / Float(numSamples)
-        trackedFrequency = 1.0 / (sampleDuration * (Float(numSamplesInPeriod) + periodCorrection))
+        let numSamplesDrift = (Int(newMaxIdx) - Int(maxIdx)) % numSamplesInWaveform
+        let periodCorrection = Float(numSamplesInWaveform) * Float(numSamplesDrift) / Float(numSamples)
+        trackedFrequency = 1.0 / (sampleDuration * (Float(numSamplesInWaveform) + periodCorrection))
         maxIdx = newMaxIdx
     }
 }

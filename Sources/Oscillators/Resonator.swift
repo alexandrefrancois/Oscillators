@@ -36,20 +36,20 @@ public class Resonator : Oscillator {
         print("time constant: \(sampleDuration / alpha) s")
         super.init(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
         setWaveform(waveShape: .sine)
-        allPhasesPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInPeriod)
+        allPhasesPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInWaveform)
         allPhasesPtr!.initialize(repeating: 0)
-        leftTermPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInPeriod)
+        leftTermPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInWaveform)
         leftTermPtr!.initialize(repeating: 0)
-        rightTermPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInPeriod)
+        rightTermPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInWaveform)
         rightTermPtr!.initialize(repeating: 0)
     }
     
     deinit {
-        allPhasesPtr!.baseAddress?.deinitialize(count: numSamplesInPeriod)
+        allPhasesPtr!.baseAddress?.deinitialize(count: numSamplesInWaveform)
         allPhasesPtr!.deallocate()
-        leftTermPtr!.baseAddress?.deinitialize(count: numSamplesInPeriod)
+        leftTermPtr!.baseAddress?.deinitialize(count: numSamplesInWaveform)
         leftTermPtr!.deallocate()
-        rightTermPtr!.baseAddress?.deinitialize(count: numSamplesInPeriod)
+        rightTermPtr!.baseAddress?.deinitialize(count: numSamplesInWaveform)
         rightTermPtr!.deallocate()
     }
     
@@ -57,40 +57,40 @@ public class Resonator : Oscillator {
         var alphaSample : Float = alpha * sample
 
         leftTermPtr!.initialize(repeating: 0)
-        vDSP_vsmul(allPhasesPtr!.baseAddress!, 1, &omAlpha, leftTermPtr!.baseAddress!, 1, vDSP_Length(numSamplesInPeriod))
+        vDSP_vsmul(allPhasesPtr!.baseAddress!, 1, &omAlpha, leftTermPtr!.baseAddress!, 1, vDSP_Length(numSamplesInWaveform))
 
         rightTermPtr!.initialize(repeating: 0)
         vDSP_vsmul(waveformPtr.baseAddress! + phaseIdx, 1, &alphaSample, rightTermPtr!.baseAddress!, 1, vDSP_Length(waveformPtr.count - phaseIdx))
         vDSP_vsmul(waveformPtr.baseAddress!, 1, &alphaSample, rightTermPtr!.baseAddress! + (waveformPtr.count - phaseIdx), 1, vDSP_Length(phaseIdx))
         
-        vDSP_vadd(leftTermPtr!.baseAddress!, 1, rightTermPtr!.baseAddress!, 1, allPhasesPtr!.baseAddress!, 1, vDSP_Length(numSamplesInPeriod))
-        phaseIdx = (phaseIdx + 1) % numSamplesInPeriod
+        vDSP_vadd(leftTermPtr!.baseAddress!, 1, rightTermPtr!.baseAddress!, 1, allPhasesPtr!.baseAddress!, 1, vDSP_Length(numSamplesInWaveform))
+        phaseIdx = (phaseIdx + 1) % numSamplesInWaveform
         
     }
     
     public func update(sample: Float) {
         updateAllPhases(sample: sample)
-        vDSP_maxv(allPhasesPtr!.baseAddress!, 1, &amplitude, vDSP_Length(numSamplesInPeriod))
+        vDSP_maxv(allPhasesPtr!.baseAddress!, 1, &amplitude, vDSP_Length(numSamplesInWaveform))
    }
     
     public func update(samples: [Float]) {
         for sample in samples {
             updateAllPhases(sample: sample)
         }
-        vDSP_maxv(allPhasesPtr!.baseAddress!, 1, &amplitude, vDSP_Length(numSamplesInPeriod))
+        vDSP_maxv(allPhasesPtr!.baseAddress!, 1, &amplitude, vDSP_Length(numSamplesInWaveform))
     }
 
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateAllPhases(sample: frameData[sampleIndex])
         }
-        vDSP_maxv(allPhasesPtr!.baseAddress!, 1, &amplitude, vDSP_Length(numSamplesInPeriod))
+        vDSP_maxv(allPhasesPtr!.baseAddress!, 1, &amplitude, vDSP_Length(numSamplesInWaveform))
     }
     
     public func updateAndTrack(sample: Float) {
         updateAllPhases(sample: sample)
         var idx: vDSP_Length = 0
-        vDSP_maxvi(allPhasesPtr!.baseAddress!, 1, &amplitude, &idx, vDSP_Length(numSamplesInPeriod))
+        vDSP_maxvi(allPhasesPtr!.baseAddress!, 1, &amplitude, &idx, vDSP_Length(numSamplesInWaveform))
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(newMaxIdx: Int(idx), numSamples: 1)
         } else {
@@ -103,7 +103,7 @@ public class Resonator : Oscillator {
             updateAllPhases(sample: sample)
         }
         var idx: vDSP_Length = 0
-        vDSP_maxvi(allPhasesPtr!.baseAddress!, 1, &amplitude, &idx, vDSP_Length(numSamplesInPeriod))
+        vDSP_maxvi(allPhasesPtr!.baseAddress!, 1, &amplitude, &idx, vDSP_Length(numSamplesInWaveform))
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(newMaxIdx: Int(idx), numSamples: samples.count)
         } else {
@@ -116,7 +116,7 @@ public class Resonator : Oscillator {
             updateAllPhases(sample: frameData[sampleIndex])
         }
         var idx: vDSP_Length = 0
-        vDSP_maxvi(allPhasesPtr!.baseAddress!, 1, &amplitude, &idx, vDSP_Length(numSamplesInPeriod))
+        vDSP_maxvi(allPhasesPtr!.baseAddress!, 1, &amplitude, &idx, vDSP_Length(numSamplesInWaveform))
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(newMaxIdx: Int(idx), numSamples: frameLength)
         } else {
@@ -125,7 +125,7 @@ public class Resonator : Oscillator {
     }
     
     func updateTrackedFrequency(newMaxIdx: Int, numSamples: Int) {
-        let numSamplesDrift = (newMaxIdx - maxIdx) % numSamplesInPeriod
+        let numSamplesDrift = (newMaxIdx - maxIdx) % numSamplesInWaveform
         let periodCorrection = Float(numSamplesInPeriod) * Float(numSamplesDrift) / Float(numSamples)
         trackedFrequency = 1.0 / (sampleDuration * (Float(numSamplesInPeriod) - periodCorrection))
         maxIdx = newMaxIdx

@@ -21,24 +21,28 @@ public class Oscillator : OscillatorProtocol {
         waveformPtr.map { $0 }
     }
     public private(set) var waveformPtr: UnsafeMutableBufferPointer<Float>
-    internal var numSamplesInPeriod: Int {
+    internal var numSamplesInWaveform: Int {
         waveformPtr.count
     }
     internal var phaseIdx: Int = 0
     
+    internal var numSamplesInPeriod: Float
+    internal var numPeriodsInWaveform: Int
+    
     init(targetFrequency: Float, sampleDuration: Float) {
         self.sampleDuration = sampleDuration
-        var numSamplesInPeriodLocal: Int
-        (numSamplesInPeriodLocal, self.frequency) = Frequencies.closestFrequency(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
+        var numSamplesInWaveformLocal : Int
+        (numSamplesInWaveformLocal, numPeriodsInWaveform, self.frequency) = Frequencies.closestFrequency(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
+        numSamplesInPeriod = Float(numSamplesInWaveformLocal) / Float(numPeriodsInWaveform)
         
-        waveformPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInPeriodLocal)
+        waveformPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInWaveformLocal)
         waveformPtr.initialize(repeating: 0)
         
-        print("New Oscillator: target frequency: \(targetFrequency), num samples in period: \(numSamplesInPeriod) -> \(frequency)")
+        print("New Oscillator: target frequency: \(targetFrequency), num samples in period: \(numSamplesInWaveformLocal), num periods in waveform: \(numPeriodsInWaveform), num samples in Period: \(numSamplesInPeriod) -> \(frequency)")
     }
     
     deinit {
-        waveformPtr.baseAddress?.deinitialize(count: numSamplesInPeriod)
+        waveformPtr.baseAddress?.deinitialize(count: numSamplesInWaveform)
         waveformPtr.deallocate()
     }
     

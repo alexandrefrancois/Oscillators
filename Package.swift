@@ -23,9 +23,11 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "Oscillators",
-            dependencies: []),
+            dependencies: [OscillatorsCpp]),
         .testTarget(
             name: "OscillatorsTests",
             dependencies: ["Oscillators"]),
+        .target(name: "OscillatorsCpp",
+            cxxSettings: [.headerSearchPath(".")]),
     ]
 )

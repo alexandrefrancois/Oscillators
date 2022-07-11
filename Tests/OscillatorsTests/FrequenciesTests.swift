@@ -8,15 +8,19 @@ final class FrequenciesTests: XCTestCase {
     func testClosestFrequency() throws {
         let samplingRate : Int = 44100
         let sampleDuration : Float = 1.0 / Float(samplingRate)
-        var (numSamplesPerPeriod, numPeriods, frequency) = Frequencies.closestFrequency(targetFrequency: 440.0, sampleDuration: sampleDuration)
+//        var (numSamplesPerPeriod, numPeriods, frequency) = Frequencies.closestFrequency(targetFrequency: 441.0, sampleDuration: sampleDuration, accuracy: Frequencies.defaultAccuracy, maxNumPeriods: Frequencies.defaultMaxNumPeriods, maxTotalNumSamples: Frequencies.defaultMaxTotalNumSamples)
+        var (numSamplesPerPeriod, numPeriods, frequency) = Frequencies.closestFrequency(targetFrequency: 441.0, sampleDuration: sampleDuration)
         XCTAssertEqual(frequency, 441.0, accuracy: epsilon)
         XCTAssertEqual(numSamplesPerPeriod, 100)
         XCTAssertEqual(numPeriods, 1)
-        (numSamplesPerPeriod, numPeriods, frequency) = Frequencies.closestFrequency(targetFrequency: 441.0, sampleDuration: sampleDuration)
+//        (numSamplesPerPeriod, numPeriods, frequency) = Frequencies.closestFrequency(targetFrequency: 440.0, sampleDuration: sampleDuration, accuracy: Frequencies.defaultAccuracy, maxNumPeriods: Frequencies.defaultMaxNumPeriods, maxTotalNbSamples: Frequencies.defaultMaxTotalNbSamples)
+        (numSamplesPerPeriod, numPeriods, frequency) = Frequencies.closestFrequency(targetFrequency: 440.0, sampleDuration: sampleDuration)
+//        XCTAssertEqual(frequency, 440.0, accuracy: 0.1)
+//        XCTAssertEqual(numSamplesPerPeriod, 2205)
+//        XCTAssertEqual(numPeriods, 22)
         XCTAssertEqual(frequency, 441.0, accuracy: epsilon)
         XCTAssertEqual(numSamplesPerPeriod, 100)
         XCTAssertEqual(numPeriods, 1)
-
     }
 
     func testIntegerFrequencies() throws {

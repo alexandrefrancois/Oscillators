@@ -29,10 +29,13 @@ public class Oscillator : OscillatorProtocol {
     internal var numSamplesInPeriod: Float
     internal var numPeriodsInWaveform: Int
     
-    init(targetFrequency: Float, sampleDuration: Float) {
+    init(targetFrequency: Float, sampleDuration: Float) { //, accuracy: Float = Frequencies.defaultAccuracy, maxNumPeriods: Int = Frequencies.defaultMaxNumPeriods, maxTotalNumSamples: Int = Frequencies.defaultMaxTotalNumSamples) {
         self.sampleDuration = sampleDuration
         var numSamplesInWaveformLocal : Int
-        (numSamplesInWaveformLocal, numPeriodsInWaveform, self.frequency) = Frequencies.closestFrequency(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
+//        (numSamplesInWaveformLocal, numPeriodsInWaveform, self.frequency) = Frequencies.closestFrequency(targetFrequency: targetFrequency, sampleDuration: sampleDuration, accuracy: accuracy, maxNumPeriods: maxNumPeriods, maxTotalNumSamples: maxTotalNumSamples)
+//        (numSamplesInWaveformLocal, numPeriodsInWaveform, self.frequency) = Frequencies.closestFrequency(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
+
+        (numSamplesInWaveformLocal, numPeriodsInWaveform, frequency) = Frequencies.closestFrequency(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
         numSamplesInPeriod = Float(numSamplesInWaveformLocal) / Float(numPeriodsInWaveform)
         
         waveformPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInWaveformLocal)
@@ -66,12 +69,14 @@ public class Oscillator : OscillatorProtocol {
     }
     
     public func setSquareWave() {
+        // TODO: this is only correct if numPeriodsInWaveform == 1
         let halfNumSamplesInPeriod = waveformPtr.count / 2
         vDSP.fill(&waveformPtr[..<halfNumSamplesInPeriod], with: 1.0)
         vDSP.fill(&waveformPtr[halfNumSamplesInPeriod...], with: -1.0)
     }
     
     public func setTriangleWave() {
+        // TODO: this is only correct if numPeriodsInWaveform == 1
         let quarterNumSamplesInPeriod = waveformPtr.count / 4
         let delta : Float = 1.0 / Float(quarterNumSamplesInPeriod)
         let threeQuartersNumSamplesInPeriod = 3 * quarterNumSamplesInPeriod
@@ -81,6 +86,7 @@ public class Oscillator : OscillatorProtocol {
     }
     
     public func setSawWave() {
+        // TODO: this is only correct if numPeriodsInWaveform == 1
         let halfNumSamplesInPeriod = waveformPtr.count / 2
         let delta : Float = 1.0 / Float(halfNumSamplesInPeriod)
         vDSP.formRamp(withInitialValue: 0.0, increment: delta, result: &waveformPtr[..<halfNumSamplesInPeriod])

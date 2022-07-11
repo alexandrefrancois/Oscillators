@@ -37,20 +37,12 @@ public class ResonatorSafe : Oscillator, ResonatorProtocol {
         
         setWaveform(waveShape: .sine)
     }
-    
-//    public func initSineKernel() {
-//        let twoPiFrequency = twoPi * frequency
-//        let delta = twoPiFrequency * sampleDuration
-//        let angles = vDSP.ramp(withInitialValue: 0.0, increment: delta, count: numSamplesInPeriod)
-//        vForce.sin(angles, result: &kernel)
-//    }
-    
+        
     func updateAllPhases(sample: Float) {
         let alphaSample : Float = alpha * sample
         
         // print("Phase: \(phaseIdx) | \(alphaSampleAmplitude)")
         
-        vDSP.clear(&leftTerm)
         vDSP.multiply(omAlpha, allPhases, result: &leftTerm)
         
 //        print("Left term:")
@@ -59,13 +51,8 @@ public class ResonatorSafe : Oscillator, ResonatorProtocol {
 //        }
         
         let complement = numSamplesInWaveform - phaseIdx
-
-        vDSP.clear(&rightTerm)
         vDSP.multiply(alphaSample, waveformPtr[..<complement], result: &rightTerm[phaseIdx...])
-//        vDSP_vsmul(&(kernel[phaseIdx]), 1, &alphaSampleAmplitude, &rightTerm, 1, vDSP_Length(numSamplesInPeriod - phaseIdx))
-        
         vDSP.multiply(alphaSample, waveformPtr[complement...], result: &rightTerm[..<phaseIdx])
-//        vDSP_vsmul(&kernel, 1, &alphaSampleAmplitude, &(rightTerm[numSamplesInPeriod - phaseIdx]), 1, vDSP_Length(phaseIdx))
         
 //        print("Right term:")
 //        for (index, element) in rightTerm.enumerated() {

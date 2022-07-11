@@ -55,14 +55,9 @@ public class Resonator : Oscillator {
     
     func updateAllPhases(sample: Float) {
         var alphaSample : Float = alpha * sample
-
-        leftTermPtr!.initialize(repeating: 0)
         vDSP_vsmul(allPhasesPtr!.baseAddress!, 1, &omAlpha, leftTermPtr!.baseAddress!, 1, vDSP_Length(numSamplesInWaveform))
-
-        rightTermPtr!.initialize(repeating: 0)
         vDSP_vsmul(waveformPtr.baseAddress! + phaseIdx, 1, &alphaSample, rightTermPtr!.baseAddress!, 1, vDSP_Length(waveformPtr.count - phaseIdx))
         vDSP_vsmul(waveformPtr.baseAddress!, 1, &alphaSample, rightTermPtr!.baseAddress! + (waveformPtr.count - phaseIdx), 1, vDSP_Length(phaseIdx))
-        
         vDSP_vadd(leftTermPtr!.baseAddress!, 1, rightTermPtr!.baseAddress!, 1, allPhasesPtr!.baseAddress!, 1, vDSP_Length(numSamplesInWaveform))
         phaseIdx = (phaseIdx + 1) % numSamplesInWaveform
         

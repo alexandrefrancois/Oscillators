@@ -33,7 +33,7 @@ public class Resonator : Oscillator {
     public init(targetFrequency: Float, sampleDuration: Float, alpha: Float = 0.0001) {
         self.alpha = alpha
         self.omAlpha = 1.0 - alpha
-        print("time constant: \(sampleDuration / alpha) s")
+//        print("time constant: \(sampleDuration / alpha) s")
         super.init(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
         setWaveform(waveShape: .sine)
         allPhasesPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInWaveform)

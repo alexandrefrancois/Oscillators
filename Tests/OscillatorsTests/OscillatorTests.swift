@@ -13,7 +13,7 @@ final class OscillatorTests: XCTestCase {
         XCTAssertEqual(oscillator.sampleDuration, sampleDuration44100)
         
         XCTAssertNotNil(oscillator.waveformPtr)
-        print("kernelsPtr base Address: \(String(describing: oscillator.waveformPtr.baseAddress)) = \(Int(bitPattern: oscillator.waveformPtr.baseAddress))")
+        print("waveformPtr base Address: \(String(describing: oscillator.waveformPtr.baseAddress)) = \(Int(bitPattern: oscillator.waveformPtr.baseAddress))")
         XCTAssertEqual(Int(bitPattern: oscillator.waveformPtr.baseAddress) % MemoryLayout<Float>.alignment, 0)
 
         XCTAssertEqual(oscillator.waveformPtr.count, oscillator.numSamplesInWaveform)

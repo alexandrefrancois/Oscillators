@@ -28,7 +28,7 @@ public class ResonatorSafe : Oscillator, ResonatorProtocol {
     
     public init(targetFrequency: Float, sampleDuration: Float, alpha: Float) {
         self.alpha = alpha
-        print("time constant: \(sampleDuration / alpha) s")
+//        print("time constant: \(sampleDuration / alpha) s")
         super.init(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
 
         self.allPhases = [Float](repeating: 0, count: numSamplesInWaveform)

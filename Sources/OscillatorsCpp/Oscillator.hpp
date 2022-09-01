@@ -35,6 +35,7 @@ constexpr float halfPi = PI / 2.0;
 
 constexpr float trackFrequencyThreshold = 0.001;
 
+// Base oscillator class
 class Oscillator {
 protected:
     float m_frequency;    

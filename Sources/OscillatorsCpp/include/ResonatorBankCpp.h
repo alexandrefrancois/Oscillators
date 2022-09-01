@@ -24,6 +24,7 @@ SOFTWARE.
 
 #import <Foundation/Foundation.h>
 
+// Wrapper for the ResonatorBank class
 @interface ResonatorBankCpp : NSObject
 - (instancetype)initWithNumResonators:(int)numResonators targetFrequencies:(float*)targetFrequencies sampleDuration:(float)sampleDuration alpha:(float)alpha;
 - (float)sampleDuration;

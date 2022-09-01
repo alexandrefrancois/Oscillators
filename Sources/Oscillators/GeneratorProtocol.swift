@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/// An oscillator used to generate a signal
+/// An oscillator used to generate a periodic signal
 public protocol GeneratorProtocol {
     var amplitude : Float { get set }
     func getNextSample() -> Float

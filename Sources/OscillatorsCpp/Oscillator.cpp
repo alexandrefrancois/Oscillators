@@ -34,10 +34,6 @@ Oscillator::Oscillator(float targetFrequency, float sampleDuration) : m_sampleDu
     int numSamplesInPeriod = static_cast<int>(std::round((1.0 / (sampleDuration * targetFrequency))));
     m_frequency = 1.0 / (numSamplesInPeriod * sampleDuration);
     m_waveform = std::vector<float>(numSamplesInPeriod, 0);
-
-//    std::cout << "New OscillatorCpp: target frequency: " << targetFrequency
-//    << ", num samples in period: " << numSamplesInPeriod
-//    << " -> " << m_frequency << std::endl;
 }
 
 void Oscillator::setSineWave() {

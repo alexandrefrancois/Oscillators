@@ -27,7 +27,7 @@ import Foundation
 /// Speed of sound at room temperature, in m/s
 fileprivate let speedOfSound: Float = 346.0
 
-/// A class to manipulate and compute frequencies in digital world
+/// A class to manipulate and compute frequencies in the digital world
 public struct Frequencies {
     
     /// Compute the closest frequency to the target frequency that corresponds to a wavelength which is an integer number of samples
@@ -49,6 +49,12 @@ public struct Frequencies {
         return speedOfSound * (observedFrequency - referenceFrequency) / referenceFrequency
     }
 
+    /// Compute the frequencies that correspond to a period whose duration is a multiple of the sample duration.
+    /// - parameter samplingRate: the sampling rate of the signal (determines sample duration)
+    /// - parameter minNumSamplesPerPeriod: lower bound for the number of samples per period (ignored if less than 2)
+    /// - parameter maxNumSamplesPerPeriod: upper bound for the number of samples per period
+    /// - parameter sorted: boolean, indicates whether the output array should be sorted (true by default)
+    /// - returns: an array containing the frequencies that meet the requirement
     public static func integerFrequencies(samplingRate: Int, minNumSamplesPerPeriod: Int, maxNumSamplesPerPeriod: Int, sorted: Bool = true) -> [Int] {
         var frequencies = [Int]()
         let from = max(2, minNumSamplesPerPeriod)

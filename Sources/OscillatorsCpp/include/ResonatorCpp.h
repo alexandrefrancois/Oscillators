@@ -25,6 +25,7 @@ SOFTWARE.
 #import <Foundation/Foundation.h>
 #import "OscillatorCpp.h"
 
+// Wrapper for the Resonator class
 @interface ResonatorCpp : OscillatorCpp
 - (instancetype)initWithTargetFrequency:(float)frequency sampleDuration:(float)sampleDuration alpha:(float)alpha;
 - (float)alpha;

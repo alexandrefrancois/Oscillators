@@ -24,6 +24,7 @@ SOFTWARE.
 
 #import <Foundation/Foundation.h>
 
+// Wrapper for the base Oscillator class
 @interface OscillatorCpp : NSObject
 - (instancetype)initWithTargetFrequency:(float)frequency sampleDuration:(float)sampleDuration;
 - (float)frequency;

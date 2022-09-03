@@ -44,7 +44,7 @@ A resonator is an oscillator which, when submitted to an input signal, oscillate
 The resonator's amplitude is updated at each tick of the clock, i.e. for each input sample, from the resonator's current amplitude value _a_ (in [0,1]), its current position in the oscillation period (waveform value _w_, in [-1,1]), and the input sample value _s_ (in [-1,1]):  
     _a <- (1-k) * a + k * s * w,  where k in [0,1]_
 
-The pattern _v <- (1-k) * v + k * s_, where k is a constant in [0,1], is known as a low-pass filter, as it smoothes out high frequency variations in the input signal. The constant _k_ dictates the "smoothing", in this case the dynamic behaviour of the system, i.e. how quickly it adapts to variations in the input signal.
+The pattern _v <- (1-k) * v + k * s_, where k is a constant in [0,1], is known as a low-pass filter, as it smooths out high frequency variations in the input signal. The constant _k_ dictates the "smoothing", in this case the dynamic behavior of the system, i.e. how quickly it adapts to variations in the input signal.
 
 The instantaneous contribution of each input sample value to the amplitude is proportional to _s * w_, which intuitively will be maximal when peaks in the input signal and peaks in the resonator's waveform are both equally spaced and aligned, i.e. when they have same frequency and are in phase.
 

@@ -63,9 +63,42 @@ public class ResonatorBankArray {
     }
     
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
-                for (index, resonator) in resonators.enumerated() {
-                    resonator.update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
-                    self.maxima[index] = resonator.amplitude
+        for (index, resonator) in resonators.enumerated() {
+            resonator.update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
+            self.maxima[index] = resonator.amplitude
+        }
+    }
+    
+    public func updateSC(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
+        let semaphore = DispatchSemaphore(value: 0)
+        Task {
+            await withTaskGroup(of: [(Int, Float)].self) { group in
+                // even out the task length by pairing resonators from both ends of the spectrum
+                // taking into account that the complexity of the update is proportional to the size of the phases array
+                for index in 0..<self.resonators.count/2 {
+                    let index2 = self.resonators.count - 1 - index
+                    group.addTask(priority: .high) {
+                        self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
+                        self.resonators[index2].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
+                        return [(index, self.resonators[index].amplitude), (index2, self.resonators[index2].amplitude)]
+                    }
                 }
+                if self.resonators.count & 1 == 1 {
+                    let index = self.resonators.count / 2
+                    group.addTask(priority: .high) {
+                        self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
+                        return [(index, self.resonators[index].amplitude)]
+                    }
+                }
+                // collect all results when ready
+                for await tuples in group {
+                    for tuple in tuples {
+                        self.maxima[tuple.0] = tuple.1
+                    }
+                }
+            }
+            semaphore.signal()
+        }
+        semaphore.wait()
     }
 }

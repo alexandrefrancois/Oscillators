@@ -37,15 +37,51 @@ final class ResonatorBankArrayTests: XCTestCase {
         XCTAssertEqual(resonatorBankArray.alpha, defaultAlpha)
         XCTAssertEqual(resonatorBankArray.resonators.count, targetFrequencies.count)
     }
-        
-    func testUpdatePerf() async throws {
-        let resonatorBankArray = ResonatorBankArray(targetFrequencies: targetFrequencies, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
+    
+    func testUpdateSeq() throws {
+        let resonatorBankArray = ResonatorBankArray(targetFrequencies: [5512.5, 6300.0005, 7350.0005, 8820.0], sampleDuration: sampleDuration44100, alpha: defaultAlpha)
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)
-        measure {
-            resonatorBankArray.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+        resonatorBankArray.updateSeq(frameData: frame, frameLength: 1024, sampleStride: 1)
+        let maxima = resonatorBankArray.maxima
+        for value in maxima {
+            XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
         }
         frame.deallocate()
     }
+  
+    func testUpdate() throws {
+        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
+        frame.initialize(repeating: 0.5, count: 1024)
+        
+        // even number of oscillators
+        let resonatorBankArray1 = ResonatorBankArray(targetFrequencies: [5512.5, 6300.0005, 7350.0005, 8820.0], sampleDuration: sampleDuration44100, alpha: defaultAlpha)
+        resonatorBankArray1.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+        let maxima1 = resonatorBankArray1.maxima
+        for value in maxima1 {
+            XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
+        }
+        // odd number of oscillators
+        let resonatorBankArray2 = ResonatorBankArray(targetFrequencies: [6300.0005, 7350.0005, 8820.0], sampleDuration: sampleDuration44100, alpha: defaultAlpha)
+        resonatorBankArray2.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+        let maxima2 = resonatorBankArray2.maxima
+        for value in maxima2 {
+            XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
+        }
+
+        frame.deallocate()
+    }
+    
+    // This test is not really meaningful
+//    func testUpdatePerf() async throws {
+//        let resonatorBankArray = ResonatorBankArray(targetFrequencies: targetFrequencies, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
+//        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
+//        frame.initialize(repeating: 0.5, count: 1024)
+//        measure {
+//            // this test does not work with the concurrent version
+//            resonatorBankArray.updateSeq(frameData: frame, frameLength: 1024, sampleStride: 1)
+//        }
+//        frame.deallocate()
+//    }
 
 }

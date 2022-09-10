@@ -15,8 +15,7 @@ An oscillator is defined by its amplitude (a scaling factor) and an array, whose
 
 ### Classes
 
-- `OscillatorProtocol`
-- `Oscillator`: the base oscillator class
+- `Oscillator`: the base oscillator class, adopts `OscillatorProtocol`
 
 ## Generator
 
@@ -32,8 +31,7 @@ At each tick of the clock (driven by the sampling rate of the output signal),
 
 ### Classes
 
-- `GeneratorProtocol`
-- `Generator`
+- `Generator`: a simple generator class, adopts `GeneratorProtocol`
 
 ## Resonators
 
@@ -54,8 +52,8 @@ All implementations use the Accelerate framework.
 
 ### Classes
 
-- `ResonatorSafe`: uses Swift Arrays
-- `Resonator`: uses Swift unsafe pointers (manual memory management)
+- `ResonatorSafe`: uses Swift Arrays, adopts `ResonatorProtocol`
+- `Resonator`: uses Swift unsafe pointers (manual memory management), adopts `ResonatorProtocol`
 
 ## Resonator Banks
 
@@ -68,7 +66,7 @@ All implementations use the Accelerate framework with unsafe pointers.
 ### Classes
 
 - `ResonatorBankSingle`: a bank of independent resonators implemented as a single array, resulting in single calls to Accelerate functions across the resonators.
-- `ResonatorBankArray`: a bank of independent resonators implemented as instances of the Swift resonator class
+- `ResonatorBankArray`: a bank of independent resonators implemented as instances of the Swift resonator class. The update function for live processing triggers resonator updates in concurrent task groups.
 
 ## C++ Implementation
 
@@ -78,7 +76,7 @@ The package features C++ version of the Oscillator, Resonator and ResonatorBank 
 
 - `oscillator_cpp::Oscillator`: the base oscillator class
 - `oscillator_cpp::Resonator`: resonator (same Accelerate calls as the Swift "unsafe pointers" implementation)
-- `oscillator_cpp::ResonatorBank`: resonator bank as vector of Resonator instances
+- `oscillator_cpp::ResonatorBank`: resonator bank as vector of Resonator instances. The update function for live processing triggers resonator updates in concurrent task groups (using Apple's Grand Central Dispatch).
 
 ### Objsctive-C++ wrappers
 

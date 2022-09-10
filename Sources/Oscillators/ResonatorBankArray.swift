@@ -62,14 +62,14 @@ public class ResonatorBankArray {
         }
     }
     
-    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
+    public func updateSeq(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         for (index, resonator) in resonators.enumerated() {
             resonator.update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
             self.maxima[index] = resonator.amplitude
         }
     }
     
-    public func updateSC(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
+    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         let semaphore = DispatchSemaphore(value: 0)
         Task {
             await withTaskGroup(of: [(Int, Float)].self) { group in

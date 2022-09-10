@@ -39,15 +39,16 @@ final class ResonatorBankCppTests: XCTestCase {
         XCTAssertEqual((Int)(resonatorBankCpp.numResonators()), targetFrequencies.count)
     }
         
-    func testUpdatePerf() async throws {
-        let resonatorBankCpp = ResonatorBankCpp(numResonators: (Int32)(targetFrequencies.count), targetFrequencies: &targetFrequencies, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
-        guard let resonatorBankCpp = resonatorBankCpp else { return XCTAssert(false) }
-        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
-        frame.initialize(repeating: 0.5, count: 1024)
-        measure {
-            resonatorBankCpp.update(frameData: frame, frameLength: 1024, sampleStride: 1)
-        }
-        frame.deallocate()
-    }
+    // This test is not really meaningful
+//    func testUpdatePerf() async throws {
+//        let resonatorBankCpp = ResonatorBankCpp(numResonators: (Int32)(targetFrequencies.count), targetFrequencies: &targetFrequencies, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
+//        guard let resonatorBankCpp = resonatorBankCpp else { return XCTAssert(false) }
+//        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
+//        frame.initialize(repeating: 0.5, count: 1024)
+//        measure {
+//            resonatorBankCpp.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+//        }
+//        frame.deallocate()
+//    }
 
 }

@@ -30,7 +30,7 @@ fileprivate let trackFrequencyThreshold = Float(0.001)
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
-public class Resonator : Oscillator {
+public class Resonator : Oscillator, ResonatorProtocol {
     public var alpha: Float {
         didSet {
             omAlpha = 1.0 - alpha

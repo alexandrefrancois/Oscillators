@@ -69,14 +69,15 @@ final class ResonatorBankSingleTests: XCTestCase {
         }
     }
     
-    func testUpdatePerf() throws {
-        let resonatorBankSingle = ResonatorBankSingle(targetFrequencies: targetFrequencies, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
-        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
-        frame.initialize(repeating: 0.5, count: 1024)
-        measure {
-            resonatorBankSingle.update(frameData: frame, frameLength: 1024, sampleStride: 1)
-        }
-        frame.deallocate()
-    }
+    // This test is not really meaningful
+//    func testUpdatePerf() throws {
+//        let resonatorBankSingle = ResonatorBankSingle(targetFrequencies: targetFrequencies, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
+//        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
+//        frame.initialize(repeating: 0.5, count: 1024)
+//        measure {
+//            resonatorBankSingle.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+//        }
+//        frame.deallocate()
+//    }
 
 }

@@ -38,7 +38,66 @@ final class ResonatorBankCppTests: XCTestCase {
         XCTAssertEqual(resonatorBankCpp.alpha(), defaultAlpha)
         XCTAssertEqual((Int)(resonatorBankCpp.numResonators()), targetFrequencies.count)
     }
+
+    func testUpdateSeq() throws {
+        var freqs: [Float] = [5512.5, 6300.0005, 7350.0005, 8820.0]
+        let resonatorBankCpp = ResonatorBankCpp(numResonators: (Int32)(freqs.count), targetFrequencies: &freqs, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
+        guard let resonatorBankCpp = resonatorBankCpp else { return XCTAssert(false) }
+
+        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
+        frame.initialize(repeating: 0.5, count: 1024)
+
+        resonatorBankCpp.updateSeq(frameData: frame, frameLength: 1024, sampleStride: 1)
+
+        // get values for all amplitudes
+        let size = resonatorBankCpp.numResonators()
+        var amplitudes = [Float](repeating: 0.0, count: Int(size))
+        resonatorBankCpp.copyAmplitudes(&amplitudes, size: size)
+        for value in amplitudes {
+            XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
+        }
         
+        frame.deallocate()
+    }
+  
+    func testUpdate() throws {
+        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
+        frame.initialize(repeating: 0.5, count: 1024)
+
+        // even number of oscillators
+        var freqs1: [Float] = [5512.5, 6300.0005, 7350.0005, 8820.0]
+        let resonatorBankCpp1 = ResonatorBankCpp(numResonators: (Int32)(freqs1.count), targetFrequencies: &freqs1, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
+        guard let resonatorBankCpp1 = resonatorBankCpp1 else { return XCTAssert(false) }
+
+        resonatorBankCpp1.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+
+        // get values for all amplitudes
+        let size1 = resonatorBankCpp1.numResonators()
+        var amplitudes1 = [Float](repeating: 0.0, count: Int(size1))
+        resonatorBankCpp1.copyAmplitudes(&amplitudes1, size: size1)
+        for value in amplitudes1 {
+            XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
+        }
+        
+        // odd number of oscillators
+        var freqs2: [Float] = [6300.0005, 7350.0005, 8820.0]
+        let resonatorBankCpp2 = ResonatorBankCpp(numResonators: (Int32)(freqs2.count), targetFrequencies: &freqs2, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
+        guard let resonatorBankCpp2 = resonatorBankCpp2 else { return XCTAssert(false) }
+
+        resonatorBankCpp2.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+
+        // get values for all amplitudes
+        let size2 = resonatorBankCpp2.numResonators()
+        var amplitudes2 = [Float](repeating: 0.0, count: Int(size2))
+        resonatorBankCpp2.copyAmplitudes(&amplitudes2, size: size2)
+        for value in amplitudes2 {
+            XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
+        }
+
+        frame.deallocate()
+    }
+
+    
     // This test is not really meaningful
 //    func testUpdatePerf() async throws {
 //        let resonatorBankCpp = ResonatorBankCpp(numResonators: (Int32)(targetFrequencies.count), targetFrequencies: &targetFrequencies, sampleDuration: sampleDuration44100, alpha: defaultAlpha)

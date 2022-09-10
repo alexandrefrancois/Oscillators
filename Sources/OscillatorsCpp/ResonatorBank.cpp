@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 #include "ResonatorBank.hpp"
+#include <dispatch/dispatch.h>
 
 using namespace oscillators_cpp;
 
@@ -31,6 +32,14 @@ ResonatorBank::ResonatorBank(size_t numResonators, float* targetFrequencies, flo
     for (size_t i=0; i<numResonators; ++i) {
         m_resonators.emplace_back(std::make_unique<Resonator>(targetFrequencies[i], sampleDuration, alpha));
     }
+    m_dispatchGroup = dispatch_group_create();
+    dispatch_retain(m_dispatchGroup);
+    m_dispatchQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
+}
+
+ResonatorBank::~ResonatorBank() {
+    dispatch_group_wait(m_dispatchGroup, dispatch_time(DISPATCH_TIME_NOW, 1000000000));
+    dispatch_release(m_dispatchGroup);
 }
 
 void ResonatorBank::setAlpha(float alpha) {
@@ -69,7 +78,27 @@ void ResonatorBank::update(const std::vector<float> &samples) {
     }
 }
 
+// concurrency with Apple GCD
 void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sampleStride) {
+    // even out the task length by pairing resonators from both ends of the spectrum
+    // taking into account that the complexity of the update is proportional to the size of the phases array
+    size_t count = m_resonators.size();
+    for (size_t index = 0; index <= count / 2; ++index) {
+        size_t index2 = count - 1 - index;
+        dispatch_group_async(m_dispatchGroup, m_dispatchQueue, ^{
+            m_resonators[index]->update(frameData, frameLength, sampleStride);
+            m_resonators[index2]->update(frameData, frameLength, sampleStride);
+        });
+    }
+    if ((count & 1) == 1) {
+        dispatch_group_async(m_dispatchGroup, m_dispatchQueue, ^{
+            m_resonators[count/2]->update(frameData, frameLength, sampleStride);
+        });
+    }
+    dispatch_group_wait(m_dispatchGroup, DISPATCH_TIME_FOREVER);
+}
+
+void ResonatorBank::updateSeq(const float *frameData, size_t frameLength, size_t sampleStride) {
     for (auto &resonatorPtr : m_resonators) {
         resonatorPtr->update(frameData, frameLength, sampleStride);
     }

@@ -28,6 +28,7 @@ SOFTWARE.
 #include "Resonator.hpp"
 
 #include <vector>
+#include <dispatch/dispatch.h>
 
 namespace oscillators_cpp {
 
@@ -37,12 +38,16 @@ private:
     float m_alpha;
     std::vector<std::unique_ptr<Resonator> > m_resonators;
 
+    dispatch_group_t m_dispatchGroup;
+    dispatch_queue_t m_dispatchQueue;
+
 public:
     ResonatorBank & operator=(const ResonatorBank&) = delete;
     ResonatorBank(const ResonatorBank&) = delete;
 
     ResonatorBank(size_t numResonators, float* targetFrequencies, float sampleDuration, float alpha);
- 
+    ~ResonatorBank();
+
     float sampleDuration() { return m_sampleDuration; }
     float alpha() { return m_alpha; }
     void setAlpha(float alpha);
@@ -55,6 +60,7 @@ public:
     void update(const float sample);
     void update(const std::vector<float> &samples);
     void update(const float *frameData, size_t frameLength, size_t sampleStride);
+    void updateSeq(const float *frameData, size_t frameLength, size_t sampleStride);
 };
 
 } // oscillators_cpp

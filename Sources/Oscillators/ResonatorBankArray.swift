@@ -83,7 +83,7 @@ public class ResonatorBankArray {
                         return [(index, self.resonators[index].amplitude), (index2, self.resonators[index2].amplitude)]
                     }
                 }
-                if self.resonators.count & 1 == 1 {
+                if (self.resonators.count & 1) == 1 {
                     let index = self.resonators.count / 2
                     group.addTask(priority: .high) {
                         self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)

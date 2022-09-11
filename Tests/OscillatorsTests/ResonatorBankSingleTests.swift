@@ -37,22 +37,22 @@ final class ResonatorBankSingleTests: XCTestCase {
         
         XCTAssertEqual(resonatorBankSingle.alpha, defaultAlpha)
         XCTAssertNotNil(resonatorBankSingle.allPhasesPtr)
-        print("allPhasesPtr base Address: \(String(describing: resonatorBankSingle.allPhasesPtr.baseAddress)) = \(Int(bitPattern: resonatorBankSingle.allPhasesPtr.baseAddress))")
+//        print("allPhasesPtr base Address: \(String(describing: resonatorBankSingle.allPhasesPtr.baseAddress)) = \(Int(bitPattern: resonatorBankSingle.allPhasesPtr.baseAddress))")
         XCTAssertEqual(Int(bitPattern: resonatorBankSingle.allPhasesPtr.baseAddress) % MemoryLayout<Float>.alignment, 0)
         XCTAssertEqual(resonatorBankSingle.allPhasesPtr.count, resonatorBankSingle.sumSamplesPerPeriod)
 
         XCTAssertNotNil(resonatorBankSingle.waveformsPtr)
-        print("kernelsPtr base Address: \(String(describing: resonatorBankSingle.waveformsPtr.baseAddress)) = \(Int(bitPattern: resonatorBankSingle.waveformsPtr.baseAddress))")
+//        print("kernelsPtr base Address: \(String(describing: resonatorBankSingle.waveformsPtr.baseAddress)) = \(Int(bitPattern: resonatorBankSingle.waveformsPtr.baseAddress))")
         XCTAssertEqual(Int(bitPattern: resonatorBankSingle.waveformsPtr.baseAddress) % MemoryLayout<Float>.alignment, 0)
         XCTAssertEqual(resonatorBankSingle.waveformsPtr.count, resonatorBankSingle.sumSamplesPerPeriod)
 
         XCTAssertNotNil(resonatorBankSingle.leftTermPtr)
-        print("leftTermPtr base Address: \(String(describing: resonatorBankSingle.leftTermPtr.baseAddress)) = \(Int(bitPattern: resonatorBankSingle.leftTermPtr.baseAddress))")
+//        print("leftTermPtr base Address: \(String(describing: resonatorBankSingle.leftTermPtr.baseAddress)) = \(Int(bitPattern: resonatorBankSingle.leftTermPtr.baseAddress))")
         XCTAssertEqual(Int(bitPattern: resonatorBankSingle.leftTermPtr.baseAddress) % MemoryLayout<Float>.alignment, 0)
         XCTAssertEqual(resonatorBankSingle.leftTermPtr.count, resonatorBankSingle.sumSamplesPerPeriod)
 
         XCTAssertNotNil(resonatorBankSingle.rightTermPtr)
-        print("rightTermPtr base Address: \(String(describing: resonatorBankSingle.rightTermPtr.baseAddress)) = \(Int(bitPattern: resonatorBankSingle.rightTermPtr.baseAddress))")
+//        print("rightTermPtr base Address: \(String(describing: resonatorBankSingle.rightTermPtr.baseAddress)) = \(Int(bitPattern: resonatorBankSingle.rightTermPtr.baseAddress))")
         XCTAssertEqual(Int(bitPattern: resonatorBankSingle.rightTermPtr.baseAddress) % MemoryLayout<Float>.alignment, 0)
         XCTAssertEqual(resonatorBankSingle.rightTermPtr.count, resonatorBankSingle.sumSamplesPerPeriod)
     }

@@ -47,7 +47,7 @@ public class ResonatorBankArray {
         // initialize from passed frequencies
         maxima = [Float](repeating: 0, count: targetFrequencies.count)
         
-        print("Number of resonators to create: \(targetFrequencies.count)")
+//        print("Number of resonators to create: \(targetFrequencies.count)")
         
         // setup an oscillator for each frequency
         for frequency in targetFrequencies {

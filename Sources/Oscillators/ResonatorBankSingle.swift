@@ -75,7 +75,7 @@ public class ResonatorBankSingle {
         self.frequencies = [Float](repeating: 0, count: numResonators)
         maxima = [Float](repeating: 0, count: numResonators)
         
-        print("Number of resonators: \(numResonators)")
+//        print("Number of resonators: \(numResonators)")
         
         // setup an oscillator for each frequency
         samplesPerPeriodPtr = UnsafeMutableBufferPointer<Int>.allocate(capacity: numResonators)
@@ -87,11 +87,11 @@ public class ResonatorBankSingle {
             let maxNumSamplesInPeriod = floor(1.0 / (sampleDuration * targetFrequency))
             samplesPerPeriodPtr[index] = Int(maxNumSamplesInPeriod)
             frequencies[index] = 1.0 / (maxNumSamplesInPeriod * sampleDuration)
-            print("Target frequency: \(targetFrequency) | \(samplesPerPeriodPtr[index]) -> \(frequencies[index])")
+//            print("Target frequency: \(targetFrequency) | \(samplesPerPeriodPtr[index]) -> \(frequencies[index])")
             
         }
         sumSamplesPerPeriod = samplesPerPeriodPtr.reduce(0, +)
-        print("Total number of samples per period: \(sumSamplesPerPeriod)")
+//        print("Total number of samples per period: \(sumSamplesPerPeriod)")
 
         allPhasesPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: sumSamplesPerPeriod)
         allPhasesPtr.initialize(repeating: 0)

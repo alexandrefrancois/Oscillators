@@ -83,4 +83,8 @@ using namespace oscillators_cpp;
     self.resonatorBank->update(frame, frameLength, sampleStride);
 }
 
+- (void)updateSeq:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
+    self.resonatorBank->updateSeq(frame, frameLength, sampleStride);
+}
+
 @end

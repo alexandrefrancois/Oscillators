@@ -16,4 +16,4 @@ jobs:
       with:
         swift-version: "5.6"
     - name: Run tests
-      run: swift test --configuration debug -Xlinker -rpath -Xlinker "$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.6.1/macosx"
+      run: swift test 2>&1 | xcpretty

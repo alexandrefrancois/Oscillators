@@ -28,7 +28,14 @@ SOFTWARE.
 #include "Resonator.hpp"
 
 #include <vector>
+
+// use GCD concurrency by default
+// uncomment the next line to use std::async instead
+// #define STD_CONCURRENCY
+
+#ifndef STD_CONCURRENCY
 #include <dispatch/dispatch.h>
+#endif
 
 namespace oscillators_cpp {
 
@@ -38,15 +45,19 @@ private:
     float m_alpha;
     std::vector<std::unique_ptr<Resonator> > m_resonators;
 
+#ifndef STD_CONCURRENCY
     dispatch_group_t m_dispatchGroup;
     dispatch_queue_t m_dispatchQueue;
+#endif
 
 public:
     ResonatorBank & operator=(const ResonatorBank&) = delete;
     ResonatorBank(const ResonatorBank&) = delete;
 
     ResonatorBank(size_t numResonators, float* targetFrequencies, float sampleDuration, float alpha);
+#ifndef STD_CONCURRENCY
     ~ResonatorBank();
+#endif
 
     float sampleDuration() { return m_sampleDuration; }
     float alpha() { return m_alpha; }
@@ -61,6 +72,12 @@ public:
     void update(const std::vector<float> &samples);
     void update(const float *frameData, size_t frameLength, size_t sampleStride);
     void updateSeq(const float *frameData, size_t frameLength, size_t sampleStride);
+    
+#ifdef STD_CONCURRENCY
+private:
+    void updateEvery(size_t mod, size_t offset, const float *frameData, size_t frameLength, size_t sampleStride);
+#endif
+
 };
 
 } // oscillators_cpp

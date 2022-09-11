@@ -36,17 +36,17 @@ final class ResonatorTests: XCTestCase {
         XCTAssertEqual(resonator.alpha, defaultAlpha)
         
         XCTAssertNotNil(resonator.allPhasesPtr)
-        print("allPhasesPtr base Address: \(String(describing: resonator.allPhasesPtr!.baseAddress)) = \(Int(bitPattern: resonator.allPhasesPtr!.baseAddress))")
+//        print("allPhasesPtr base Address: \(String(describing: resonator.allPhasesPtr!.baseAddress)) = \(Int(bitPattern: resonator.allPhasesPtr!.baseAddress))")
         XCTAssertEqual(Int(bitPattern: resonator.allPhasesPtr!.baseAddress) % MemoryLayout<Float>.alignment, 0)
         XCTAssertEqual(resonator.allPhasesPtr!.count, resonator.numSamplesInWaveform)
 
         XCTAssertNotNil(resonator.leftTermPtr)
-        print("leftTermPtr base Address: \(String(describing: resonator.leftTermPtr!.baseAddress)) = \(Int(bitPattern: resonator.leftTermPtr!.baseAddress))")
+//        print("leftTermPtr base Address: \(String(describing: resonator.leftTermPtr!.baseAddress)) = \(Int(bitPattern: resonator.leftTermPtr!.baseAddress))")
         XCTAssertEqual(Int(bitPattern: resonator.leftTermPtr!.baseAddress) % MemoryLayout<Float>.alignment, 0)
         XCTAssertEqual(resonator.leftTermPtr!.count, resonator.numSamplesInWaveform)
         
         XCTAssertNotNil(resonator.rightTermPtr)
-        print("rightTermPtr base Address: \(String(describing: resonator.rightTermPtr!.baseAddress)) = \(Int(bitPattern: resonator.rightTermPtr!.baseAddress))")
+//        print("rightTermPtr base Address: \(String(describing: resonator.rightTermPtr!.baseAddress)) = \(Int(bitPattern: resonator.rightTermPtr!.baseAddress))")
         XCTAssertEqual(Int(bitPattern: resonator.rightTermPtr!.baseAddress) % MemoryLayout<Float>.alignment, 0)
         XCTAssertEqual(resonator.rightTermPtr!.count, resonator.numSamplesInWaveform)
     }

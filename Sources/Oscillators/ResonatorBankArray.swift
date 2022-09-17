@@ -26,24 +26,13 @@ import Foundation
 
 /// An array of independent resonator instances
 public class ResonatorBankArray {
-    public var alpha: Float {
-        didSet {
-            for resonator in resonators {
-                resonator.alpha = alpha
-            }
-        }
-    }
-
     public private(set) var resonators = [Resonator]()
     public var numResonators: Int {
         resonators.count
     }
     public private(set) var maxima: [Float]
 
-    // TODO: make initializers with different ways of specifying number of oscillators and frequencies
     public init(targetFrequencies: [Float], sampleDuration: Float, alpha: Float) {
-        self.alpha = alpha
-        
         // initialize from passed frequencies
         maxima = [Float](repeating: 0, count: targetFrequencies.count)
         
@@ -55,6 +44,24 @@ public class ResonatorBankArray {
         }
     }
     
+    public init(alphas: [Float], sampleDuration: Float, targetFrequency: Float) {
+        // initialize from passed frequencies
+        maxima = [Float](repeating: 0, count: alphas.count)
+        
+//        print("Number of resonators to create: \(alphas.count)")
+        
+        // setup an oscillator for each alpha
+        for alpha in alphas {
+            resonators.append(Resonator(targetFrequency: targetFrequency, sampleDuration: sampleDuration, alpha: alpha))
+        }
+    }
+
+    public func setAllAlphas(_ alpha: Float) {
+        for resonator in resonators {
+            resonator.alpha = alpha
+        }
+    }
+        
     public func update(sample: Float) {
         // this can be done in parallel?
         for resonator in resonators {

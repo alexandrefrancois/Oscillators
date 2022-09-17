@@ -22,24 +22,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#import <Foundation/Foundation.h>
+import XCTest
+@testable import Oscillators
 
-// Wrapper for the ResonatorBank class
-@interface ResonatorBankCpp : NSObject
-- (instancetype)initWithNumResonators:(int)numResonators targetFrequencies:(float*)targetFrequencies sampleDuration:(float)sampleDuration alphas:(float*)alphas;
-- (float)sampleDuration;
-- (int)numResonators;
-- (float)frequencyValue:(int)index;
-- (float)alphaValue:(int)index;
-- (float)timeConstantValue:(int)index;
-- (void)setAllAlphas:(float)alpha;
-- (void)copyAmplitudes:(float*)dest size:(int)size; // this is a bit ugly but avoids memory management issues
-- (float)amplitudeValue:(int)index;
-- (void)update:(float)sample
-NS_SWIFT_NAME(update(sample:));
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
-- (void)updateSeq:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(updateSeq(frameData:frameLength:sampleStride:));
-@end
+fileprivate let epsilon : Float = 0.000001
 
+final class DynamicsTests: XCTestCase {
+    func testTimeConstant() throws {
+        let t = Dynamics.timeConstant(alpha: DynamicsFixtures.defaultAlpha, sampleDuration: AudioFixtures.sampleDuration44100)
+        XCTAssertEqual(t, 0.099999994, accuracy: epsilon)
+    }
+    func testAlpha() throws {
+        let a = Dynamics.alpha(timeConstant: DynamicsFixtures.defaultTimeConstant, sampleDuration: AudioFixtures.sampleDuration44100)
+        XCTAssertEqual(a, 0.00022675736, accuracy: epsilon)
+    }
+
+}

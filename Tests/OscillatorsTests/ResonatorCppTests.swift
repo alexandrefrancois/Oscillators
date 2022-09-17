@@ -25,22 +25,23 @@ SOFTWARE.
 import XCTest
 @testable import OscillatorsCpp
 
-fileprivate let sampleDuration44100 : Float = 1.0 / 44100.0
-fileprivate let defaultAlpha : Float = 0.0005
-
 final class ResonatorCppTests: XCTestCase {
     
     func testConstructor() throws {
-        let resonator = ResonatorCpp(targetFrequency: 440.0, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
+        let resonator = ResonatorCpp(targetFrequency: 440.0,
+                                     sampleDuration: AudioFixtures.sampleDuration44100,
+                                     alpha: DynamicsFixtures.defaultAlpha)
         
         guard let resonator = resonator else { return XCTAssert(false) }
 
-        XCTAssertEqual(resonator.alpha(), defaultAlpha)
+        XCTAssertEqual(resonator.alpha(), DynamicsFixtures.defaultAlpha)
     }
     
     func testSetAlpha() throws {
         var alpha: Float = 0.99
-        let resonator = ResonatorCpp(targetFrequency: 440.0, sampleDuration: sampleDuration44100, alpha: alpha)
+        let resonator = ResonatorCpp(targetFrequency: 440.0,
+                                     sampleDuration: AudioFixtures.sampleDuration44100,
+                                     alpha: alpha)
         guard let resonator = resonator else { return XCTAssert(false, "ResonatorCpp could not be instantiated") }
         XCTAssertEqual(resonator.alpha(), alpha)
         XCTAssertEqual(resonator.omAlpha(), 1.0-alpha)
@@ -51,7 +52,9 @@ final class ResonatorCppTests: XCTestCase {
     }
 
     func testUpdateAllPhases() throws {
-        let resonator = ResonatorCpp(targetFrequency: 440.0, sampleDuration: sampleDuration44100, alpha: 1.0);
+        let resonator = ResonatorCpp(targetFrequency: 440.0,
+                                     sampleDuration: AudioFixtures.sampleDuration44100,
+                                     alpha: 1.0);
         guard let resonator = resonator else { return XCTAssert(false, "ResonatorCpp could not be instantiated") }
         resonator.updateAllPhases(sample: 1.0)
         for i in 0..<resonator.numSamplesInPeriod() {

@@ -22,24 +22,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#import <Foundation/Foundation.h>
+import Oscillators
 
-// Wrapper for the ResonatorBank class
-@interface ResonatorBankCpp : NSObject
-- (instancetype)initWithNumResonators:(int)numResonators targetFrequencies:(float*)targetFrequencies sampleDuration:(float)sampleDuration alphas:(float*)alphas;
-- (float)sampleDuration;
-- (int)numResonators;
-- (float)frequencyValue:(int)index;
-- (float)alphaValue:(int)index;
-- (float)timeConstantValue:(int)index;
-- (void)setAllAlphas:(float)alpha;
-- (void)copyAmplitudes:(float*)dest size:(int)size; // this is a bit ugly but avoids memory management issues
-- (float)amplitudeValue:(int)index;
-- (void)update:(float)sample
-NS_SWIFT_NAME(update(sample:));
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
-- (void)updateSeq:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(updateSeq(frameData:frameLength:sampleStride:));
-@end
+class DynamicsFixtures {
+    static let defaultAlpha : Float = 1.0 / (AudioFixtures.defaultSampleRate * 0.1)
+    static let defaultTimeConstant : Float = 0.1
 
+    static var timeConstants : [Float] = [0.01, 0.02, 0.05, 0.10, 0.20, 0.50, 0.80, 1.0, 1.5, 2.0]
+    
+    static var alphas : [Float] {
+        timeConstants.map {
+            Dynamics.alpha(timeConstant: $0, sampleDuration: AudioFixtures.sampleDuration44100)
+        }
+    }
+
+}

@@ -25,15 +25,14 @@ SOFTWARE.
 import XCTest
 @testable import Oscillators
 
-fileprivate let sampleDuration44100 : Float = 1.0 / 44100.0
-fileprivate let defaultAlpha : Float = 0.0005
-
 final class ResonatorTests: XCTestCase {
     
     func testConstructor() throws {
-        let resonator = Resonator(targetFrequency: 440.0, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
+        let resonator = Resonator(targetFrequency: 440.0,
+                                  sampleDuration: AudioFixtures.sampleDuration44100,
+                                  alpha: DynamicsFixtures.defaultAlpha)
         
-        XCTAssertEqual(resonator.alpha, defaultAlpha)
+        XCTAssertEqual(resonator.alpha, DynamicsFixtures.defaultAlpha)
         
         XCTAssertNotNil(resonator.allPhasesPtr)
 //        print("allPhasesPtr base Address: \(String(describing: resonator.allPhasesPtr!.baseAddress)) = \(Int(bitPattern: resonator.allPhasesPtr!.baseAddress))")
@@ -53,7 +52,7 @@ final class ResonatorTests: XCTestCase {
     
     func testSetAlpha() throws {
         var alpha: Float = 0.99
-        let resonator = Resonator(targetFrequency: 440.0, sampleDuration: sampleDuration44100, alpha: alpha)
+        let resonator = Resonator(targetFrequency: 440.0, sampleDuration: AudioFixtures.sampleDuration44100, alpha: alpha)
         XCTAssertEqual(resonator.alpha, alpha)
         XCTAssertEqual(resonator.omAlpha, 1.0-alpha)
 
@@ -63,7 +62,7 @@ final class ResonatorTests: XCTestCase {
     }
     
     func testUpdateAllPhases() throws {
-        let resonator = Resonator(targetFrequency: 440.0, sampleDuration: sampleDuration44100, alpha: 1.0)
+        let resonator = Resonator(targetFrequency: 440.0, sampleDuration: AudioFixtures.sampleDuration44100, alpha: 1.0)
         resonator.updateAllPhases(sample: 1.0)
         for i in 0..<resonator.numSamplesInWaveform {
             XCTAssertEqual(resonator.allPhasesPtr![i], resonator.waveformPtr[i])

@@ -22,24 +22,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#import <Foundation/Foundation.h>
+import Foundation
 
-// Wrapper for the ResonatorBank class
-@interface ResonatorBankCpp : NSObject
-- (instancetype)initWithNumResonators:(int)numResonators targetFrequencies:(float*)targetFrequencies sampleDuration:(float)sampleDuration alphas:(float*)alphas;
-- (float)sampleDuration;
-- (int)numResonators;
-- (float)frequencyValue:(int)index;
-- (float)alphaValue:(int)index;
-- (float)timeConstantValue:(int)index;
-- (void)setAllAlphas:(float)alpha;
-- (void)copyAmplitudes:(float*)dest size:(int)size; // this is a bit ugly but avoids memory management issues
-- (float)amplitudeValue:(int)index;
-- (void)update:(float)sample
-NS_SWIFT_NAME(update(sample:));
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
-- (void)updateSeq:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(updateSeq(frameData:frameLength:sampleStride:));
-@end
-
+/// A class to manipulate and compute frequencies in the digital world
+public struct Dynamics {
+    
+    /// Compute the time constant from alpha value for a given sample rate
+    /// - parameter alpha: what it says
+    /// - parameter sampleDuration: same
+    /// - returns: the time constant value
+    public static func timeConstant(alpha: Float, sampleDuration: Float) -> Float {
+        sampleDuration / alpha
+    }
+    
+    /// Compute the alpha value from time constant value for a given sample rate
+    /// - parameter time constant: what it says
+    /// - parameter sampleDuration: same
+    /// - returns: the alpha value
+    public static func alpha(timeConstant: Float, sampleDuration: Float) -> Float {
+        sampleDuration / timeConstant
+    }
+}

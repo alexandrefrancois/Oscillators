@@ -32,10 +32,10 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-ResonatorBank::ResonatorBank(size_t numResonators, float* targetFrequencies, float sampleDuration, float alpha) : m_sampleDuration(sampleDuration), m_alpha(alpha) {
+ResonatorBank::ResonatorBank(size_t numResonators, float* targetFrequencies, float sampleDuration, float* alphas) : m_sampleDuration(sampleDuration) {
     m_resonators.reserve(numResonators);
     for (size_t i=0; i<numResonators; ++i) {
-        m_resonators.emplace_back(std::make_unique<Resonator>(targetFrequencies[i], sampleDuration, alpha));
+        m_resonators.emplace_back(std::make_unique<Resonator>(targetFrequencies[i], sampleDuration, alphas[i]));
     }
 #ifndef STD_CONCURRENCY
     m_dispatchGroup = dispatch_group_create();
@@ -51,15 +51,34 @@ ResonatorBank::~ResonatorBank() {
 }
 #endif
 
-void ResonatorBank::setAlpha(float alpha) {
-    if (alpha < 0.0 || alpha >1.0) {
-        throw std::out_of_range("Bad alpha passed to setAlpha()");
+float ResonatorBank::frequencyValue(size_t index) {
+    if (index >= m_resonators.size()) {
+        throw std::out_of_range("Bad index passed to frequencyValue()");
     }
-    m_alpha = alpha;
+    return m_resonators[index]->frequency();
+}
+
+float ResonatorBank::alphaValue(size_t index) {
+    if (index >= m_resonators.size()) {
+        throw std::out_of_range("Bad index passed to alphaValue()");
+    }
+    return m_resonators[index]->alpha();
+}
+
+void ResonatorBank::setAllAlphas(float alpha) {
+    if (alpha < 0.0 || alpha >1.0) {
+        throw std::out_of_range("Bad alpha passed to setAllAlphas()");
+    }
     for (auto &resonatorPtr : m_resonators) {
         resonatorPtr->setAlpha(alpha);
     }
+}
 
+float ResonatorBank::timeConstantValue(size_t index) {
+    if (index >= m_resonators.size()) {
+        throw std::out_of_range("Bad index passed to timeConstantValue()");
+    }
+    return m_resonators[index]->timeConstant();
 }
 
 void ResonatorBank::copyAmplitudes(float *dest, size_t size) {

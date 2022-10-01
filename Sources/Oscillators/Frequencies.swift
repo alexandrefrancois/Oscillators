@@ -47,25 +47,5 @@ public struct Frequencies {
     public static func dopplerVelocity(observedFrequency: Float, referenceFrequency: Float) -> Float {
         guard referenceFrequency > 0 else { return 0 }
         return speedOfSound * (observedFrequency - referenceFrequency) / referenceFrequency
-    }
-
-    /// Compute the frequencies that correspond to a period whose duration is a multiple of the sample duration.
-    /// - parameter samplingRate: the sampling rate of the signal (determines sample duration)
-    /// - parameter minNumSamplesPerPeriod: lower bound for the number of samples per period (ignored if less than 2)
-    /// - parameter maxNumSamplesPerPeriod: upper bound for the number of samples per period
-    /// - parameter sorted: boolean, indicates whether the output array should be sorted (true by default)
-    /// - returns: an array containing the frequencies that meet the requirement
-    public static func integerFrequencies(samplingRate: Int, minNumSamplesPerPeriod: Int, maxNumSamplesPerPeriod: Int, sorted: Bool = true) -> [Int] {
-        var frequencies = [Int]()
-        let from = max(2, minNumSamplesPerPeriod)
-        let to = Int(sqrt(Float(min(samplingRate/2, maxNumSamplesPerPeriod))))
-        for i in from...to {
-            if samplingRate % i == 0 {
-                frequencies.append(i)
-                frequencies.append(samplingRate / i)
-            }
-        }
-        return sorted ? frequencies.sorted() : frequencies
-    }
-    
+    }    
 }

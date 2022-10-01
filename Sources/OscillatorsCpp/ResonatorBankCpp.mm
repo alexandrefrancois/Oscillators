@@ -36,9 +36,9 @@ using namespace oscillators_cpp;
 
 @implementation ResonatorBankCpp
 
-- (instancetype)initWithNumResonators:(int)numResonators targetFrequencies:(float*)targetFrequencies sampleDuration:(float)sampleDuration alpha:(float)alpha {
+- (instancetype)initWithNumResonators:(int)numResonators targetFrequencies:(float*)targetFrequencies sampleDuration:(float)sampleDuration alphas:(float*)alphas {
     if (self = [super init]) {
-        self.resonatorBank = new ResonatorBank(numResonators, targetFrequencies, sampleDuration, alpha);
+        self.resonatorBank = new ResonatorBank(numResonators, targetFrequencies, sampleDuration, alphas);
     }
     return self;
 }
@@ -51,20 +51,24 @@ using namespace oscillators_cpp;
     return self.resonatorBank->sampleDuration();
 }
 
-- (float)alpha {
-    return self.resonatorBank->alpha();
-}
-
-- (void)setAlpha:(float)alpha {
-    self.resonatorBank->setAlpha(alpha);
-}
-
-- (float)timeConstant {
-    return self.resonatorBank->timeConstant();
-}
-
 - (int)numResonators {
-    return self.resonatorBank->numResonators();
+    return static_cast<int>(self.resonatorBank->numResonators());
+}
+
+- (float)frequencyValue:(int)index {
+    return self.resonatorBank->frequencyValue(index);
+}
+
+- (float)alphaValue:(int)index {
+    return self.resonatorBank->alphaValue(index);
+}
+
+- (void)setAllAlphas:(float)alpha {
+    self.resonatorBank->setAllAlphas(alpha);
+}
+
+- (float)timeConstantValue:(int)index {
+    return self.resonatorBank->timeConstantValue(index);
 }
 
 - (void)copyAmplitudes:(float*)dest size: (int)size {

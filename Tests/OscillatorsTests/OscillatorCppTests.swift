@@ -25,17 +25,16 @@ SOFTWARE.
 import XCTest
 @testable import OscillatorsCpp
 
-fileprivate let sampleDuration44100 : Float = 1.0 / 44100.0
 fileprivate let epsilon : Float = 0.0001
 fileprivate let twoPi = Float.pi * 2.0
 
 final class OscillatorCppTests: XCTestCase {
     
     func testConstructor() throws {
-        let oscillator = OscillatorCpp(targetFrequency: 440.0, sampleDuration: sampleDuration44100)
+        let oscillator = OscillatorCpp(targetFrequency: 440.0, sampleDuration: AudioFixtures.sampleDuration44100)
         guard let oscillator = oscillator else { return XCTAssert(false, "OscillatorCpp could not be instantiated") }
         
-        XCTAssertEqual(oscillator.sampleDuration(), sampleDuration44100)
+        XCTAssertEqual(oscillator.sampleDuration(), AudioFixtures.sampleDuration44100)
         XCTAssertEqual(oscillator.numSamplesInPeriod(), 100)
         XCTAssertEqual(oscillator.frequency(), 441.0, accuracy: epsilon)
         XCTAssertEqual(oscillator.amplitude(), 0.0, accuracy: epsilon)
@@ -47,7 +46,7 @@ final class OscillatorCppTests: XCTestCase {
     }
     
     func testInitSineWave() throws {
-        let oscillator = OscillatorCpp(targetFrequency: 440.0, sampleDuration: sampleDuration44100);
+        let oscillator = OscillatorCpp(targetFrequency: 440.0, sampleDuration: AudioFixtures.sampleDuration44100);
         guard let oscillator = oscillator else { return XCTAssert(false, "OscillatorCpp could not be instantiated") }
         
         oscillator.setSineWave();

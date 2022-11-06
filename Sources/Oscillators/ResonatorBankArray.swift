@@ -63,12 +63,12 @@ public class ResonatorBankArray {
     }
         
     public func update(sample: Float) {
-        // this can be done in parallel?
         for resonator in resonators {
             resonator.update(sample: sample)
         }
     }
     
+    /// Sequentially update all resonators
     public func updateSeq(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         for (index, resonator) in resonators.enumerated() {
             resonator.update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
@@ -76,7 +76,40 @@ public class ResonatorBankArray {
         }
     }
     
+    /// Concurrently update all resonators
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
+        let semaphore = DispatchSemaphore(value: 0)
+        Task {
+            await withTaskGroup(of: [(Int, Float)].self) { group in
+                let stride = 8;
+                for offset in 0..<stride {
+                    group.addTask(priority: .high) {
+                        var retVal = [(Int, Float)]()
+                        var index = offset
+                        while index < self.resonators.count {
+                            self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
+                            retVal.append((index, self.resonators[index].amplitude))
+                            index += stride
+                        }
+                        return retVal
+                    }
+                }
+                // collect all results when ready
+                for await tuples in group {
+                    for tuple in tuples {
+                        self.maxima[tuple.0] = tuple.1
+                    }
+                }
+            }
+            semaphore.signal()
+        }
+        semaphore.wait()
+    }
+
+    /// Concurrently update all resonators, using Gradient Frequency  heuristic
+    /// In a gradient Frequency network, the resonators are tuned to natural frequencies based on human auditory perception
+    /// and organized from lowest to highest frequency
+    public func updateGF(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         let semaphore = DispatchSemaphore(value: 0)
         Task {
             await withTaskGroup(of: [(Int, Float)].self) { group in

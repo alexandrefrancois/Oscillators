@@ -39,6 +39,8 @@ SOFTWARE.
 NS_SWIFT_NAME(update(sample:));
 - (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
 NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
+- (void)updateGF:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
+NS_SWIFT_NAME(updateGF(frameData:frameLength:sampleStride:));
 - (void)updateSeq:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
 NS_SWIFT_NAME(updateSeq(frameData:frameLength:sampleStride:));
 @end

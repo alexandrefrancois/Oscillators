@@ -71,6 +71,7 @@ public:
     void update(const float sample);
     void update(const std::vector<float> &samples);
     void update(const float *frameData, size_t frameLength, size_t sampleStride);
+    void updateGF(const float *frameData, size_t frameLength, size_t sampleStride);
     void updateSeq(const float *frameData, size_t frameLength, size_t sampleStride);
     
 #ifdef STD_CONCURRENCY

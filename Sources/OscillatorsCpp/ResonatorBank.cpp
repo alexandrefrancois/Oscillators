@@ -108,7 +108,23 @@ void ResonatorBank::update(const std::vector<float> &samples) {
 
 #ifndef STD_CONCURRENCY
 // concurrency with Apple GCD
+
 void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sampleStride) {
+    constexpr size_t stride = 8;
+    for (size_t offset = 0; offset < stride; ++offset) {
+        dispatch_group_async(m_dispatchGroup, m_dispatchQueue, ^{
+            size_t index = offset;
+            while (index < m_resonators.size()) {
+                m_resonators[index]->update(frameData, frameLength, sampleStride);
+                index += stride;
+            }
+        });
+    }
+    dispatch_group_wait(m_dispatchGroup, DISPATCH_TIME_FOREVER);
+}
+
+// concurrency with Apple GCD - alternate heuristic
+void ResonatorBank::updateGF(const float *frameData, size_t frameLength, size_t sampleStride) {
     size_t count = m_resonators.size();
     // make one single task with the top frequency oscillators as their runtime does not justify independent tasks
     size_t count2 = count / 2;
@@ -120,7 +136,7 @@ void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sa
     // for the lower frequency oscillators
     // even out the task length by pairing resonators from both ends of the spectrum
     // taking into account that the complexity of the update is proportional to the size of the phases array
-    for (size_t index = 0; index < count2 / 2; ++index) {
+    for (size_t index = 0; index < count2 / 3; ++index) {
         size_t index2 = count2 - 1 - index;
         dispatch_group_async(m_dispatchGroup, m_dispatchQueue, ^{
             m_resonators[index]->update(frameData, frameLength, sampleStride);
@@ -135,22 +151,6 @@ void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sa
     dispatch_group_wait(m_dispatchGroup, DISPATCH_TIME_FOREVER);
 }
 
-// concurrency with Apple GCD - alternate heuristic
-// does not seem to make much of a difference one way or the other
-//void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sampleStride) {
-//    constexpr size_t stride = 8;
-//    for (size_t offset = 0; offset < stride; ++offset) {
-//        dispatch_group_async(m_dispatchGroup, m_dispatchQueue, ^{
-//            size_t index = offset;
-//            while (index < m_resonators.size()) {
-//                m_resonators[index]->update(frameData, frameLength, sampleStride);
-//                index += stride;
-//            }
-//        });
-//    }
-//    dispatch_group_wait(m_dispatchGroup, DISPATCH_TIME_FOREVER);
-//}
-
 #else
 // concurrency with std::async
 void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sampleStride) {
@@ -164,6 +164,11 @@ void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sa
     for (auto& handle : handles) {
         handle.wait();
     }
+}
+
+void ResonatorBank::updateGF(const float *frameData, size_t frameLength, size_t sampleStride) {
+    // not implemented...
+    update(frameData, frameLength, sampleStride);
 }
 
 void ResonatorBank::updateEvery(size_t stride, size_t offset, const float *frameData, size_t frameLength, size_t sampleStride) {

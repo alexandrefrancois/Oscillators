@@ -126,26 +126,19 @@ void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sa
 // concurrency with Apple GCD - alternate heuristic
 void ResonatorBank::updateGF(const float *frameData, size_t frameLength, size_t sampleStride) {
     size_t count = m_resonators.size();
-    // make one single task with the top frequency oscillators as their runtime does not justify independent tasks
-    size_t count2 = count / 2;
-    dispatch_group_async(m_dispatchGroup, m_dispatchQueue, ^{
-        for (size_t index = count2; index < count; ++index) {
-            m_resonators[index]->update(frameData, frameLength, sampleStride);
-        }
-    });
     // for the lower frequency oscillators
     // even out the task length by pairing resonators from both ends of the spectrum
     // taking into account that the complexity of the update is proportional to the size of the phases array
-    for (size_t index = 0; index < count2 / 3; ++index) {
-        size_t index2 = count2 - 1 - index;
+    for (size_t index = 0; index < count / 2; ++index) {
+        size_t index2 = count - 1 - index;
         dispatch_group_async(m_dispatchGroup, m_dispatchQueue, ^{
             m_resonators[index]->update(frameData, frameLength, sampleStride);
             m_resonators[index2]->update(frameData, frameLength, sampleStride);
         });
     }
-    if ((count2 & 1) == 1) {
+    if ((count & 1) == 1) {
         dispatch_group_async(m_dispatchGroup, m_dispatchQueue, ^{
-            m_resonators[count2/2]->update(frameData, frameLength, sampleStride);
+            m_resonators[count/2]->update(frameData, frameLength, sampleStride);
         });
     }
     dispatch_group_wait(m_dispatchGroup, DISPATCH_TIME_FOREVER);

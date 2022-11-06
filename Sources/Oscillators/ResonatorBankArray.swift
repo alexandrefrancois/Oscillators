@@ -113,29 +113,20 @@ public class ResonatorBankArray {
         let semaphore = DispatchSemaphore(value: 0)
         Task {
             await withTaskGroup(of: [(Int, Float)].self) { group in
-                // make one single task with the top frequency oscillators as their runtime does not justify independent tasks
-                let count2 = self.resonators.count/2
-                group.addTask(priority: .high) {
-                    var retVal = [(Int, Float)]()
-                    for index in count2..<self.resonators.count {
-                        self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
-                        retVal.append((index, self.resonators[index].amplitude))
-                    }
-                    return retVal
-                }
+                 let count = self.resonators.count // 3 * self.resonators.count/4
                 // for the lower frequency oscillators
                 // even out the task length by pairing resonators from both ends of the spectrum
                 // taking into account that the complexity of the update is proportional to the size of the phases array
-                for index in 0..<count2/2 {
-                    let index2 = count2 - 1 - index
+                for index in 0..<count/2 {
+                    let index2 = count - 1 - index
                     group.addTask(priority: .high) {
                         self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
                         self.resonators[index2].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
                         return [(index, self.resonators[index].amplitude), (index2, self.resonators[index2].amplitude)]
                     }
                 }
-                if (count2 & 1) == 1 {
-                    let index = count2 / 2
+                if (count & 1) == 1 {
+                    let index = count / 2
                     group.addTask(priority: .high) {
                         self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
                         return [(index, self.resonators[index].amplitude)]

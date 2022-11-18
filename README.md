@@ -68,6 +68,13 @@ All implementations use the Accelerate framework with unsafe pointers.
 - `ResonatorBankSingle`: a bank of independent resonators implemented as a single array, resulting in single calls to Accelerate functions across the resonators.
 - `ResonatorBankArray`: a bank of independent resonators implemented as instances of the Swift resonator class. The update function for live processing triggers resonator updates in concurrent task groups.
 
+### Concurrency and Update Heuristics
+
+The Swift `ResonatorBankArray` class implementes 3 update functions:
+- `updateSeq` calls the update function for each resonator sequentially
+- `update` calls update for each resonator concurrently, with update calls grouped in a fixed number of concurrent tasks
+- `updateGF` groups update calls from both ends of the bank, which should work well for Gradient Frequency banks as this should results in tasks of similar complexity (in a Gradient Frequency bank, the resonators are tuned to natural frequencies based on human auditory perception and organized from lowest to highest frequency)
+
 ## C++ Implementation
 
 The package features C++ version of the Oscillator, Resonator and ResonatorBank (as a vector of Resonator instances), in an Objective-C++ wrapper to bridge with Swift. The wrapper provides similar interfaces to the Swift implementations to facilitate comparative performance evaluation.
@@ -78,7 +85,13 @@ The package features C++ version of the Oscillator, Resonator and ResonatorBank 
 - `oscillator_cpp::Resonator`: resonator (same Accelerate calls as the Swift "unsafe pointers" implementation)
 - `oscillator_cpp::ResonatorBank`: resonator bank as vector of Resonator instances. The update function for live processing triggers resonator updates in concurrent task groups (using Apple's Grand Central Dispatch).
 
-### Objsctive-C++ wrappers
+### Concurrency and Update Heuristics
+
+The C++ `oscillator_cpp::ResonatorBank` class by defaults utilizes Apple's Grand Central Dispatch to implements 3 update functions matching those in the Swift implementation, `updateSeq`, `update` and `updateGF`.
+
+The code also provides a sample implementation of the `update` function utilizing `std::async`, which is not used by default.
+
+### Objective-C++ wrappers
 
 These classes provide an Objective-C++ interface for the C++ classes so they can be used in Swift code.
 

@@ -32,6 +32,8 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
+constexpr size_t resonatorStride = 6;
+
 ResonatorBank::ResonatorBank(size_t numResonators, float* targetFrequencies, float sampleDuration, float* alphas) : m_sampleDuration(sampleDuration) {
     m_resonators.reserve(numResonators);
     for (size_t i=0; i<numResonators; ++i) {
@@ -110,13 +112,12 @@ void ResonatorBank::update(const std::vector<float> &samples) {
 // concurrency with Apple GCD
 
 void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sampleStride) {
-    constexpr size_t stride = 8;
-    for (size_t offset = 0; offset < stride; ++offset) {
+    for (size_t offset = 0; offset < resonatorStride; ++offset) {
         dispatch_group_async(m_dispatchGroup, m_dispatchQueue, ^{
             size_t index = offset;
             while (index < m_resonators.size()) {
                 m_resonators[index]->update(frameData, frameLength, sampleStride);
-                index += stride;
+                index += resonatorStride;
             }
         });
     }
@@ -147,11 +148,10 @@ void ResonatorBank::updateGF(const float *frameData, size_t frameLength, size_t 
 #else
 // concurrency with std::async
 void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sampleStride) {
-    constexpr size_t stride = 8;
     std::vector<std::future<void>> handles;
-    handles.reserve(stride);
-    for (size_t offset = 0; offset < stride; ++offset) {
-        auto handle = std::async(std::launch::async, &ResonatorBank::updateEvery, this, stride, offset, frameData, frameLength, sampleStride);
+    handles.reserve(resonatorStride);
+    for (size_t offset = 0; offset < resonatorStride; ++offset) {
+        auto handle = std::async(std::launch::async, &ResonatorBank::updateEvery, this, resonatorStride, offset, frameData, frameLength, sampleStride);
         handles.emplace_back(std::move(handle));
     }
     for (auto& handle : handles) {

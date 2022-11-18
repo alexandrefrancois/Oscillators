@@ -24,6 +24,8 @@ SOFTWARE.
 
 import Foundation
 
+fileprivate let numTasks = 6
+
 /// An array of independent resonator instances
 public class ResonatorBankArray {
     public private(set) var resonators = [Resonator]()
@@ -81,15 +83,15 @@ public class ResonatorBankArray {
         let semaphore = DispatchSemaphore(value: 0)
         Task {
             await withTaskGroup(of: [(Int, Float)].self) { group in
-                let stride = 8;
-                for offset in 0..<stride {
+                let resonatorStride = numTasks;
+                for offset in 0..<resonatorStride {
                     group.addTask(priority: .high) {
                         var retVal = [(Int, Float)]()
                         var index = offset
                         while index < self.resonators.count {
                             self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
                             retVal.append((index, self.resonators[index].amplitude))
-                            index += stride
+                            index += resonatorStride
                         }
                         return retVal
                     }

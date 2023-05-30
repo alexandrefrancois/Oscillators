@@ -33,11 +33,13 @@ class Resonator : public Oscillator {
 private:
     float m_alpha;
     float m_omAlpha;
+    
+    float m_sin;
+    float m_cos;
+    std::vector<float> m_waveform2;
+
     float m_trackedFrequency;
-    size_t m_maxIdx;
-    std::vector<float> m_allPhases;
-    std::vector<float> m_leftTerm;
-    std::vector<float> m_rightTerm;
+    float m_phase;
 
 public:
     Resonator(float targetFrequency, float sampleDuration, float alpha);
@@ -46,20 +48,22 @@ public:
     void setAlpha(float alpha);
     float omAlpha() const { return m_omAlpha; }
     float timeConstant() const { return m_sampleDuration / m_alpha; }
+    float s() const { return m_sin; }
+    float c() const { return m_cos; }
+    float phase() const { return m_phase; }
     float trackedFrequency() const { return m_trackedFrequency; }
 
-    void copyAllPhases(float *dest, size_t size);
-    float allPhasesValue(size_t index) const;
-
-    void updateAllPhases(float sample);
+    void updateWithSample(float sample);
     void update(const float sample);
     void update(const std::vector<float> &samples);
     void update(const float *frameData, size_t frameLength, size_t sampleStride);
     void updateAndTrack(const float *frameData, size_t frameLength, size_t sampleStride);
-    
-private:
-    void updateTrackedFrequency(size_t newMaxIdx, size_t numSamples);
 
+    float waveform2Value(size_t index) const;
+
+private:
+    void updateTrackedFrequency(size_t numSamples);
+    void setCosineWave();
 };
 
 } // oscillators_cpp

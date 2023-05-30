@@ -51,21 +51,21 @@ final class ResonatorCppTests: XCTestCase {
         XCTAssertEqual(resonator.omAlpha(), 1.0-alpha)
     }
 
-    func testUpdateAllPhases() throws {
+    func testUpdateWithSample() throws {
         let resonator = ResonatorCpp(targetFrequency: 440.0,
                                      sampleDuration: AudioFixtures.sampleDuration44100,
                                      alpha: 1.0);
         guard let resonator = resonator else { return XCTAssert(false, "ResonatorCpp could not be instantiated") }
-        resonator.updateAllPhases(sample: 1.0)
-        for i in 0..<resonator.numSamplesInPeriod() {
-            XCTAssertEqual(resonator.allPhasesValue(i), resonator.waveformValue(i))
-        }
-        resonator.updateAllPhases(sample: 0.0)
-        for i in 0..<resonator.numSamplesInPeriod() {
-            XCTAssertEqual(resonator.allPhasesValue(i), 0.0)
-        }
+        resonator.updateWithSample(value: 1.0)
+        XCTAssertEqual(resonator.s(), resonator.waveformValue(0))
+        XCTAssertEqual(resonator.c(), resonator.waveform2Value(0))
+        resonator.updateWithSample(value: 0.0)
+        XCTAssertEqual(resonator.s(), 0.0)
+        XCTAssertEqual(resonator.c(), 0.0)
     }
     
+    // Suggestion: test frequency tracking and phase?
+
     // This test is not really meaningful
 //    func testUpdatePerf() throws {
 //        let resonator = ResonatorCpp(targetFrequency: 10.0, sampleDuration: sampleDuration44100, alpha: defaultAlpha)

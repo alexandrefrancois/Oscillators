@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -99,18 +99,6 @@ void Resonator::updateAndTrack(const float *frameData, size_t frameLength, size_
 }
 
 void Resonator::updateTrackedFrequency(size_t numSamples) {
-    //    const int size = static_cast<int>(m_allPhases.size());
-    //    int numSamplesDrift = (static_cast<int>(newMaxIdx) - static_cast<int>(m_maxIdx));
-    //    if (numSamplesDrift < -size/2) {
-    //        numSamplesDrift += size-1;
-    //    } else if (numSamplesDrift > size/2) {
-    //        numSamplesDrift -= size-1;
-    //    }
-    //    const float alpha = m_alpha * numSamples;
-    //    const float omAlpha = 1.0 - alpha;
-    //    m_trackedFrequency = (omAlpha * m_trackedFrequency) + (alpha / (m_sampleDuration * static_cast<float>(size) * (1.0f - static_cast<float>(numSamplesDrift) / static_cast<float>(numSamples))));
-    //    m_maxIdx = newMaxIdx;
-    
     const float newPhase = atan2(m_sin, m_cos); // returns value in [-pi,pi]
     float phaseDrift = newPhase - m_phase;
     m_phase = newPhase;

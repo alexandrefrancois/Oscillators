@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -83,7 +83,7 @@ public class ResonatorBankSingle {
         
         for index in 0..<numResonators {
             let targetFrequency = targetFrequencies[index]
-            // pre-compute some cosines for efficiency and to prevent drift
+            // pre-compute some sines and cosines for efficiency and to prevent drift
             let maxNumSamplesInPeriod = floor(1.0 / (sampleDuration * targetFrequency))
             samplesPerPeriodPtr[index] = Int(maxNumSamplesInPeriod)
             frequencies[index] = 1.0 / (maxNumSamplesInPeriod * sampleDuration)

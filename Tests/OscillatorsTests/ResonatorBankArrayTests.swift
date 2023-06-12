@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -58,13 +58,13 @@ final class ResonatorBankArrayTests: XCTestCase {
 
     }
 
-    func testUpdateSeq() throws {
+    func testUpdate() throws {
         let resonatorBankArray = ResonatorBankArray(targetFrequencies: [5512.5, 6300.0005, 7350.0005, 8820.0],
                                                     sampleDuration: AudioFixtures.sampleDuration44100,
                                                     alpha: DynamicsFixtures.defaultAlpha)
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)
-        resonatorBankArray.updateSeq(frameData: frame, frameLength: 1024, sampleStride: 1)
+        resonatorBankArray.update(frameData: frame, frameLength: 1024, sampleStride: 1)
         let maxima = resonatorBankArray.maxima
         for value in maxima {
             XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
@@ -72,7 +72,7 @@ final class ResonatorBankArrayTests: XCTestCase {
         frame.deallocate()
     }
   
-    func testUpdate() throws {
+    func testUpdateConcurrent() throws {
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)
         
@@ -80,7 +80,7 @@ final class ResonatorBankArrayTests: XCTestCase {
         let resonatorBankArray1 = ResonatorBankArray(targetFrequencies: [5512.5, 6300.0005, 7350.0005, 8820.0],
                                                      sampleDuration: AudioFixtures.sampleDuration44100,
                                                      alpha: DynamicsFixtures.defaultAlpha)
-        resonatorBankArray1.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+        resonatorBankArray1.updateConcurrent(frameData: frame, frameLength: 1024, sampleStride: 1)
         let maxima1 = resonatorBankArray1.maxima
         for value in maxima1 {
             XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
@@ -89,7 +89,7 @@ final class ResonatorBankArrayTests: XCTestCase {
         let resonatorBankArray2 = ResonatorBankArray(targetFrequencies: [6300.0005, 7350.0005, 8820.0],
                                                      sampleDuration: AudioFixtures.sampleDuration44100,
                                                      alpha: DynamicsFixtures.defaultAlpha)
-        resonatorBankArray2.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+        resonatorBankArray2.updateConcurrent(frameData: frame, frameLength: 1024, sampleStride: 1)
         let maxima2 = resonatorBankArray2.maxima
         for value in maxima2 {
             XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
@@ -97,43 +97,4 @@ final class ResonatorBankArrayTests: XCTestCase {
 
         frame.deallocate()
     }
-    
-    func testUpdateGF() throws {
-        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
-        frame.initialize(repeating: 0.5, count: 1024)
-        
-        // even number of oscillators
-        let resonatorBankArray1 = ResonatorBankArray(targetFrequencies: [5512.5, 6300.0005, 7350.0005, 8820.0],
-                                                     sampleDuration: AudioFixtures.sampleDuration44100,
-                                                     alpha: DynamicsFixtures.defaultAlpha)
-        resonatorBankArray1.updateGF(frameData: frame, frameLength: 1024, sampleStride: 1)
-        let maxima1 = resonatorBankArray1.maxima
-        for value in maxima1 {
-            XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
-        }
-        // odd number of oscillators
-        let resonatorBankArray2 = ResonatorBankArray(targetFrequencies: [6300.0005, 7350.0005, 8820.0],
-                                                     sampleDuration: AudioFixtures.sampleDuration44100,
-                                                     alpha: DynamicsFixtures.defaultAlpha)
-        resonatorBankArray2.updateGF(frameData: frame, frameLength: 1024, sampleStride: 1)
-        let maxima2 = resonatorBankArray2.maxima
-        for value in maxima2 {
-            XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
-        }
-
-        frame.deallocate()
-    }
-    
-    // This test is not really meaningful
-//    func testUpdatePerf() async throws {
-//        let resonatorBankArray = ResonatorBankArray(targetFrequencies: targetFrequencies, sampleDuration: AudioFixtures.sampleDuration44100, alpha: defaultAlpha)
-//        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
-//        frame.initialize(repeating: 0.5, count: 1024)
-//        measure {
-//            // this test does not work with the concurrent version
-//            resonatorBankArray.updateSeq(frameData: frame, frameLength: 1024, sampleStride: 1)
-//        }
-//        frame.deallocate()
-//    }
-
 }

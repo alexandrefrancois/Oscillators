@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -57,27 +57,4 @@ final class ResonatorTests: XCTestCase {
     }
   
     // Suggestion: test frequency tracking and phase?
-    
-    
-    // This test is not really meaningful
-//    func testUpdatePerf() throws {
-//        let resonator = Resonator(targetFrequency: 10.0, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
-//        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
-//        frame.initialize(repeating: 0.5, count: 1024)
-//        measure {
-//            resonator.update(frameData: frame, frameLength: 1024, sampleStride: 1)
-//        }
-//        frame.deallocate()
-//    }
-    
-    // This test is not really meaningful
-//    func testUpdateSafePerf() throws {
-//        let resonator = ResonatorSafe(targetFrequency: 10.0, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
-//        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
-//        frame.initialize(repeating: 0.5, count: 1024)
-//        measure {
-//            resonator.update(frameData: frame, frameLength: 1024, sampleStride: 1)
-//        }
-//        frame.deallocate()
-//    }
 }

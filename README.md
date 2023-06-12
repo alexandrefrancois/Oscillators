@@ -1,6 +1,6 @@
 # Oscillators
 
-Copyright (c) 2022 Alexandre R. J. François  
+Copyright (c) 2022-2023 Alexandre R. J. François  
 Released under MIT License.
 
 This package implements digital oscillator models for signal synthesis and analysis, suitable for real-time audio processing.
@@ -46,14 +46,29 @@ The pattern _v <- (1-k) * v + k * s_, where k is a constant in [0,1], is known a
 
 The instantaneous contribution of each input sample value to the amplitude is proportional to _s * w_, which intuitively will be maximal when peaks in the input signal and peaks in the resonator's waveform are both equally spaced and aligned, i.e. when they have same frequency and are in phase.
 
+
+// --------------------------
+// TODO: UPDATE HERE!
+
+New Implementation!
+
+No need for all phases
+No accelerate
+
+Old ones:
+
 In order to account for phase offset, the above calculation is performed for various phases, and the resonator's amplitude is set to the maximum value across all phases. The phase offset resolution is also conveniently the sample duration so the resonator model adds to the oscillator model an array of same length as the resonator's period, where each position stores the amplitude amplitude value for the corresponding phase offset.
 
-All implementations use the Accelerate framework.
+-----
+
+
+All implementations use the Accelerate framework where relevant.
 
 ### Classes
 
-- `ResonatorSafe`: uses Swift Arrays, adopts `ResonatorProtocol`
-- `Resonator`: uses Swift unsafe pointers (manual memory management), adopts `ResonatorProtocol`
+- `Resonator`: computes contributions at 0 and PI/2 (sine and cosine), adopts `ResonatorProtocol`
+- `ResonatorAllPhases`: computes contribution at all phases, uses Swift unsafe pointers (manual memory management), adopts `ResonatorProtocol`
+- `ResonatorAllPhasesSafe`: computes contribution at all phases, uses Swift Arrays, adopts `ResonatorProtocol`
 
 ## Resonator Banks
 
@@ -70,10 +85,9 @@ All implementations use the Accelerate framework with unsafe pointers.
 
 ### Concurrency and Update Heuristics
 
-The Swift `ResonatorBankArray` class implementes 3 update functions:
-- `updateSeq` calls the update function for each resonator sequentially
-- `update` calls update for each resonator concurrently, with update calls grouped in a fixed number of concurrent tasks
-- `updateGF` groups update calls from both ends of the bank, which should work well for Gradient Frequency banks as this should results in tasks of similar complexity (in a Gradient Frequency bank, the resonators are tuned to natural frequencies based on human auditory perception and organized from lowest to highest frequency)
+The Swift `ResonatorBankArray` class implementes 2 update functions:
+- `update` calls the update function for each resonator sequentially
+- `updateConcurrent` calls update for each resonator concurrently, with update calls grouped in a fixed number of concurrent tasks
 
 ## C++ Implementation
 
@@ -82,14 +96,14 @@ The package features C++ version of the Oscillator, Resonator and ResonatorBank 
 ### C++ classes
 
 - `oscillator_cpp::Oscillator`: the base oscillator class
-- `oscillator_cpp::Resonator`: resonator (same Accelerate calls as the Swift "unsafe pointers" implementation)
-- `oscillator_cpp::ResonatorBank`: resonator bank as vector of Resonator instances. The update function for live processing triggers resonator updates in concurrent task groups (using Apple's Grand Central Dispatch).
+- `oscillator_cpp::Resonator`: resonator (same computations as the Swift `Resonator` implementation)
+- `oscillator_cpp::ResonatorBank`: resonator bank as vector of Resonator instances. The update function for live processing triggers resonator updates in sequential or concurrent task groups (using Apple's Grand Central Dispatch).
 
 ### Concurrency and Update Heuristics
 
-The C++ `oscillator_cpp::ResonatorBank` class by defaults utilizes Apple's Grand Central Dispatch to implements 3 update functions matching those in the Swift implementation, `updateSeq`, `update` and `updateGF`.
+The C++ `oscillator_cpp::ResonatorBank` class by defaults utilizes Apple's Grand Central Dispatch to implement the concurrent update functions `updateConcurrent`.
 
-The code also provides a sample implementation of the `update` function utilizing `std::async`, which is not used by default.
+The code also provides a sample implementation of the `updateConcurrent` function utilizing `std::async`, which is not used by default.
 
 ### Objective-C++ wrappers
 

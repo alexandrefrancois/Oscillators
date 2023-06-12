@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -67,16 +67,4 @@ final class ResonatorBankSingleTests: XCTestCase {
             XCTAssertEqual(resonatorBankSingle.allPhasesPtr[i], 0.0)
         }
     }
-    
-    // This test is not really meaningful
-//    func testUpdatePerf() throws {
-//        let resonatorBankSingle = ResonatorBankSingle(targetFrequencies: targetFrequencies, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
-//        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
-//        frame.initialize(repeating: 0.5, count: 1024)
-//        measure {
-//            resonatorBankSingle.update(frameData: frame, frameLength: 1024, sampleStride: 1)
-//        }
-//        frame.deallocate()
-//    }
-
 }

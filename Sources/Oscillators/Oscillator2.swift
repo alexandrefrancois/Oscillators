@@ -27,7 +27,6 @@ import Accelerate
 
 /// Oscillator base class:
 /// an oscillator is characterized by its frequency, amplitude and waveform
-/// whose duration is an integer multiple of the sample duration
 public class Oscillator2 : OscillatorProtocol {
     public private(set) var sampleDuration: Float
     public private(set) var frequency: Float

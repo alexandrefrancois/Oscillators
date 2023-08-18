@@ -24,7 +24,7 @@ SOFTWARE.
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
-public protocol ResonatorProtocol {
+public protocol ResonatorProtocol: OscillatorProtocol {
     var alpha : Float { get set }
     var timeConstant : Float { get }
     var trackedFrequency : Float { get }

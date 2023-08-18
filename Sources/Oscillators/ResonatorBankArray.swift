@@ -28,7 +28,7 @@ fileprivate let numTasks = 6
 
 /// An array of independent resonator instances
 public class ResonatorBankArray {
-    public private(set) var resonators = [Resonator]()
+    public private(set) var resonators = [ResonatorProtocol]()
     public var numResonators: Int {
         resonators.count
     }
@@ -42,7 +42,8 @@ public class ResonatorBankArray {
         
         // setup an oscillator for each frequency
         for frequency in targetFrequencies {
-            resonators.append(Resonator(targetFrequency: frequency, sampleDuration: sampleDuration, alpha: alpha))
+//            resonators.append(Resonator(targetFrequency: frequency, sampleDuration: sampleDuration, alpha: alpha))
+            resonators.append(Resonator2(frequency: frequency, sampleDuration: sampleDuration, alpha: alpha))
         }
     }
     
@@ -59,7 +60,7 @@ public class ResonatorBankArray {
     }
 
     public func setAllAlphas(_ alpha: Float) {
-        for resonator in resonators {
+        for var resonator in resonators {
             resonator.alpha = alpha
         }
     }

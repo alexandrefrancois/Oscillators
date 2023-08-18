@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,18 +22,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/// An oscillator is characterized by its frequency, amplitude and waveform
-/// whose duration is an integer multiple of the sample duration
-public protocol OscillatorProtocol {
-    var sampleDuration : Float { get }
-    var frequency : Float { get }
-    var amplitude : Float { get }
-//    var waveform : [Float] { get }
+import XCTest
+@testable import Oscillators
 
-    // Wave shapes
-//    func setSquareWave()
-//    func setTriangleWave()
-//    func setSawWave()
-//    func setSineWave()
-//    func setSilence()
+fileprivate let epsilon : Float = 0.0001
+fileprivate let twoPi = Float.pi * 2.0
+
+final class Oscillator2Tests: XCTestCase {
+    
+    func testConstructor() throws {
+        let frequency : Float = 440.0
+        let oscillator = Oscillator2(frequency: frequency, sampleDuration: AudioFixtures.sampleDuration44100)
+        
+        XCTAssertEqual(oscillator.frequency, frequency)
+        XCTAssertEqual(oscillator.sampleDuration, AudioFixtures.sampleDuration44100)
+        XCTAssertEqual(oscillator.amplitude, 0)
+    }
 }

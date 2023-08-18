@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,18 +22,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/// An oscillator is characterized by its frequency, amplitude and waveform
-/// whose duration is an integer multiple of the sample duration
-public protocol OscillatorProtocol {
-    var sampleDuration : Float { get }
-    var frequency : Float { get }
-    var amplitude : Float { get }
-//    var waveform : [Float] { get }
+import Foundation
+import Accelerate
 
-    // Wave shapes
-//    func setSquareWave()
-//    func setTriangleWave()
-//    func setSawWave()
-//    func setSineWave()
-//    func setSilence()
+/// Oscillator base class:
+/// an oscillator is characterized by its frequency, amplitude and waveform
+/// whose duration is an integer multiple of the sample duration
+public class Oscillator2 : OscillatorProtocol {
+    public private(set) var sampleDuration: Float
+    public private(set) var frequency: Float
+    
+    public var amplitude: Float = 0.0
+    
+    internal var phaseIdx: Float = 0.0
+    internal var phaseIncrement: Float
+        
+    init(frequency: Float, sampleDuration: Float) {
+        self.frequency = frequency
+        self.sampleDuration = sampleDuration
+        
+        phaseIncrement = SineLUT.phaseIncrement(frequency: frequency, samplingRate: 1.0 / sampleDuration)
+    }
 }

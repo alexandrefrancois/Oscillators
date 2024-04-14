@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,7 @@ final class ResonatorBankCppTests: XCTestCase {
         }
     }
 
-    func testUpdateSeq() throws {
+    func testUpdate() throws {
         var freqs: [Float] = [5512.5, 6300.0005, 7350.0005, 8820.0]
         var alphas = [Float](repeating: DynamicsFixtures.defaultAlpha, count: freqs.count)
         let resonatorBankCpp = ResonatorBankCpp(numResonators: (Int32)(freqs.count),
@@ -58,7 +58,7 @@ final class ResonatorBankCppTests: XCTestCase {
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)
 
-        resonatorBankCpp.updateSeq(frameData: frame, frameLength: 1024, sampleStride: 1)
+        resonatorBankCpp.update(frameData: frame, frameLength: 1024, sampleStride: 1)
 
         // get values for all amplitudes
         let size = resonatorBankCpp.numResonators()
@@ -71,7 +71,7 @@ final class ResonatorBankCppTests: XCTestCase {
         frame.deallocate()
     }
   
-    func testUpdate() throws {
+    func testUpdateConcurrent() throws {
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)
 
@@ -84,7 +84,7 @@ final class ResonatorBankCppTests: XCTestCase {
                                                  alphas: &alphas1)
         guard let resonatorBankCpp1 = resonatorBankCpp1 else { return XCTAssert(false) }
 
-        resonatorBankCpp1.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+        resonatorBankCpp1.updateConcurrent(frameData: frame, frameLength: 1024, sampleStride: 1)
 
         // get values for all amplitudes
         let size1 = resonatorBankCpp1.numResonators()
@@ -103,7 +103,7 @@ final class ResonatorBankCppTests: XCTestCase {
                                                  alphas: &alphas2)
         guard let resonatorBankCpp2 = resonatorBankCpp2 else { return XCTAssert(false) }
 
-        resonatorBankCpp2.update(frameData: frame, frameLength: 1024, sampleStride: 1)
+        resonatorBankCpp2.updateConcurrent(frameData: frame, frameLength: 1024, sampleStride: 1)
 
         // get values for all amplitudes
         let size2 = resonatorBankCpp2.numResonators()
@@ -115,18 +115,4 @@ final class ResonatorBankCppTests: XCTestCase {
 
         frame.deallocate()
     }
-
-    
-    // This test is not really meaningful
-//    func testUpdatePerf() async throws {
-//        let resonatorBankCpp = ResonatorBankCpp(numResonators: (Int32)(targetFrequencies.count), targetFrequencies: &targetFrequencies, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
-//        guard let resonatorBankCpp = resonatorBankCpp else { return XCTAssert(false) }
-//        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
-//        frame.initialize(repeating: 0.5, count: 1024)
-//        measure {
-//            resonatorBankCpp.update(frameData: frame, frameLength: 1024, sampleStride: 1)
-//        }
-//        frame.deallocate()
-//    }
-
 }

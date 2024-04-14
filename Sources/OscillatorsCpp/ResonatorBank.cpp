@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -108,10 +108,16 @@ void ResonatorBank::update(const std::vector<float> &samples) {
     }
 }
 
+void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sampleStride) {
+    for (auto &resonatorPtr : m_resonators) {
+        resonatorPtr->update(frameData, frameLength, sampleStride);
+    }
+}
+
 #ifndef STD_CONCURRENCY
 // concurrency with Apple GCD
 
-void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sampleStride) {
+void ResonatorBank::updateConcurrent(const float *frameData, size_t frameLength, size_t sampleStride) {
     for (size_t offset = 0; offset < resonatorStride; ++offset) {
         dispatch_group_async(m_dispatchGroup, m_dispatchQueue, ^{
             size_t index = offset;
@@ -124,30 +130,10 @@ void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sa
     dispatch_group_wait(m_dispatchGroup, DISPATCH_TIME_FOREVER);
 }
 
-// concurrency with Apple GCD - alternate heuristic
-void ResonatorBank::updateGF(const float *frameData, size_t frameLength, size_t sampleStride) {
-    size_t count = m_resonators.size();
-    // for the lower frequency oscillators
-    // even out the task length by pairing resonators from both ends of the spectrum
-    // taking into account that the complexity of the update is proportional to the size of the phases array
-    for (size_t index = 0; index < count / 2; ++index) {
-        size_t index2 = count - 1 - index;
-        dispatch_group_async(m_dispatchGroup, m_dispatchQueue, ^{
-            m_resonators[index]->update(frameData, frameLength, sampleStride);
-            m_resonators[index2]->update(frameData, frameLength, sampleStride);
-        });
-    }
-    if ((count & 1) == 1) {
-        dispatch_group_async(m_dispatchGroup, m_dispatchQueue, ^{
-            m_resonators[count/2]->update(frameData, frameLength, sampleStride);
-        });
-    }
-    dispatch_group_wait(m_dispatchGroup, DISPATCH_TIME_FOREVER);
-}
-
 #else
 // concurrency with std::async
-void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sampleStride) {
+
+void ResonatorBank::updateConcurrent(const float *frameData, size_t frameLength, size_t sampleStride) {
     std::vector<std::future<void>> handles;
     handles.reserve(resonatorStride);
     for (size_t offset = 0; offset < resonatorStride; ++offset) {
@@ -159,11 +145,6 @@ void ResonatorBank::update(const float *frameData, size_t frameLength, size_t sa
     }
 }
 
-void ResonatorBank::updateGF(const float *frameData, size_t frameLength, size_t sampleStride) {
-    // not implemented...
-    update(frameData, frameLength, sampleStride);
-}
-
 void ResonatorBank::updateEvery(size_t stride, size_t offset, const float *frameData, size_t frameLength, size_t sampleStride) {
     size_t index = offset;
     while (index < m_resonators.size()) {
@@ -173,8 +154,3 @@ void ResonatorBank::updateEvery(size_t stride, size_t offset, const float *frame
 }
 #endif
 
-void ResonatorBank::updateSeq(const float *frameData, size_t frameLength, size_t sampleStride) {
-    for (auto &resonatorPtr : m_resonators) {
-        resonatorPtr->update(frameData, frameLength, sampleStride);
-    }
-}

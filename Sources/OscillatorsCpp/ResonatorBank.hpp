@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -71,8 +71,7 @@ public:
     void update(const float sample);
     void update(const std::vector<float> &samples);
     void update(const float *frameData, size_t frameLength, size_t sampleStride);
-    void updateGF(const float *frameData, size_t frameLength, size_t sampleStride);
-    void updateSeq(const float *frameData, size_t frameLength, size_t sampleStride);
+    void updateConcurrent(const float *frameData, size_t frameLength, size_t sampleStride);
     
 #ifdef STD_CONCURRENCY
 private:

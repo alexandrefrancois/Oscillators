@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,16 +32,17 @@ SOFTWARE.
 - (void)setAlpha:(float)alpha;
 - (float)omAlpha;
 - (float)timeConstant;
+- (float)s;
+- (float)c;
+- (float)phase;
 - (float)trackedFrequency;
-- (void)copyAllPhases:(float*)dest size:(int)size; // this is a bit ugly but avoids memory management issues
-- (float)allPhasesValue:(int)index;
-- (void)updateAllPhases:(float)sample
-NS_SWIFT_NAME(updateAllPhases(sample:));
+- (void)updateWithSample:(float)sample
+NS_SWIFT_NAME(updateWithSample(value:));
 - (void)update:(float)sample
 NS_SWIFT_NAME(update(sample:));
 - (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
 NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
 - (void)updateAndTrack:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
 NS_SWIFT_NAME(updateAndTrack(frameData:frameLength:sampleStride:));
-
+- (float)waveform2Value:(int)index;
 @end

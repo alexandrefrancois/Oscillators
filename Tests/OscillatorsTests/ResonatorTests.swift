@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -33,21 +33,6 @@ final class ResonatorTests: XCTestCase {
                                   alpha: DynamicsFixtures.defaultAlpha)
         
         XCTAssertEqual(resonator.alpha, DynamicsFixtures.defaultAlpha)
-        
-        XCTAssertNotNil(resonator.allPhasesPtr)
-//        print("allPhasesPtr base Address: \(String(describing: resonator.allPhasesPtr!.baseAddress)) = \(Int(bitPattern: resonator.allPhasesPtr!.baseAddress))")
-        XCTAssertEqual(Int(bitPattern: resonator.allPhasesPtr!.baseAddress) % MemoryLayout<Float>.alignment, 0)
-        XCTAssertEqual(resonator.allPhasesPtr!.count, resonator.numSamplesInWaveform)
-
-        XCTAssertNotNil(resonator.leftTermPtr)
-//        print("leftTermPtr base Address: \(String(describing: resonator.leftTermPtr!.baseAddress)) = \(Int(bitPattern: resonator.leftTermPtr!.baseAddress))")
-        XCTAssertEqual(Int(bitPattern: resonator.leftTermPtr!.baseAddress) % MemoryLayout<Float>.alignment, 0)
-        XCTAssertEqual(resonator.leftTermPtr!.count, resonator.numSamplesInWaveform)
-        
-        XCTAssertNotNil(resonator.rightTermPtr)
-//        print("rightTermPtr base Address: \(String(describing: resonator.rightTermPtr!.baseAddress)) = \(Int(bitPattern: resonator.rightTermPtr!.baseAddress))")
-        XCTAssertEqual(Int(bitPattern: resonator.rightTermPtr!.baseAddress) % MemoryLayout<Float>.alignment, 0)
-        XCTAssertEqual(resonator.rightTermPtr!.count, resonator.numSamplesInWaveform)
     }
     
     func testSetAlpha() throws {
@@ -61,37 +46,15 @@ final class ResonatorTests: XCTestCase {
         XCTAssertEqual(resonator.omAlpha, 1.0-alpha)
     }
     
-    func testUpdateAllPhases() throws {
+    func testUpdateWithSample() throws {
         let resonator = Resonator(targetFrequency: 440.0, sampleDuration: AudioFixtures.sampleDuration44100, alpha: 1.0)
-        resonator.updateAllPhases(sample: 1.0)
-        for i in 0..<resonator.numSamplesInWaveform {
-            XCTAssertEqual(resonator.allPhasesPtr![i], resonator.waveformPtr[i])
-        }
-        resonator.updateAllPhases(sample: 0.0)
-        for i in 0..<resonator.numSamplesInWaveform {
-            XCTAssertEqual(resonator.allPhasesPtr![i], 0.0)
-        }
+        resonator.updateWithSample(1.0)
+        XCTAssertEqual(resonator.s, resonator.waveformPtr[0])
+        XCTAssertEqual(resonator.c, resonator.waveform2Ptr[0])
+        resonator.updateWithSample(0.0)
+        XCTAssertEqual(resonator.s, 0.0)
+        XCTAssertEqual(resonator.c, 0.0)
     }
-    
-    // This test is not really meaningful
-//    func testUpdatePerf() throws {
-//        let resonator = Resonator(targetFrequency: 10.0, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
-//        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
-//        frame.initialize(repeating: 0.5, count: 1024)
-//        measure {
-//            resonator.update(frameData: frame, frameLength: 1024, sampleStride: 1)
-//        }
-//        frame.deallocate()
-//    }
-    
-    // This test is not really meaningful
-//    func testUpdateSafePerf() throws {
-//        let resonator = ResonatorSafe(targetFrequency: 10.0, sampleDuration: sampleDuration44100, alpha: defaultAlpha)
-//        let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
-//        frame.initialize(repeating: 0.5, count: 1024)
-//        measure {
-//            resonator.update(frameData: frame, frameLength: 1024, sampleStride: 1)
-//        }
-//        frame.deallocate()
-//    }
+  
+    // Suggestion: test frequency tracking and phase?
 }

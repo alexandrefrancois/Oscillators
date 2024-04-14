@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,14 +28,27 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-Resonator::Resonator(float targetFrequency, float sampleDuration, float alpha) : Oscillator(targetFrequency, sampleDuration), m_alpha(alpha), m_omAlpha(1.0 - alpha) {
-
-    // initialize waveform
+Resonator::Resonator(float targetFrequency, float sampleDuration, float alpha) : Oscillator(targetFrequency, sampleDuration),
+    m_alpha(alpha), m_omAlpha(1.0 - alpha), m_trackedFrequency(m_frequency), m_phase(0.0){
+    m_waveform2 = std::vector<float>(m_waveform.size(), 0);
+    // initialize waveforms
     setSineWave();
-    
-    m_allPhases = std::vector<float>(numSamplesInPeriod(), 0);
-    m_leftTerm = std::vector<float>(numSamplesInPeriod(), 0);
-    m_rightTerm = std::vector<float>(numSamplesInPeriod(), 0);
+    setCosineWave();
+}
+
+void Resonator::setCosineWave() {
+    const float delta = twoPi * m_frequency * m_sampleDuration;
+    const float initialValue = 0.0;
+    const int size = static_cast<int>(m_waveform2.size());
+    vDSP_vramp(&initialValue, &delta, &m_waveform2[0], 1, size);
+    vvcosf(&m_waveform2[0], &m_waveform2[0], &size);
+}
+
+float Resonator::waveform2Value(size_t index) const {
+    if (index >= m_waveform2.size()) {
+        throw std::out_of_range("Bad index passed to waveform2Value()");
+    }
+    return m_waveform2[index];
 }
 
 void Resonator::setAlpha(float alpha) {
@@ -46,70 +59,53 @@ void Resonator::setAlpha(float alpha) {
     m_omAlpha = 1.0 - m_alpha;
 }
 
-void Resonator::copyAllPhases(float *dest, size_t size) {
-    memcpy(dest, &m_allPhases[0], std::min(size, m_allPhases.size()) * sizeof(float));
-}
-
-float Resonator::allPhasesValue(size_t index) const {
-    if (index >= m_allPhases.size()) {
-        throw std::out_of_range("Bad index passed to allPhasesValue()");
-    }
-    return m_allPhases[index];
-}
-
-void Resonator::updateAllPhases(float sample) {
+void Resonator::updateWithSample(float sample) {
     const float alphaSample = m_alpha * sample;
-    const size_t localNumSamplesInPeriod = numSamplesInPeriod();
-    vDSP_vsmul(&m_allPhases[0], 1, &m_omAlpha, &m_leftTerm[0], 1, localNumSamplesInPeriod);
-    const size_t complement = localNumSamplesInPeriod - m_phaseIdx;
-    vDSP_vsmul(&m_waveform[m_phaseIdx], 1, &alphaSample, &m_rightTerm[0], 1, complement);
-    vDSP_vsmul(&m_waveform[0], 1, &alphaSample, &m_rightTerm[complement], 1, m_phaseIdx);
-    vDSP_vadd(&m_leftTerm[0], 1, &m_rightTerm[0], 1, &m_allPhases[0], 1, localNumSamplesInPeriod);
-    ++m_phaseIdx %= localNumSamplesInPeriod;
+    m_sin = m_omAlpha * m_sin + alphaSample * m_waveform[m_phaseIdx];
+    m_cos = m_omAlpha * m_cos + alphaSample * m_waveform2[m_phaseIdx];
+
+    ++m_phaseIdx %= numSamplesInPeriod();
 }
 
 void Resonator::update(const float sample) {
-    updateAllPhases(sample);
-    vDSP_maxv(&m_allPhases[0], 1, &m_amplitude, numSamplesInPeriod());
+    updateWithSample(sample);
+    m_amplitude = sqrt(m_sin * m_sin + m_cos * m_cos);
 }
 
 void Resonator::update(const std::vector<float> &samples) {
     for (float sample : samples) {
-        updateAllPhases(sample);
+        updateWithSample(sample);
     }
-    vDSP_maxv(&m_allPhases[0], 1, &m_amplitude, numSamplesInPeriod());
+    m_amplitude = sqrt(m_sin * m_sin + m_cos * m_cos);
 }
 
 void Resonator::update(const float *frameData, size_t frameLength, size_t sampleStride) {
     for (int i=0; i<frameLength; i += sampleStride) {
-        updateAllPhases(frameData[i]);
+        updateWithSample(frameData[i]);
     }
-    vDSP_maxv(&m_allPhases[0], 1, &m_amplitude, numSamplesInPeriod());
+    m_amplitude = sqrt(m_sin * m_sin + m_cos * m_cos);
 }
 
 void Resonator::updateAndTrack(const float *frameData, size_t frameLength, size_t sampleStride) {
     for (int i=0; i<frameLength; i += sampleStride) {
-        updateAllPhases(frameData[i]);
+        updateWithSample(frameData[i]);
     }
-    vDSP_Length idx = 0;
-    vDSP_maxvi(&m_allPhases[0], 1, &m_amplitude, &idx, m_allPhases.size());
+    m_amplitude = sqrt(m_sin * m_sin + m_cos * m_cos);
     if (m_amplitude > trackFrequencyThreshold) {
-        updateTrackedFrequency(idx, frameLength);
+        updateTrackedFrequency(frameLength);
     } else {
         m_trackedFrequency = m_frequency;
     }
 }
 
-void Resonator::updateTrackedFrequency(size_t newMaxIdx, size_t numSamples) {
-    const int size = static_cast<int>(m_allPhases.size());
-    int numSamplesDrift = (static_cast<int>(newMaxIdx) - static_cast<int>(m_maxIdx));
-    if (numSamplesDrift < -size/2) {
-        numSamplesDrift += size-1;
-    } else if (numSamplesDrift > size/2) {
-        numSamplesDrift -= size-1;
+void Resonator::updateTrackedFrequency(size_t numSamples) {
+    const float newPhase = atan2(m_sin, m_cos); // returns value in [-pi,pi]
+    float phaseDrift = newPhase - m_phase;
+    m_phase = newPhase;
+    if (phaseDrift <= -PI) {
+        phaseDrift += twoPi;
+    } else if (phaseDrift > PI) {
+        phaseDrift -= twoPi;
     }
-    const float alpha = m_alpha * numSamples;
-    const float omAlpha = 1.0 - alpha;
-    m_trackedFrequency = (omAlpha * m_trackedFrequency) + (alpha / (m_sampleDuration * static_cast<float>(size) * (1.0f - static_cast<float>(numSamplesDrift) / static_cast<float>(numSamples))));
-    m_maxIdx = newMaxIdx;
+    m_trackedFrequency = m_frequency - phaseDrift / (twoPi * static_cast<float>(numSamples) * m_sampleDuration);
 }

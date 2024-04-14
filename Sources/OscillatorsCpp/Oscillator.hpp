@@ -31,7 +31,6 @@ namespace oscillators_cpp {
 
 constexpr float PI = 3.14159274101257324219; // PI
 constexpr float twoPi = 2.0 * PI;
-constexpr float halfPi = PI / 2.0;
 
 constexpr float trackFrequencyThreshold = 0.001;
 

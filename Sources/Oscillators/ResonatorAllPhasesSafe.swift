@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ fileprivate let twoPi = Float.pi * 2.0
 fileprivate let trackFrequencyThreshold = Float(0.001)
 
 /// A single oscillator, computations use the Accelerate framework with swift arrays
-public class ResonatorSafe : Oscillator, ResonatorProtocol {
+public class ResonatorAllPhasesSafe : Oscillator, ResonatorProtocol {
     public var alpha: Float {
         didSet {
             omAlpha = 1.0 - alpha

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -64,16 +64,20 @@ using namespace oscillators_cpp;
     return self.resonator->trackedFrequency();
 }
 
-- (void)copyAllPhases:(float*)dest size: (int)size {
-    self.resonator->copyAllPhases(dest, size);
+- (float)s {
+    return self.resonator->s();
 }
 
-- (float)allPhasesValue:(int)index {
-    return self.resonator->allPhasesValue(index);
+- (float)c {
+    return self.resonator->c();
 }
 
-- (void)updateAllPhases:(float)sample {
-    self.resonator->updateAllPhases(sample);
+- (float)phase {
+    return self.resonator->phase();
+}
+
+- (void)updateWithSample:(float)sample {
+    self.resonator->updateWithSample(sample);
 }
 
 - (void)update:(float)sample {
@@ -86,6 +90,10 @@ using namespace oscillators_cpp;
 
 - (void)updateAndTrack:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
     self.resonator->updateAndTrack(frame, frameLength, sampleStride);
+}
+
+- (float)waveform2Value:(int)index {
+    return self.resonator->waveform2Value(index);
 }
 
 @end

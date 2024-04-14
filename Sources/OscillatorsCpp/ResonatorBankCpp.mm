@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2023 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -87,12 +87,8 @@ using namespace oscillators_cpp;
     self.resonatorBank->update(frame, frameLength, sampleStride);
 }
 
-- (void)updateGF:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
-    self.resonatorBank->updateGF(frame, frameLength, sampleStride);
-}
-
-- (void)updateSeq:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
-    self.resonatorBank->updateSeq(frame, frameLength, sampleStride);
+- (void)updateConcurrent:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
+    self.resonatorBank->updateConcurrent(frame, frameLength, sampleStride);
 }
 
 @end

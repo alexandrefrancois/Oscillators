@@ -1,6 +1,6 @@
 # Oscillators
 
-Copyright (c) 2022-2023 Alexandre R. J. François  
+Copyright (c) 2022-2024 Alexandre R. J. François  
 Released under MIT License.
 
 This package implements digital oscillator models for signal synthesis and analysis, suitable for real-time audio processing.
@@ -46,21 +46,13 @@ The pattern _v <- (1-k) * v + k * s_, where k is a constant in [0,1], is known a
 
 The instantaneous contribution of each input sample value to the amplitude is proportional to _s * w_, which intuitively will be maximal when peaks in the input signal and peaks in the resonator's waveform are both equally spaced and aligned, i.e. when they have same frequency and are in phase.
 
+In order to account for phase offset, the above calculation is performed at 2 phase values (there are only 2 degrees of freedom). For a sine waveform _sin(x)_, the natural candidates are phases 0 and 𝜋/2, i.e. _sin(x)_ and _sin(x+𝜋/2) = cos(x)_.
 
-// --------------------------
-// TODO: UPDATE HERE!
+This can be formulated and implemented neatly and compactly with complex numbers, but intuitively, instead of computing the amplitude at each phase, the resonator maintains two values, _ps_ and _pc_ (both in [0,1]), updated at each tick of the clock, i.e. for each input sample, from their current values, the current position in the oscillation period (values _ws_ for the sine waveform and _wc_ for the cosine waveform, both in [-1,1]), and the input sample value _s_ (in [-1,1]):  
+_ps <- (1-k) * ps + k * s * ws_  
+_pc <- (1-k) * pc + k * s * wc_
 
-New Implementation!
-
-No need for all phases
-No accelerate
-
-Old ones:
-
-In order to account for phase offset, the above calculation is performed for various phases, and the resonator's amplitude is set to the maximum value across all phases. The phase offset resolution is also conveniently the sample duration so the resonator model adds to the oscillator model an array of same length as the resonator's period, where each position stores the amplitude amplitude value for the corresponding phase offset.
-
------
-
+At any tick, the resonator's amplitude is _sqrt(ps*ps + pc*pc)_ and the phase offset _arctan(ps/pc)_.
 
 All implementations use the Accelerate framework where relevant.
 
@@ -80,8 +72,8 @@ All implementations use the Accelerate framework with unsafe pointers.
 
 ### Classes
 
-- `ResonatorBankSingle`: a bank of independent resonators implemented as a single array, resulting in single calls to Accelerate functions across the resonators.
 - `ResonatorBankArray`: a bank of independent resonators implemented as instances of the Swift resonator class. The update function for live processing triggers resonator updates in concurrent task groups.
+- `ResonatorBankSingle`: a bank of independent resonators implemented as a single array, resulting in single calls to Accelerate functions across the resonators.
 
 ### Concurrency and Update Heuristics
 

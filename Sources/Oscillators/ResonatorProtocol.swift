@@ -27,7 +27,7 @@ SOFTWARE.
 public protocol ResonatorProtocol {
     var alpha : Float { get set }
     var timeConstant : Float { get }
-    var trackedFrequency : Float { get }
+    var frequency : Float { get }
     
     /// This function performs an update of the resonator amplitude from a single sample
     func update(sample: Float)

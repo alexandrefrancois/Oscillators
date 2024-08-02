@@ -31,33 +31,12 @@ fileprivate let twoPi = Float.pi * 2.0
 final class OscillatorCppTests: XCTestCase {
     
     func testConstructor() throws {
-        let oscillator = OscillatorCpp(targetFrequency: 440.0, sampleDuration: AudioFixtures.sampleDuration44100)
+        let oscillator = OscillatorCpp(frequency: 440.5, sampleRate: AudioFixtures.defaultSampleRate)
         guard let oscillator = oscillator else { return XCTAssert(false, "OscillatorCpp could not be instantiated") }
         
-        XCTAssertEqual(oscillator.sampleDuration(), AudioFixtures.sampleDuration44100)
-        XCTAssertEqual(oscillator.numSamplesInPeriod(), 100)
-        XCTAssertEqual(oscillator.frequency(), 441.0, accuracy: epsilon)
+        XCTAssertEqual(oscillator.frequency(), 440.5, accuracy: epsilon)
         XCTAssertEqual(oscillator.amplitude(), 0.0, accuracy: epsilon)
-        
-        let size:Int = Int(oscillator.numSamplesInPeriod())
-        var waveform = [Float](repeating: 1.0, count: size)
-        oscillator.copyWaveform(&waveform, size: Int32(size))
-        XCTAssertEqual(waveform[size/2], 0.0, accuracy: epsilon)
+        XCTAssertEqual(oscillator.sampleRate(), AudioFixtures.defaultSampleRate)
     }
     
-    func testInitSineWave() throws {
-        let oscillator = OscillatorCpp(targetFrequency: 440.0, sampleDuration: AudioFixtures.sampleDuration44100);
-        guard let oscillator = oscillator else { return XCTAssert(false, "OscillatorCpp could not be instantiated") }
-        
-        oscillator.setSineWave();
-        
-        // check waveform values
-        let twoPiFrequency : Float = twoPi * oscillator.frequency();
-        let delta : Float = twoPiFrequency * oscillator.sampleDuration();
-        for i in 0..<oscillator.numSamplesInPeriod() {
-            let alpha = Float(i) * delta
-            XCTAssertEqual(oscillator.waveformValue(i), sin(alpha), accuracy: epsilon, "\(i): \(oscillator.waveformValue(i) - sin(alpha))")
-        }
-    }
-
 }

@@ -26,8 +26,8 @@ SOFTWARE.
 
 // Wrapper for the ResonatorBank class
 @interface ResonatorBankCpp : NSObject
-- (instancetype)initWithNumResonators:(int)numResonators targetFrequencies:(float*)targetFrequencies sampleDuration:(float)sampleDuration alphas:(float*)alphas;
-- (float)sampleDuration;
+- (instancetype)initWithNumResonators:(int)numResonators frequencies:(float*)frequencies sampleRate:(float)sampleRate alphas:(float*)alphas;
+- (float)sampleRate;
 - (int)numResonators;
 - (float)frequencyValue:(int)index;
 - (float)alphaValue:(int)index;

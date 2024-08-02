@@ -28,27 +28,8 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-Resonator::Resonator(float targetFrequency, float sampleDuration, float alpha) : Oscillator(targetFrequency, sampleDuration),
+Resonator::Resonator(float frequency, float sampleRate, float alpha) : Oscillator(frequency, sampleRate),
     m_alpha(alpha), m_omAlpha(1.0 - alpha), m_trackedFrequency(m_frequency), m_phase(0.0){
-    m_waveform2 = std::vector<float>(m_waveform.size(), 0);
-    // initialize waveforms
-    setSineWave();
-    setCosineWave();
-}
-
-void Resonator::setCosineWave() {
-    const float delta = twoPi * m_frequency * m_sampleDuration;
-    const float initialValue = 0.0;
-    const int size = static_cast<int>(m_waveform2.size());
-    vDSP_vramp(&initialValue, &delta, &m_waveform2[0], 1, size);
-    vvcosf(&m_waveform2[0], &m_waveform2[0], &size);
-}
-
-float Resonator::waveform2Value(size_t index) const {
-    if (index >= m_waveform2.size()) {
-        throw std::out_of_range("Bad index passed to waveform2Value()");
-    }
-    return m_waveform2[index];
 }
 
 void Resonator::setAlpha(float alpha) {
@@ -61,10 +42,9 @@ void Resonator::setAlpha(float alpha) {
 
 void Resonator::updateWithSample(float sample) {
     const float alphaSample = m_alpha * sample;
-    m_sin = m_omAlpha * m_sin + alphaSample * m_waveform[m_phaseIdx];
-    m_cos = m_omAlpha * m_cos + alphaSample * m_waveform2[m_phaseIdx];
-
-    ++m_phaseIdx %= numSamplesInPeriod();
+    m_sin = m_omAlpha * m_sin + alphaSample * m_Ws;
+    m_cos = m_omAlpha * m_cos + alphaSample * m_Wc;
+    incrementPhase();
 }
 
 void Resonator::update(const float sample) {
@@ -107,5 +87,5 @@ void Resonator::updateTrackedFrequency(size_t numSamples) {
     } else if (phaseDrift > PI) {
         phaseDrift -= twoPi;
     }
-    m_trackedFrequency = m_frequency - phaseDrift / (twoPi * static_cast<float>(numSamples) * m_sampleDuration);
+    m_trackedFrequency = m_frequency - (phaseDrift * m_sampleRate) / (twoPi * static_cast<float>(numSamples));
 }

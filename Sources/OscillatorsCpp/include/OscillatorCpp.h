@@ -26,12 +26,9 @@ SOFTWARE.
 
 // Wrapper for the base Oscillator class
 @interface OscillatorCpp : NSObject
-- (instancetype)initWithTargetFrequency:(float)frequency sampleDuration:(float)sampleDuration;
+- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate;
 - (float)frequency;
-- (float)sampleDuration;
+- (float)sampleRate;
 - (float)amplitude;
-- (int)numSamplesInPeriod;
-- (void)setSineWave;
-- (void)copyWaveform:(float*)dest size:(int)size; // this is a bit ugly but avoids memory management issues
-- (float)waveformValue:(int)index;
+
 @end

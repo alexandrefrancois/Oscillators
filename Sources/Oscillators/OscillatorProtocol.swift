@@ -22,18 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/// An oscillator is characterized by its frequency, amplitude and waveform
-/// whose duration is an integer multiple of the sample duration
+/// An oscillator is characterized by its frequency and amplitude
+/// Phase calculations depend on sampling rate
 public protocol OscillatorProtocol {
-    var sampleDuration : Float { get }
     var frequency : Float { get }
     var amplitude : Float { get }
-    var waveform : [Float] { get }
-
-    // Wave shapes
-    func setSquareWave()
-    func setTriangleWave()
-    func setSawWave()
-    func setSineWave()
-    func setSilence()
+    
+    var sampleRate : Float { get }
 }

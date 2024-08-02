@@ -34,19 +34,19 @@ public class ResonatorBankArray {
     }
     public private(set) var maxima: [Float]
 
-    public init(targetFrequencies: [Float], sampleDuration: Float, alpha: Float) {
+    public init(frequencies: [Float], sampleRate: Float, alpha: Float) {
         // initialize from passed frequencies
-        maxima = [Float](repeating: 0, count: targetFrequencies.count)
+        maxima = [Float](repeating: 0, count: frequencies.count)
         
 //        print("Number of resonators to create: \(targetFrequencies.count)")
         
         // setup an oscillator for each frequency
-        for frequency in targetFrequencies {
-            resonators.append(Resonator(targetFrequency: frequency, sampleDuration: sampleDuration, alpha: alpha))
+        for frequency in frequencies {
+            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alpha))
         }
     }
     
-    public init(alphas: [Float], sampleDuration: Float, targetFrequency: Float) {
+    public init(alphas: [Float], sampleRate: Float, frequency: Float) {
         // initialize from passed frequencies
         maxima = [Float](repeating: 0, count: alphas.count)
         
@@ -54,7 +54,7 @@ public class ResonatorBankArray {
         
         // setup an oscillator for each alpha
         for alpha in alphas {
-            resonators.append(Resonator(targetFrequency: targetFrequency, sampleDuration: sampleDuration, alpha: alpha))
+            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alpha))
         }
     }
 

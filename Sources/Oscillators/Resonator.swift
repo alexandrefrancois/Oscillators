@@ -39,40 +39,26 @@ public class Resonator : Oscillator, ResonatorProtocol {
     private(set) var omAlpha : Float = 0.0
     
     public var timeConstant : Float {
-        sampleDuration / alpha
+        1.0 / (sampleRate * alpha)
     }
     
     private(set) var s: Float = 0.0
     private(set) var c: Float = 0.0
-    private(set) var waveform2Ptr: UnsafeMutableBufferPointer<Float>
 
     public var phase: Float = 0.0
     public var trackedFrequency: Float = 0.0
     
-    public init(targetFrequency: Float, sampleDuration: Float, alpha: Float) {
-        let f = Frequencies.closestFrequency(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
-        let n = 1.0 / (f * sampleDuration)
-        let numSamplesInWaveformLocal : Int = Int(n)
-        waveform2Ptr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInWaveformLocal)
-        waveform2Ptr.initialize(repeating: 0)
-
+    public init(frequency: Float, sampleRate: Float, alpha: Float) {
         self.alpha = alpha
         self.omAlpha = 1.0 - alpha
-        super.init(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
-        setWaveform(waveShape: .sine)
-        setCosineWave()
+        super.init(frequency: frequency, sampleRate: sampleRate)
     }
     
-    deinit {
-        waveform2Ptr.baseAddress?.deinitialize(count: numSamplesInWaveform)
-        waveform2Ptr.deallocate()
-    }
-
     func updateWithSample(_ sample: Float) {
         let alphaSample : Float = alpha * sample
-        s = omAlpha * s + alphaSample * waveformPtr[phaseIdx]
-        c = omAlpha * c + alphaSample * waveform2Ptr[phaseIdx]
-        phaseIdx = (phaseIdx + 1) % numSamplesInWaveform
+        s = omAlpha * s + alphaSample * Ws
+        c = omAlpha * c + alphaSample * Wc
+        incrementPhase()
     }
     
     public func update(sample: Float) {
@@ -142,15 +128,8 @@ public class Resonator : Oscillator, ResonatorProtocol {
         
         let localAlpha = alpha * Float(numSamples)
         let localOmAlpha = 1.0 - localAlpha
-        let instantaneousFrequency = frequency - phaseDrift / (twoPi * Float(numSamples) * sampleDuration)
+        let instantaneousFrequency = frequency - phaseDrift * sampleRate / (twoPi * Float(numSamples))
         trackedFrequency = (localOmAlpha * trackedFrequency) + (localAlpha * instantaneousFrequency)
     }
     
-    func setCosineWave() {
-        let twoPiFrequency : Float = twoPi * frequency
-        let delta : Float = twoPiFrequency * sampleDuration
-        vDSP.formRamp(withInitialValue: 0.0, increment: delta, result: &waveform2Ptr)
-        vForce.cos(waveform2Ptr, result: &waveform2Ptr)
-    }
-
 }

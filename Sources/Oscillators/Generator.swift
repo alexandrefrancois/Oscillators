@@ -26,15 +26,14 @@ import Foundation
 
 /// An oscillator used to generate a periodic signal
 public class Generator : Oscillator, GeneratorProtocol {
-    public init(targetFrequency: Float, sampleDuration: Float, waveShape: WaveShape, amplitude: Float = 1.0) {
-        super.init(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
-        setWaveform(waveShape: waveShape)
+    public init(frequency: Float, sampleRate: Float, amplitude: Float = 1.0) {
+        super.init(frequency: frequency, sampleRate: sampleRate)
         self.amplitude = amplitude
     }
-
+    
     public func getNextSample() -> Float {
-        let nextSample = amplitude * waveformPtr[phaseIdx];
-        phaseIdx = (phaseIdx + 1) % waveformPtr.count;
+        let nextSample = amplitude * Ws;
+        incrementPhase()
         return nextSample
     }
     
@@ -42,9 +41,9 @@ public class Generator : Oscillator, GeneratorProtocol {
         var samples = [Float]()
         var samplesToGet = numSamples
         while samplesToGet > 0 {
-            samples.append(amplitude * waveformPtr[phaseIdx])
+            samples.append(amplitude * Ws)
             samplesToGet -= 1
-            phaseIdx = (phaseIdx + 1) % waveformPtr.count
+            incrementPhase()
         }
         return samples
     }
@@ -52,9 +51,9 @@ public class Generator : Oscillator, GeneratorProtocol {
     public func getNextSamples(samples: inout [Float]) {
         var sampleIdx = 0
         while sampleIdx < samples.count {
-            samples[sampleIdx] = amplitude * waveformPtr[phaseIdx]
+            samples[sampleIdx] = amplitude * Ws
             sampleIdx += 1
-            phaseIdx = (phaseIdx + 1) % waveformPtr.count
+            incrementPhase()
         }
     }
 }

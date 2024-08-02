@@ -31,15 +31,15 @@ public struct Dynamics {
     /// - parameter alpha: what it says
     /// - parameter sampleDuration: same
     /// - returns: the time constant value
-    public static func timeConstant(alpha: Float, sampleDuration: Float) -> Float {
-        sampleDuration / alpha
+    public static func timeConstant(alpha: Float, sampleRate: Float) -> Float {
+        1.0 / (sampleRate * alpha)
     }
     
     /// Compute the alpha value from time constant value for a given sample rate
     /// - parameter time constant: what it says
     /// - parameter sampleDuration: same
     /// - returns: the alpha value
-    public static func alpha(timeConstant: Float, sampleDuration: Float) -> Float {
-        sampleDuration / timeConstant
+    public static func alpha(timeConstant: Float, sampleRate: Float) -> Float {
+        1.0 / (sampleRate * timeConstant)
     }
 }

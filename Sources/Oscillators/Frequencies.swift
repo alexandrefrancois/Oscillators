@@ -29,17 +29,6 @@ fileprivate let speedOfSound: Float = 346.0
 
 /// A class to manipulate and compute frequencies in the digital world
 public struct Frequencies {
-    
-    /// Compute the closest frequency to the target frequency that corresponds to a wavelength which is an integer number of samples
-    /// - parameter targetFrequency: what it says
-    /// - parameter sampleDuration: same
-    /// - returns: the frequency
-    public static func closestFrequency(targetFrequency: Float, sampleDuration: Float) -> Float {
-        let maxNumSamplesInPeriod = (1.0 / (sampleDuration * targetFrequency)).rounded()
-        let frequency = 1.0 / (maxNumSamplesInPeriod * sampleDuration)
-        return frequency
-    }
-    
     /// Compute the Doppler velocity from an observed and source frequency.
     /// - parameter observedFrequency: the frequency measured by the observer
     /// - parameter referenceFrequency: the frequency of the sound emitted by the source

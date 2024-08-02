@@ -27,7 +27,7 @@ SOFTWARE.
 
 // Wrapper for the Resonator class
 @interface ResonatorCpp : OscillatorCpp
-- (instancetype)initWithTargetFrequency:(float)frequency sampleDuration:(float)sampleDuration alpha:(float)alpha;
+- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate alpha:(float)alpha;
 - (float)alpha;
 - (void)setAlpha:(float)alpha;
 - (float)omAlpha;
@@ -44,5 +44,4 @@ NS_SWIFT_NAME(update(sample:));
 NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
 - (void)updateAndTrack:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
 NS_SWIFT_NAME(updateAndTrack(frameData:frameLength:sampleStride:));
-- (float)waveform2Value:(int)index;
 @end

@@ -29,17 +29,6 @@ fileprivate let epsilon : Float = 0.000001
 
 final class FrequenciesTests: XCTestCase {
     
-    func testClosestFrequency() throws {
-        let samplingRate : Int = 44100
-        let sampleDuration : Float = 1.0 / Float(samplingRate)
-        let frequency1 = Frequencies.closestFrequency(targetFrequency: 441.0, sampleDuration: sampleDuration)
-        XCTAssertEqual(frequency1, 441.0, accuracy: epsilon)
-        XCTAssertEqual(Int(1.0 / (frequency1 * sampleDuration)), 100)
-        let frequency2 = Frequencies.closestFrequency(targetFrequency: 440.0, sampleDuration: sampleDuration)
-        XCTAssertEqual(frequency2, 441.0, accuracy: epsilon)
-        XCTAssertEqual(Int(1.0 / (frequency2 * sampleDuration)), 100)
-    }
-
     func testDopplerVelocity() throws {
         let v440441 = Frequencies.dopplerVelocity(observedFrequency: 440, referenceFrequency: 441)
         XCTAssertEqual(v440441, -0.78458047, accuracy: epsilon)

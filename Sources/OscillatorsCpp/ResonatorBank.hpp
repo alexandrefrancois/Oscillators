@@ -41,7 +41,7 @@ namespace oscillators_cpp {
 
 class ResonatorBank {
 private:
-    float m_sampleDuration;
+    float m_sampleRate;
     std::vector<std::unique_ptr<Resonator> > m_resonators;
 
 #ifndef STD_CONCURRENCY
@@ -53,12 +53,12 @@ public:
     ResonatorBank & operator=(const ResonatorBank&) = delete;
     ResonatorBank(const ResonatorBank&) = delete;
 
-    ResonatorBank(size_t numResonators, float* targetFrequencies, float sampleDuration, float* alphas);
+    ResonatorBank(size_t numResonators, float* frequencies, float sampleRate, float* alphas);
 #ifndef STD_CONCURRENCY
     ~ResonatorBank();
 #endif
 
-    float sampleDuration() { return m_sampleDuration; }
+    float sampleRate() { return m_sampleRate; }
     size_t numResonators() { return m_resonators.size(); }
     float frequencyValue(size_t index);
     float alphaValue(size_t index);

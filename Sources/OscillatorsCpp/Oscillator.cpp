@@ -30,27 +30,26 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-Oscillator::Oscillator(float targetFrequency, float sampleDuration) : m_sampleDuration(sampleDuration), m_amplitude(0.0), m_phaseIdx(0) {
-    int numSamplesInPeriod = static_cast<int>(std::round((1.0 / (sampleDuration * targetFrequency))));
-    m_frequency = 1.0 / (numSamplesInPeriod * sampleDuration);
-    m_waveform = std::vector<float>(numSamplesInPeriod, 0);
+Oscillator::Oscillator(float frequency, float sampleRate)
+: m_frequency(frequency), m_sampleRate(sampleRate), m_amplitude(0.0),
+m_Wc(1.0), m_Ws(0.0) {
+    const float omega = twoPi * frequency / sampleRate;
+    m_Oc = cos(omega);
+    m_Os = sin(omega);
+    m_Ocs = m_Oc + m_Os;
 }
 
-void Oscillator::setSineWave() {
-    const float delta = twoPi * m_frequency * m_sampleDuration;
-    const float initialValue = 0.0;
-    const int size = static_cast<int>(m_waveform.size());
-    vDSP_vramp(&initialValue, &delta, &m_waveform[0], 1, size);
-    vvsinf(&m_waveform[0], &m_waveform[0], &size);
+void Oscillator::incrementPhase() {
+    // complex multiplication with 3 real multiplications
+    const float ac = m_Oc * m_Wc;
+    const float bd = m_Os * m_Ws;
+    const float abcd = m_Ocs * (m_Wc + m_Ws);
+    m_Wc = ac - bd;
+    m_Ws = abcd - ac - bd;
 }
 
-void Oscillator::copyWaveform(float *dest, size_t size) {
-    memcpy(dest, &m_waveform[0], std::min(size, m_waveform.size()) * sizeof(float));
-}
-
-float Oscillator::waveformValue(size_t index) const {
-    if (index >= m_waveform.size()) {
-        throw std::out_of_range("Bad index passed to waveformValue()");
-    }
-    return m_waveform[index];
+void Oscillator::stabilize(){
+    const float k = (3.0 - m_Wc*m_Wc - m_Ws*m_Ws) / 2.0;
+    m_Wc *= k;
+    m_Ws *= k;
 }

@@ -23,105 +23,51 @@ SOFTWARE.
 */
 
 import Foundation
-import Accelerate
 
 fileprivate let twoPi = Float.pi * 2.0
 
-public enum WaveShape {
-    case square
-    case triangle
-    case saw
-    case sine
-    case silence
-}
-
 /// Oscillator base class:
-/// an oscillator is characterized by its frequency, amplitude and waveform
-/// whose duration is an integer multiple of the sample duration
+/// an oscillator is characterized by its frequency and amplitude.
+/// Incremental calculations depend on sampling rate.
 public class Oscillator : OscillatorProtocol {
-    public private(set) var sampleDuration: Float
     public private(set) var frequency: Float
-    
     public var amplitude: Float = 0.0
-    
-    public var waveform: [Float] {
-        waveformPtr.map { $0 }
-    }
-    public private(set) var waveformPtr: UnsafeMutableBufferPointer<Float>
-    internal var numSamplesInWaveform: Int {
-        waveformPtr.count
-    }
-    internal var phaseIdx: Int = 0
-    
-    internal var numSamplesInPeriod: Float
-    
-    init(targetFrequency: Float, sampleDuration: Float) { //, accuracy: Float = Frequencies.defaultAccuracy, maxNumPeriods: Int = Frequencies.defaultMaxNumPeriods, maxTotalNumSamples: Int = Frequencies.defaultMaxTotalNumSamples) {
-        self.sampleDuration = sampleDuration
+    public private(set) var sampleRate: Float
 
-        frequency = Frequencies.closestFrequency(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
-        numSamplesInPeriod = 1.0 / (frequency * sampleDuration)
-                
-        let numSamplesInWaveformLocal : Int = Int(numSamplesInPeriod)
-
-        waveformPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numSamplesInWaveformLocal)
-        waveformPtr.initialize(repeating: 0)
+    // Phasor
+    internal var Wc: Float = 1.0
+    internal var Ws: Float = 0.0
+    internal var Oc: Float = 0.0
+    internal var Os: Float = 0.0
+    internal var Ocs: Float = 0.0
         
-//        print("New Oscillator: target frequency: \(targetFrequency), num samples in Period: \(numSamplesInPeriod) -> \(frequency)")
+    init(frequency: Float, sampleRate: Float) {
+        self.sampleRate = sampleRate
+        self.frequency = frequency
+        let omega = twoPi * frequency / sampleRate
+        Oc = cos(omega)
+        Os = sin(omega)
+        Ocs = Oc + Os
+        
+        print("Oscillator init: ", frequency, "Hz / ", sampleRate, "Hz | ", Oc, Os)
+    }
+
+    // Basic 1 position increment
+    internal func incrementPhase() {
+        // complex multiplication with 3 real multiplications
+        let ac = Oc*Wc
+        let bd = Os*Ws
+        let abcd = (Ocs) * (Wc+Ws)
+        Wc = ac - bd
+        Ws = abcd - ac - bd
     }
     
-    deinit {
-        waveformPtr.baseAddress?.deinitialize(count: numSamplesInWaveform)
-        waveformPtr.deallocate()
+    // Stabilize
+    internal func stabilize() {
+        let k = (3.0 - Wc*Wc - Ws*Ws) / 2.0
+        Wc *= k
+        Ws *= k
     }
     
-    public func setWaveform(waveShape: WaveShape) {
-        switch(waveShape) {
-        case .square:
-            setSquareWave()
-        case .triangle:
-            setTriangleWave()
-        case .saw:
-            setSawWave()
-        case .sine:
-            setSineWave()
-        case .silence:
-            setSilence()
-        }
-    }
-    
-    public func setSilence() {
-        vDSP.fill(&waveformPtr, with: 0.0)
-    }
-    
-    public func setSquareWave() {
-        // TODO: this is only correct if numPeriodsInWaveform == 1
-        let halfNumSamplesInPeriod = waveformPtr.count / 2
-        vDSP.fill(&waveformPtr[..<halfNumSamplesInPeriod], with: 1.0)
-        vDSP.fill(&waveformPtr[halfNumSamplesInPeriod...], with: -1.0)
-    }
-    
-    public func setTriangleWave() {
-        // TODO: this is only correct if numPeriodsInWaveform == 1
-        let quarterNumSamplesInPeriod = waveformPtr.count / 4
-        let delta : Float = 1.0 / Float(quarterNumSamplesInPeriod)
-        let threeQuartersNumSamplesInPeriod = 3 * quarterNumSamplesInPeriod
-        vDSP.formRamp(withInitialValue: 0.0, increment: delta, result: &waveformPtr[..<quarterNumSamplesInPeriod])
-        vDSP.formRamp(withInitialValue: 1.0, increment: -delta, result: &waveformPtr[quarterNumSamplesInPeriod..<threeQuartersNumSamplesInPeriod])
-        vDSP.formRamp(withInitialValue: -1.0, increment: delta, result: &waveformPtr[threeQuartersNumSamplesInPeriod...])
-    }
-    
-    public func setSawWave() {
-        // TODO: this is only correct if numPeriodsInWaveform == 1
-        let halfNumSamplesInPeriod = waveformPtr.count / 2
-        let delta : Float = 1.0 / Float(halfNumSamplesInPeriod)
-        vDSP.formRamp(withInitialValue: 0.0, increment: delta, result: &waveformPtr[..<halfNumSamplesInPeriod])
-        vDSP.formRamp(withInitialValue: -1.0, increment: delta, result: &waveformPtr[halfNumSamplesInPeriod...])
-    }
-    
-    public func setSineWave() {
-        let twoPiFrequency : Float = twoPi * frequency
-        let delta : Float = twoPiFrequency * sampleDuration
-        vDSP.formRamp(withInitialValue: 0.0, increment: delta, result: &waveformPtr)
-        vForce.sin(waveformPtr, result: &waveformPtr)
-    }
+    // TODO: support change frequency, increment more than 1 sample position, etc.
 }

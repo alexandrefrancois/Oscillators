@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2023 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -42,8 +42,8 @@ void Resonator::setAlpha(float alpha) {
 
 void Resonator::updateWithSample(float sample) {
     const float alphaSample = m_alpha * sample;
-    m_sin = m_omAlpha * m_sin + alphaSample * m_Ws;
-    m_cos = m_omAlpha * m_cos + alphaSample * m_Wc;
+    m_sin = m_omAlpha * m_sin + alphaSample * m_Zs;
+    m_cos = m_omAlpha * m_cos + alphaSample * m_Zc;
     incrementPhase();
 }
 

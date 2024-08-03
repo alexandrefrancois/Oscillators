@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,8 +32,9 @@ public class Generator : Oscillator, GeneratorProtocol {
     }
     
     public func getNextSample() -> Float {
-        let nextSample = amplitude * Ws;
+        let nextSample = sample;
         incrementPhase()
+        stabilize() // this is overkill - could be done every few 100 samples...
         return nextSample
     }
     
@@ -41,19 +42,21 @@ public class Generator : Oscillator, GeneratorProtocol {
         var samples = [Float]()
         var samplesToGet = numSamples
         while samplesToGet > 0 {
-            samples.append(amplitude * Ws)
+            samples.append(sample)
             samplesToGet -= 1
             incrementPhase()
         }
+        stabilize()
         return samples
     }
     
     public func getNextSamples(samples: inout [Float]) {
         var sampleIdx = 0
         while sampleIdx < samples.count {
-            samples[sampleIdx] = amplitude * Ws
+            samples[sampleIdx] = sample
             sampleIdx += 1
             incrementPhase()
         }
+        stabilize()
     }
 }

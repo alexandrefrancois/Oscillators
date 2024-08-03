@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,11 +29,11 @@ fileprivate let epsilon : Float = 0.000001
 
 final class DynamicsTests: XCTestCase {
     func testTimeConstant() throws {
-        let t = Dynamics.timeConstant(alpha: DynamicsFixtures.defaultAlpha, sampleDuration: AudioFixtures.sampleDuration44100)
+        let t = Dynamics.timeConstant(alpha: DynamicsFixtures.defaultAlpha, sampleRate: AudioFixtures.defaultSampleRate)
         XCTAssertEqual(t, 0.099999994, accuracy: epsilon)
     }
     func testAlpha() throws {
-        let a = Dynamics.alpha(timeConstant: DynamicsFixtures.defaultTimeConstant, sampleDuration: AudioFixtures.sampleDuration44100)
+        let a = Dynamics.alpha(timeConstant: DynamicsFixtures.defaultTimeConstant, sampleRate: AudioFixtures.defaultSampleRate)
         XCTAssertEqual(a, 0.00022675736, accuracy: epsilon)
     }
 

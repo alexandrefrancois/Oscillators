@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +44,10 @@ using namespace oscillators_cpp;
 
 - (float)frequency {
     return self.oscillator->frequency();
+}
+
+- (void)setFrequency:(float)frequency {
+    self.oscillator->setFrequency(frequency);
 }
 
 - (float)amplitude {

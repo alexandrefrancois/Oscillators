@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,46 +28,67 @@ fileprivate let twoPi = Float.pi * 2.0
 
 /// Oscillator base class:
 /// an oscillator is characterized by its frequency and amplitude.
-/// Incremental calculations depend on sampling rate.
+/// Waveform values are computed recursively with a complex phasor.
+/// Incremental calculations depend on frequency and sampling rate.
 public class Oscillator : OscillatorProtocol {
-    public private(set) var frequency: Float
-    public var amplitude: Float = 0.0
-    public private(set) var sampleRate: Float
+    public var frequency: Float {
+        didSet {
+            updateMultiplier()
+        }
+    }
+    public var sampleRate: Float {
+        didSet {
+            updateMultiplier()
+        }
+    }
+    public var amplitude: Float = 1.0
 
-    // Phasor
-    internal var Wc: Float = 1.0
-    internal var Ws: Float = 0.0
-    internal var Oc: Float = 0.0
-    internal var Os: Float = 0.0
-    internal var Ocs: Float = 0.0
-        
+    public var sample : Float {
+        amplitude * Zc
+    }
+    
+    // Phasor variables
+    // Phasor: Z = Zc + i Zs
+    // Multiplier: W = Wc + i Ws
+    internal var Zc : Float = 1.0
+    internal var Zs : Float = 0.0
+    internal var Wc : Float = 0.0
+    internal var Ws : Float = 0.0
+    internal var Wcps : Float = 0.0 // pre-computed Oc + Os
+    
     init(frequency: Float, sampleRate: Float) {
         self.sampleRate = sampleRate
         self.frequency = frequency
-        let omega = twoPi * frequency / sampleRate
-        Oc = cos(omega)
-        Os = sin(omega)
-        Ocs = Oc + Os
-        
-        print("Oscillator init: ", frequency, "Hz / ", sampleRate, "Hz | ", Oc, Os)
+        updateMultiplier()
     }
 
-    // Basic 1 position increment
+    func updateMultiplier() {
+        let omega = twoPi * frequency / sampleRate
+        Wc = cos(omega)
+        Ws = sin(omega)
+        Wcps = Wc + Ws
+    }
+    
+    /// Compute next value of the phasor
+    /// Z <- Z * W
     internal func incrementPhase() {
+        // W <- W * O
         // complex multiplication with 3 real multiplications
-        let ac = Oc*Wc
-        let bd = Os*Ws
-        let abcd = (Ocs) * (Wc+Ws)
-        Wc = ac - bd
-        Ws = abcd - ac - bd
+        let ac = Wc*Zc
+        let bd = Ws*Zs
+        let abcd = (Wcps) * (Zc+Zs)
+        Zc = ac - bd
+        Zs = abcd - ac - bd
     }
     
-    // Stabilize
+    /// Apply re-normalization correction to compensate for
+    /// numerical drift, use Taylor expansion around 1 to approximate
+    /// 1/sqrt(x) to reduce computational cost.
+    /// This can be applied every few hundred (?) samples
     internal func stabilize() {
-        let k = (3.0 - Wc*Wc - Ws*Ws) / 2.0
-        Wc *= k
-        Ws *= k
+        let k = (3.0 - Zc*Zc - Zs*Zs) / 2.0
+        Zc *= k
+        Zs *= k
     }
     
-    // TODO: support change frequency, increment more than 1 sample position, etc.
 }

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2023 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,8 @@ SOFTWARE.
 
 import XCTest
 @testable import Oscillators
+
+fileprivate let epsilon : Float = 0.000001
 
 final class ResonatorTests: XCTestCase {
     
@@ -48,13 +50,13 @@ final class ResonatorTests: XCTestCase {
     
     func testUpdateWithSample() throws {
         let resonator = Resonator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: 1.0)
+        let expectedC = resonator.Zc
+        let expectedS = resonator.Zs
         resonator.updateWithSample(1.0)
-//        XCTAssertEqual(resonator.s, resonator.Ws)
-//        XCTAssertEqual(resonator.c, resonator.Wc)
+        XCTAssertEqual(resonator.c, expectedC, accuracy: epsilon)
+        XCTAssertEqual(resonator.s, expectedS, accuracy: epsilon)
         resonator.updateWithSample(0.0)
         XCTAssertEqual(resonator.s, 0.0)
         XCTAssertEqual(resonator.c, 0.0)
     }
-  
-    // Suggestion: test frequency tracking and phase?
 }

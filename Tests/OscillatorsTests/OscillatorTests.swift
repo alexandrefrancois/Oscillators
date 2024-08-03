@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,30 +31,60 @@ fileprivate let twoPi = Float.pi * 2.0
 final class OscillatorTests: XCTestCase {
     
     func testConstructor() throws {
-        let oscillator = Oscillator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate)
+        let frequency = Float(440.0)
+        let sampleRate = AudioFixtures.defaultSampleRate
+        
+        let oscillator = Oscillator(frequency: frequency, sampleRate: sampleRate)
         
         XCTAssertEqual(oscillator.sampleRate, AudioFixtures.defaultSampleRate)
-        XCTAssertEqual(oscillator.frequency, 440.0)
-        XCTAssertEqual(oscillator.amplitude, 0)
+        XCTAssertEqual(oscillator.frequency, frequency)
+        XCTAssertEqual(oscillator.sampleRate, sampleRate)
+        XCTAssertEqual(oscillator.amplitude, 1.0)
+    }
+    
+    func testUpdateMultiplier() throws {
+        let frequency = Float(440.0)
+        let sampleRate = AudioFixtures.defaultSampleRate
+
+        let oscillator = Oscillator(frequency: frequency, sampleRate: sampleRate)
+
+        // initial values
+        var omega = twoPi * frequency / sampleRate
+        XCTAssertEqual(oscillator.Wc, cos(omega))
+        XCTAssertEqual(oscillator.Ws, sin(omega))
+        XCTAssertEqual(oscillator.Wcps, cos(omega)+sin(omega))
+        
+        // change frequency
+        oscillator.frequency = Float(880.0)
+        omega = twoPi * oscillator.frequency / oscillator.sampleRate
+        XCTAssertEqual(oscillator.Wc, cos(omega))
+        XCTAssertEqual(oscillator.Ws, sin(omega))
+        XCTAssertEqual(oscillator.Wcps, cos(omega)+sin(omega))
+
+        // change sampleRate
+        oscillator.sampleRate = Float(48000.0)
+        omega = twoPi * oscillator.frequency / oscillator.sampleRate
+        XCTAssertEqual(oscillator.Wc, cos(omega))
+        XCTAssertEqual(oscillator.Ws, sin(omega))
+        XCTAssertEqual(oscillator.Wcps, cos(omega)+sin(omega))
+
     }
     
     func testPhasor() throws {
         let oscillator = Oscillator(frequency: 441.0, sampleRate: AudioFixtures.defaultSampleRate)
         let twoPiFrequency : Float = twoPi * oscillator.frequency
-        let alpha : Float = twoPiFrequency // 600000 * twoPiFrequency / oscillator.sampleRate
-        for i in 0..<441000{
-//            let alpha = Float(i) * delta
-//            XCTAssertEqual(oscillator.Wc, cos(alpha), accuracy: epsilon, "\(i): \(oscillator.Wc - cos(alpha))")
-//            XCTAssertEqual(oscillator.Ws, sin(alpha), accuracy: epsilon, "\(i): \(oscillator.Ws - sin(alpha))")
+        
+        // This checks that the phasor's frequency does not drift after a number of iterations
+        // that corresponds to a multiple of the number of samples in the oscillator's period
+        let alpha : Float = twoPiFrequency
+        for i in 0..<4410000 {
             oscillator.incrementPhase()
-            if i % 512 == 0 {
+            if i % 1024 == 0 {
                 oscillator.stabilize()
             }
         }
-        
-        // TODO: not sure where the error is larger - find a better test!
-        XCTAssertEqual(oscillator.Wc, cos(alpha), accuracy: epsilon, "\(oscillator.Wc - cos(alpha))")
-        XCTAssertEqual(oscillator.Ws, sin(alpha), accuracy: epsilon, "\(oscillator.Ws - sin(alpha))")
+        XCTAssertEqual(oscillator.Zc, cos(alpha), accuracy: epsilon, "\(oscillator.Zc - cos(alpha))")
+        XCTAssertEqual(oscillator.Zs, sin(alpha), accuracy: epsilon, "\(oscillator.Zs - sin(alpha))")
     }
 
 }

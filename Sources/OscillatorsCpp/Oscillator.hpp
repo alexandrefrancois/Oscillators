@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -40,20 +40,23 @@ protected:
     float m_sampleRate;
     
     // Phasor
+    float m_Zc;
+    float m_Zs;
     float m_Wc;
     float m_Ws;
-    float m_Oc;
-    float m_Os;
-    float m_Ocs;
- 
+    float m_Wcps;
+
+    void updateMultiplier();
+
 public:
     Oscillator & operator=(const Oscillator&) = delete;
     Oscillator(const Oscillator&) = delete;
     virtual ~Oscillator() = default;
     
     Oscillator(float frequency, float sampleRate);
-        
+
     float frequency() const { return m_frequency; }
+    void setFrequency(float frequency);
     float amplitude() const { return m_amplitude; }
     float sampleRate() const { return m_sampleRate; }
 

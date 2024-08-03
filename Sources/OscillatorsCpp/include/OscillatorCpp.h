@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ SOFTWARE.
 @interface OscillatorCpp : NSObject
 - (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate;
 - (float)frequency;
+- (void)setFrequency:(float)frequency;
 - (float)sampleRate;
 - (float)amplitude;
 

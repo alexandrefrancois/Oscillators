@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2023 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -57,8 +57,6 @@ final class ResonatorCppTests: XCTestCase {
                                      alpha: 1.0);
         guard let resonator = resonator else { return XCTAssert(false, "ResonatorCpp could not be instantiated") }
         resonator.updateWithSample(value: 1.0)
-//        XCTAssertEqual(resonator.s(), resonator.waveformValue(0))
-//        XCTAssertEqual(resonator.c(), resonator.waveform2Value(0))
         resonator.updateWithSample(value: 0.0)
         XCTAssertEqual(resonator.s(), 0.0)
         XCTAssertEqual(resonator.c(), 0.0)

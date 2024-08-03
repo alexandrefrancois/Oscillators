@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2023 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -56,14 +56,15 @@ public class Resonator : Oscillator, ResonatorProtocol {
     
     func updateWithSample(_ sample: Float) {
         let alphaSample : Float = alpha * sample
-        s = omAlpha * s + alphaSample * Ws
-        c = omAlpha * c + alphaSample * Wc
+        s = omAlpha * s + alphaSample * Zs
+        c = omAlpha * c + alphaSample * Zc
         incrementPhase()
     }
     
     public func update(sample: Float) {
         updateWithSample(sample)
         amplitude = sqrt(s*s + c*c)
+        stabilize() // this is overkill - could be done every few 100 samples...
    }
     
     public func update(samples: [Float]) {
@@ -71,6 +72,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
             updateWithSample(sample)
         }
         amplitude = sqrt(s*s + c*c)
+        stabilize()
     }
 
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
@@ -78,6 +80,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
             updateWithSample(frameData[sampleIndex])
         }
         amplitude = sqrt(s*s + c*c)
+        stabilize()
     }
     
     public func updateAndTrack(sample: Float) {
@@ -88,6 +91,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
         } else {
             trackedFrequency = frequency
         }
+        stabilize() // this is overkill - could be done every few 100 samples...
     }
     
     public func updateAndTrack(samples: [Float]) {
@@ -100,6 +104,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
         } else {
             trackedFrequency = frequency
         }
+        stabilize()
     }
 
     public func updateAndTrack(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
@@ -112,6 +117,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
         } else {
             trackedFrequency = frequency
         }
+        stabilize()
     }
     
     func updateTrackedFrequency(numSamples: Int) {

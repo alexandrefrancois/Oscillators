@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,14 +30,15 @@ fileprivate let speedOfSound: Float = 346.0
 /// A class to manipulate and compute frequencies in the digital world
 public struct Frequencies {
     
-    /// Compute the closest frequency to the target frequency that corresponds to a wavelength which is an integer number of samples
-    /// - parameter targetFrequency: what it says
-    /// - parameter sampleDuration: same
-    /// - returns: the frequency
-    public static func closestFrequency(targetFrequency: Float, sampleDuration: Float) -> Float {
-        let maxNumSamplesInPeriod = (1.0 / (sampleDuration * targetFrequency)).rounded()
-        let frequency = 1.0 / (maxNumSamplesInPeriod * sampleDuration)
-        return frequency
+    /// Compute and return an array of equal temperament picth frequencies
+    /// between (and including) the notes at the 2 indices provided.
+    /// In equal temperament, an interval of 1 semitone has a frequency ratio of 2^(1/12) (approx. 1.05946)
+    /// the tuning is set for A4 which, if index 0 denotes C0, is index 57.
+    /// Typical piano range from A0=9 (27.500 Hz) to C8=96 (4186.009 Hz)
+    public static func musicalPitchFrequencies(from: Int, to: Int, tuning: Float = 440.0) -> [Float] {
+        return (from...to).map { idx in
+            tuning * powf(2.0, Float(idx - 57) / 12.0)
+        }
     }
     
     /// Compute the Doppler velocity from an observed and source frequency.
@@ -47,5 +48,5 @@ public struct Frequencies {
     public static func dopplerVelocity(observedFrequency: Float, referenceFrequency: Float) -> Float {
         guard referenceFrequency > 0 else { return 0 }
         return speedOfSound * (observedFrequency - referenceFrequency) / referenceFrequency
-    }    
+    }
 }

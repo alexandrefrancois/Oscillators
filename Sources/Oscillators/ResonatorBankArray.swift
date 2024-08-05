@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2023 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,29 +32,29 @@ public class ResonatorBankArray {
     public var numResonators: Int {
         resonators.count
     }
-    public private(set) var maxima: [Float]
+    public private(set) var amplitudes: [Float]
 
-    public init(targetFrequencies: [Float], sampleDuration: Float, alpha: Float) {
+    public init(frequencies: [Float], sampleRate: Float, alpha: Float) {
         // initialize from passed frequencies
-        maxima = [Float](repeating: 0, count: targetFrequencies.count)
+        amplitudes = [Float](repeating: 0, count: frequencies.count)
         
 //        print("Number of resonators to create: \(targetFrequencies.count)")
         
         // setup an oscillator for each frequency
-        for frequency in targetFrequencies {
-            resonators.append(Resonator(targetFrequency: frequency, sampleDuration: sampleDuration, alpha: alpha))
+        for frequency in frequencies {
+            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alpha))
         }
     }
     
-    public init(alphas: [Float], sampleDuration: Float, targetFrequency: Float) {
+    public init(alphas: [Float], sampleRate: Float, frequency: Float) {
         // initialize from passed frequencies
-        maxima = [Float](repeating: 0, count: alphas.count)
+        amplitudes = [Float](repeating: 0, count: alphas.count)
         
 //        print("Number of resonators to create: \(alphas.count)")
         
         // setup an oscillator for each alpha
         for alpha in alphas {
-            resonators.append(Resonator(targetFrequency: targetFrequency, sampleDuration: sampleDuration, alpha: alpha))
+            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alpha))
         }
     }
 
@@ -74,7 +74,7 @@ public class ResonatorBankArray {
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         for (index, resonator) in resonators.enumerated() {
             resonator.update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
-            self.maxima[index] = resonator.amplitude
+            self.amplitudes[index] = resonator.amplitude
         }
     }
     
@@ -99,7 +99,7 @@ public class ResonatorBankArray {
                 // collect all results when ready
                 for await tuples in group {
                     for tuple in tuples {
-                        self.maxima[tuple.0] = tuple.1
+                        self.amplitudes[tuple.0] = tuple.1
                     }
                 }
             }

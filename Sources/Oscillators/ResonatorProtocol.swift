@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ SOFTWARE.
 public protocol ResonatorProtocol {
     var alpha : Float { get set }
     var timeConstant : Float { get }
-    var trackedFrequency : Float { get }
+    var frequency : Float { get }
     
     /// This function performs an update of the resonator amplitude from a single sample
     func update(sample: Float)

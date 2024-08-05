@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2023 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -33,9 +33,9 @@ using namespace oscillators_cpp;
 
 @implementation ResonatorCpp
 
-- (instancetype)initWithTargetFrequency:(float)frequency sampleDuration:(float)sampleDuration alpha:(float)alpha {
+- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate alpha:(float)alpha {
     if (self = [super init]) {
-        self.oscillator = new Resonator(frequency, sampleDuration, alpha);
+        self.oscillator = new Resonator(frequency, sampleRate, alpha);
     }
     return self;
 }
@@ -90,10 +90,6 @@ using namespace oscillators_cpp;
 
 - (void)updateAndTrack:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
     self.resonator->updateAndTrack(frame, frameLength, sampleStride);
-}
-
-- (float)waveform2Value:(int)index {
-    return self.resonator->waveform2Value(index);
 }
 
 @end

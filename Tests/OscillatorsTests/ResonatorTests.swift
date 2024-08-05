@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2023 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,11 +25,13 @@ SOFTWARE.
 import XCTest
 @testable import Oscillators
 
+fileprivate let epsilon : Float = 0.000001
+
 final class ResonatorTests: XCTestCase {
     
     func testConstructor() throws {
-        let resonator = Resonator(targetFrequency: 440.0,
-                                  sampleDuration: AudioFixtures.sampleDuration44100,
+        let resonator = Resonator(frequency: 440.0,
+                                  sampleRate: AudioFixtures.defaultSampleRate,
                                   alpha: DynamicsFixtures.defaultAlpha)
         
         XCTAssertEqual(resonator.alpha, DynamicsFixtures.defaultAlpha)
@@ -37,7 +39,7 @@ final class ResonatorTests: XCTestCase {
     
     func testSetAlpha() throws {
         var alpha: Float = 0.99
-        let resonator = Resonator(targetFrequency: 440.0, sampleDuration: AudioFixtures.sampleDuration44100, alpha: alpha)
+        let resonator = Resonator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: alpha)
         XCTAssertEqual(resonator.alpha, alpha)
         XCTAssertEqual(resonator.omAlpha, 1.0-alpha)
 
@@ -47,14 +49,14 @@ final class ResonatorTests: XCTestCase {
     }
     
     func testUpdateWithSample() throws {
-        let resonator = Resonator(targetFrequency: 440.0, sampleDuration: AudioFixtures.sampleDuration44100, alpha: 1.0)
+        let resonator = Resonator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: 1.0)
+        let expectedC = resonator.Zc
+        let expectedS = resonator.Zs
         resonator.updateWithSample(1.0)
-        XCTAssertEqual(resonator.s, resonator.waveformPtr[0])
-        XCTAssertEqual(resonator.c, resonator.waveform2Ptr[0])
+        XCTAssertEqual(resonator.c, expectedC, accuracy: epsilon)
+        XCTAssertEqual(resonator.s, expectedS, accuracy: epsilon)
         resonator.updateWithSample(0.0)
         XCTAssertEqual(resonator.s, 0.0)
         XCTAssertEqual(resonator.c, 0.0)
     }
-  
-    // Suggestion: test frequency tracking and phase?
 }

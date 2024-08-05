@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,18 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/// An oscillator is characterized by its frequency, amplitude and waveform
-/// whose duration is an integer multiple of the sample duration
+/// An oscillator is characterized by its frequency and amplitude
+/// Phase calculations depend on sampling rate
 public protocol OscillatorProtocol {
-    var sampleDuration : Float { get }
-    var frequency : Float { get }
-    var amplitude : Float { get }
-    var waveform : [Float] { get }
-
-    // Wave shapes
-    func setSquareWave()
-    func setTriangleWave()
-    func setSawWave()
-    func setSineWave()
-    func setSilence()
+    var frequency : Float { get set }
+    var amplitude : Float { get set }
+    var sampleRate : Float { get set }
+    var sample : Float { get }
 }

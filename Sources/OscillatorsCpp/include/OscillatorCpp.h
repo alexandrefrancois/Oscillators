@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,10 @@ SOFTWARE.
 
 // Wrapper for the base Oscillator class
 @interface OscillatorCpp : NSObject
-- (instancetype)initWithTargetFrequency:(float)frequency sampleDuration:(float)sampleDuration;
+- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate;
 - (float)frequency;
-- (float)sampleDuration;
+- (void)setFrequency:(float)frequency;
+- (float)sampleRate;
 - (float)amplitude;
-- (int)numSamplesInPeriod;
-- (void)setSineWave;
-- (void)copyWaveform:(float*)dest size:(int)size; // this is a bit ugly but avoids memory management issues
-- (float)waveformValue:(int)index;
+
 @end

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,17 +29,22 @@ fileprivate let epsilon : Float = 0.000001
 
 final class FrequenciesTests: XCTestCase {
     
-    func testClosestFrequency() throws {
-        let samplingRate : Int = 44100
-        let sampleDuration : Float = 1.0 / Float(samplingRate)
-        let frequency1 = Frequencies.closestFrequency(targetFrequency: 441.0, sampleDuration: sampleDuration)
-        XCTAssertEqual(frequency1, 441.0, accuracy: epsilon)
-        XCTAssertEqual(Int(1.0 / (frequency1 * sampleDuration)), 100)
-        let frequency2 = Frequencies.closestFrequency(targetFrequency: 440.0, sampleDuration: sampleDuration)
-        XCTAssertEqual(frequency2, 441.0, accuracy: epsilon)
-        XCTAssertEqual(Int(1.0 / (frequency2 * sampleDuration)), 100)
+    func testMusicalPitchFrequencies() throws {
+        let frequencies440 = Frequencies.musicalPitchFrequencies(from: 0, to: 116)
+        XCTAssertEqual(frequencies440[0], 16.3515968, accuracy: epsilon)
+        XCTAssertEqual(frequencies440[9], 27.5, accuracy: epsilon)
+        XCTAssertEqual(frequencies440[57], 440.0, accuracy: epsilon)
+        XCTAssertEqual(frequencies440[96], 4186.00879, accuracy: epsilon)
+        XCTAssertEqual(frequencies440[116], 13289.748, accuracy: epsilon)
+        
+        let frequencies441 = Frequencies.musicalPitchFrequencies(from: 0, to: 116, tuning: 441.0)
+        XCTAssertEqual(frequencies441[0], 16.38876, accuracy: epsilon)
+        XCTAssertEqual(frequencies441[9], 27.5625, accuracy: epsilon)
+        XCTAssertEqual(frequencies441[57], 441.0, accuracy: epsilon)
+        XCTAssertEqual(frequencies441[96], 4195.5225, accuracy: epsilon)
+        XCTAssertEqual(frequencies441[116], 13319.952, accuracy: epsilon)
     }
-
+    
     func testDopplerVelocity() throws {
         let v440441 = Frequencies.dopplerVelocity(observedFrequency: 440, referenceFrequency: 441)
         XCTAssertEqual(v440441, -0.78458047, accuracy: epsilon)

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,33 +32,36 @@ namespace oscillators_cpp {
 constexpr float PI = 3.14159274101257324219; // PI
 constexpr float twoPi = 2.0 * PI;
 
-constexpr float trackFrequencyThreshold = 0.001;
-
 // Base oscillator class
 class Oscillator {
 protected:
-    float m_frequency;    
-    float m_sampleDuration;
+    float m_frequency;
     float m_amplitude;
-    std::vector<float> m_waveform;
-    size_t m_phaseIdx;
+    float m_sampleRate;
     
+    // Phasor
+    float m_Zc;
+    float m_Zs;
+    float m_Wc;
+    float m_Ws;
+    float m_Wcps;
+
+    void updateMultiplier();
+
 public:
     Oscillator & operator=(const Oscillator&) = delete;
     Oscillator(const Oscillator&) = delete;
     virtual ~Oscillator() = default;
     
-    Oscillator(float targetFrequency, float sampleDuration);
-        
+    Oscillator(float frequency, float sampleRate);
+
     float frequency() const { return m_frequency; }
-    float sampleDuration() const { return m_sampleDuration; }
+    void setFrequency(float frequency);
     float amplitude() const { return m_amplitude; }
-    size_t numSamplesInPeriod() const { return m_waveform.size(); }
-    
-    void setSineWave();
-    
-    void copyWaveform(float *dest, size_t size);
-    float waveformValue(size_t index) const;
+    float sampleRate() const { return m_sampleRate; }
+
+    void incrementPhase();
+    void stabilize();
 };
 
 } // oscillators_cpp

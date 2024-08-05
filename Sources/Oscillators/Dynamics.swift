@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,15 +31,15 @@ public struct Dynamics {
     /// - parameter alpha: what it says
     /// - parameter sampleDuration: same
     /// - returns: the time constant value
-    public static func timeConstant(alpha: Float, sampleDuration: Float) -> Float {
-        sampleDuration / alpha
+    public static func timeConstant(alpha: Float, sampleRate: Float) -> Float {
+        1.0 / (sampleRate * alpha)
     }
     
     /// Compute the alpha value from time constant value for a given sample rate
     /// - parameter time constant: what it says
     /// - parameter sampleDuration: same
     /// - returns: the alpha value
-    public static func alpha(timeConstant: Float, sampleDuration: Float) -> Float {
-        sampleDuration / timeConstant
+    public static func alpha(timeConstant: Float, sampleRate: Float) -> Float {
+        1.0 / (sampleRate * timeConstant)
     }
 }

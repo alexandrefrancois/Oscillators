@@ -2,7 +2,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,27 +30,37 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-Oscillator::Oscillator(float targetFrequency, float sampleDuration) : m_sampleDuration(sampleDuration), m_amplitude(0.0), m_phaseIdx(0) {
-    int numSamplesInPeriod = static_cast<int>(std::round((1.0 / (sampleDuration * targetFrequency))));
-    m_frequency = 1.0 / (numSamplesInPeriod * sampleDuration);
-    m_waveform = std::vector<float>(numSamplesInPeriod, 0);
+Oscillator::Oscillator(float frequency, float sampleRate)
+: m_frequency(frequency), m_sampleRate(sampleRate), m_amplitude(0.0),
+m_Zc(1.0), m_Zs(0.0) {
+    updateMultiplier();
 }
 
-void Oscillator::setSineWave() {
-    const float delta = twoPi * m_frequency * m_sampleDuration;
-    const float initialValue = 0.0;
-    const int size = static_cast<int>(m_waveform.size());
-    vDSP_vramp(&initialValue, &delta, &m_waveform[0], 1, size);
-    vvsinf(&m_waveform[0], &m_waveform[0], &size);
+void Oscillator::updateMultiplier() {
+    const float omega = twoPi * m_frequency / m_sampleRate;
+    m_Wc = cos(omega);
+    m_Ws = sin(omega);
+    m_Wcps = m_Wc + m_Ws;
 }
 
-void Oscillator::copyWaveform(float *dest, size_t size) {
-    memcpy(dest, &m_waveform[0], std::min(size, m_waveform.size()) * sizeof(float));
+void Oscillator::setFrequency(float frequency) {
+    m_frequency = frequency;
+    updateMultiplier();
 }
 
-float Oscillator::waveformValue(size_t index) const {
-    if (index >= m_waveform.size()) {
-        throw std::out_of_range("Bad index passed to waveformValue()");
-    }
-    return m_waveform[index];
+void Oscillator::incrementPhase() {
+    // complex multiplication with 3 real multiplications
+    const float ac = m_Wc * m_Zc;
+    const float bd = m_Ws * m_Zs;
+    const float abcd = m_Wcps * (m_Zc + m_Zs);
+    m_Zc = ac - bd;
+    m_Zs = abcd - ac - bd;
+}
+
+void Oscillator::stabilize(){
+    // approximation for 1 / sqrt(x) around 1 (Taylor expansion)
+    // sqrt(m_Zc*m_Zc + m_Zs*m_Zs) should be 1
+    const float k = (3.0 - m_Zc*m_Zc - m_Zs*m_Zs) / 2.0;
+    m_Zc *= k;
+    m_Zs *= k;
 }

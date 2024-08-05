@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2023 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,8 @@ SOFTWARE.
 
 // Wrapper for the ResonatorBank class
 @interface ResonatorBankCpp : NSObject
-- (instancetype)initWithNumResonators:(int)numResonators targetFrequencies:(float*)targetFrequencies sampleDuration:(float)sampleDuration alphas:(float*)alphas;
-- (float)sampleDuration;
+- (instancetype)initWithNumResonators:(int)numResonators frequencies:(float*)frequencies sampleRate:(float)sampleRate alphas:(float*)alphas;
+- (float)sampleRate;
 - (int)numResonators;
 - (float)frequencyValue:(int)index;
 - (float)alphaValue:(int)index;

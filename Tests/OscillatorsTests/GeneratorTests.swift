@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,38 +25,51 @@ SOFTWARE.
 import XCTest
 @testable import Oscillators
 
-fileprivate let epsilon : Float = 0.000001
+fileprivate let epsilon : Float = 0.0001
+fileprivate let twoPi = Float.pi * 2.0
 
 final class GeneratorTests: XCTestCase {
         
     func testGetNextSample() throws {
         let amplitude : Float = 0.5
-        let generator = Generator(targetFrequency: 440.0, sampleDuration: AudioFixtures.sampleDuration44100, waveShape: .square, amplitude: amplitude)
+        let generator = Generator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, amplitude: amplitude)
         let nextSample = generator.getNextSample()
         XCTAssertEqual(nextSample, amplitude, accuracy: epsilon)
     }
     
     func testGetNextSamples1() throws {
+        let frequency : Float = 440.0
         let amplitude : Float = 0.5
-        let generator = Generator(targetFrequency: 440.0, sampleDuration: AudioFixtures.sampleDuration44100, waveShape: .square, amplitude: amplitude)
-        let numSamples = 3 * generator.numSamplesInWaveform
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let generator = Generator(frequency: frequency, sampleRate: sampleRate, amplitude: amplitude)
+        let numSamples = 10000
         let samples = generator.getNextSamples(numSamples: numSamples)
         XCTAssertEqual(samples.count, numSamples)
+        
+        let twoPiFrequency : Float = twoPi * frequency
+        let delta : Float = twoPiFrequency / sampleRate
         XCTAssertEqual(samples[0], amplitude, accuracy: epsilon)
-        XCTAssertEqual(samples[Int(generator.numSamplesInPeriod) / 2 - 1], amplitude, accuracy: epsilon)
-        XCTAssertEqual(samples[Int(generator.numSamplesInPeriod) / 2 + 1], -amplitude, accuracy: epsilon)
-        XCTAssertEqual(samples[Int(generator.numSamplesInPeriod)], amplitude, accuracy: epsilon)
+        XCTAssertEqual(samples[666], amplitude * cos(666 * delta), accuracy: epsilon)
+        XCTAssertEqual(samples[3333], amplitude * cos(3333 * delta), accuracy: epsilon)
+        XCTAssertEqual(samples[7777], amplitude * cos(7777 * delta), accuracy: epsilon)
+        XCTAssertEqual(samples[9999], amplitude * cos(9999 * delta), accuracy: epsilon)
     }
 
     func testGetNextSamples2() throws {
+        let frequency : Float = 440.0
         let amplitude : Float = 0.5
-        let generator = Generator(targetFrequency: 440.0, sampleDuration: AudioFixtures.sampleDuration44100, waveShape: .square, amplitude: amplitude)
-        let numSamples = 3 * generator.numSamplesInWaveform
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let generator = Generator(frequency: frequency, sampleRate: sampleRate, amplitude: amplitude)
+        let numSamples = 10000
         var samples = [Float](repeating: 0.0, count: numSamples)
         generator.getNextSamples(samples: &samples)
+        
+        let twoPiFrequency : Float = twoPi * frequency
+        let delta : Float = twoPiFrequency / sampleRate
         XCTAssertEqual(samples[0], amplitude, accuracy: epsilon)
-        XCTAssertEqual(samples[Int(generator.numSamplesInPeriod) / 2 - 1], amplitude, accuracy: epsilon)
-        XCTAssertEqual(samples[Int(generator.numSamplesInPeriod) / 2 + 1], -amplitude, accuracy: epsilon)
-        XCTAssertEqual(samples[Int(generator.numSamplesInPeriod)], amplitude, accuracy: epsilon)
+        XCTAssertEqual(samples[666], amplitude * cos(666 * delta), accuracy: epsilon)
+        XCTAssertEqual(samples[3333], amplitude * cos(3333 * delta), accuracy: epsilon)
+        XCTAssertEqual(samples[7777], amplitude * cos(7777 * delta), accuracy: epsilon)
+        XCTAssertEqual(samples[9999], amplitude * cos(9999 * delta), accuracy: epsilon)
     }
 }

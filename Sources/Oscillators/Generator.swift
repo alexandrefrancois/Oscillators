@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,15 +26,15 @@ import Foundation
 
 /// An oscillator used to generate a periodic signal
 public class Generator : Oscillator, GeneratorProtocol {
-    public init(targetFrequency: Float, sampleDuration: Float, waveShape: WaveShape, amplitude: Float = 1.0) {
-        super.init(targetFrequency: targetFrequency, sampleDuration: sampleDuration)
-        setWaveform(waveShape: waveShape)
+    public init(frequency: Float, sampleRate: Float, amplitude: Float = 1.0) {
+        super.init(frequency: frequency, sampleRate: sampleRate)
         self.amplitude = amplitude
     }
-
+    
     public func getNextSample() -> Float {
-        let nextSample = amplitude * waveformPtr[phaseIdx];
-        phaseIdx = (phaseIdx + 1) % waveformPtr.count;
+        let nextSample = sample;
+        incrementPhase()
+        stabilize() // this is overkill - could be done every few 100 samples...
         return nextSample
     }
     
@@ -42,19 +42,21 @@ public class Generator : Oscillator, GeneratorProtocol {
         var samples = [Float]()
         var samplesToGet = numSamples
         while samplesToGet > 0 {
-            samples.append(amplitude * waveformPtr[phaseIdx])
+            samples.append(sample)
             samplesToGet -= 1
-            phaseIdx = (phaseIdx + 1) % waveformPtr.count
+            incrementPhase()
         }
+        stabilize()
         return samples
     }
     
     public func getNextSamples(samples: inout [Float]) {
         var sampleIdx = 0
         while sampleIdx < samples.count {
-            samples[sampleIdx] = amplitude * waveformPtr[phaseIdx]
+            samples[sampleIdx] = sample
             sampleIdx += 1
-            phaseIdx = (phaseIdx + 1) % waveformPtr.count
+            incrementPhase()
         }
+        stabilize()
     }
 }

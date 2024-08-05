@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2023 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,8 @@ SOFTWARE.
 
 namespace oscillators_cpp {
 
+constexpr float trackFrequencyThreshold = 0.001;
+
 class Resonator : public Oscillator {
 private:
     float m_alpha;
@@ -42,12 +44,12 @@ private:
     float m_phase;
 
 public:
-    Resonator(float targetFrequency, float sampleDuration, float alpha);
+    Resonator(float frequency, float sampleRate, float alpha);
 
     float alpha() const { return m_alpha; }
     void setAlpha(float alpha);
     float omAlpha() const { return m_omAlpha; }
-    float timeConstant() const { return m_sampleDuration / m_alpha; }
+    float timeConstant() const { return 1.0 / (m_sampleRate * m_alpha); }
     float s() const { return m_sin; }
     float c() const { return m_cos; }
     float phase() const { return m_phase; }
@@ -59,11 +61,8 @@ public:
     void update(const float *frameData, size_t frameLength, size_t sampleStride);
     void updateAndTrack(const float *frameData, size_t frameLength, size_t sampleStride);
 
-    float waveform2Value(size_t index) const;
-
 private:
     void updateTrackedFrequency(size_t numSamples);
-    void setCosineWave();
 };
 
 } // oscillators_cpp

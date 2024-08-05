@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022 Alexandre R. J. Francois
+Copyright (c) 2022-2024 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,9 +31,9 @@ using namespace oscillators_cpp;
 
 @implementation OscillatorCpp
 
-- (instancetype)initWithTargetFrequency:(float)frequency sampleDuration:(float)sampleDuration {
+- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate {
     if (self = [super init]) {
-        self.oscillator = new Oscillator(frequency, sampleDuration);
+        self.oscillator = new Oscillator(frequency, sampleRate);
     }
     return self;
 }
@@ -46,28 +46,16 @@ using namespace oscillators_cpp;
     return self.oscillator->frequency();
 }
 
-- (float)sampleDuration {
-    return self.oscillator->sampleDuration();
+- (void)setFrequency:(float)frequency {
+    self.oscillator->setFrequency(frequency);
 }
 
 - (float)amplitude {
     return self.oscillator->amplitude();
 }
 
-- (int)numSamplesInPeriod {
-    return self.oscillator->numSamplesInPeriod();
-}
-
-- (void)setSineWave {
-    self.oscillator->setSineWave();
-}
-
-- (void)copyWaveform:(float*)dest size: (int)size {
-    self.oscillator->copyWaveform(dest, size);
-}
-
-- (float)waveformValue:(int)index {
-    return self.oscillator->waveformValue(index);
+- (float)sampleRate {
+    return self.oscillator->sampleRate();
 }
 
 @end

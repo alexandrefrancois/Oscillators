@@ -43,13 +43,22 @@ public class ResonatorBankVec {
     public private(set) var amplitudes : [Float]
 
     private var twoNumResonators : Int
+    
+    /// Accumulated resonance values, non-interlaced real (cos) | imaginary (sin) parts
     private var rPtr : UnsafeMutableBufferPointer<Float>
+    /// Vector of complex representation of accumulated resonance values
     private var R : DSPSplitComplex
+    /// Phasors
     private var zPtr : UnsafeMutableBufferPointer<Float>
+    /// Vector of complex representation of phasor values
     private var Z : DSPSplitComplex
+    /// Phasor multipliers
     private var wPtr : UnsafeMutableBufferPointer<Float>
+    /// Vector of complex representation of phasor multiplier values
     private var W : DSPSplitComplex
+    /// Squared magnitudes buffer (ntermediate calculations)
     private var smPtr : UnsafeMutableBufferPointer<Float>
+    /// Reverse square root buffer (intermediate calculations)
     private var rsqrtPtr : UnsafeMutableBufferPointer<Float>
 
     public init(frequencies: [Float], sampleRate: Float, alpha: Float) {
@@ -110,6 +119,7 @@ public class ResonatorBankVec {
         rsqrtPtr.deallocate()
     }
     
+    /// Update all resonators in parallel
     func update(sample: Float) {
         var alphaSample = alpha * sample
         
@@ -129,6 +139,8 @@ public class ResonatorBankVec {
                    1)
      }
     
+    /// Apply norm correction to phasor.
+    /// This can be done every few hundreds (?) of iterations
     func stabilize() {
         vDSP.squareMagnitudes(Z, result: &smPtr)
         // use reciprocal square root
@@ -136,6 +148,9 @@ public class ResonatorBankVec {
         vDSP.multiply(Z, by: rsqrtPtr, result: &Z)
     }
     
+    /// Process a frame of samples.
+    /// Apply stabilization (norm correction) at the end
+    /// Compute amplitudes (phasor magnitudes) at the end
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {

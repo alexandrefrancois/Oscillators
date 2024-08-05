@@ -42,16 +42,16 @@ public class ResonatorBankVec {
     public private(set) var frequencies : [Float] // tuning in Hz
     public private(set) var amplitudes : [Float]
 
-    private var RcPtr : UnsafeMutableBufferPointer<Float>
-    private var RsPtr: UnsafeMutableBufferPointer<Float>
+    private var twoNumResonators : Int
+    private var rPtr : UnsafeMutableBufferPointer<Float>
     private var R : DSPSplitComplex
-    private var ZcPtr : UnsafeMutableBufferPointer<Float>
-    private var ZsPtr : UnsafeMutableBufferPointer<Float>
+    private var zPtr : UnsafeMutableBufferPointer<Float>
     private var Z : DSPSplitComplex
-    private var WcPtr : UnsafeMutableBufferPointer<Float>
-    private var WsPtr : UnsafeMutableBufferPointer<Float>
+    private var wPtr : UnsafeMutableBufferPointer<Float>
     private var W : DSPSplitComplex
-    
+    private var smPtr : UnsafeMutableBufferPointer<Float>
+    private var rsqrtPtr : UnsafeMutableBufferPointer<Float>
+
     public init(frequencies: [Float], sampleRate: Float, alpha: Float) {
         self.alpha = alpha
         self.omAlpha = 1.0 - alpha
@@ -62,83 +62,64 @@ public class ResonatorBankVec {
         self.numResonators = frequencies.count
         amplitudes = [Float](repeating: 0, count: numResonators)
         
+        twoNumResonators = 2 * numResonators
+        
         // setup resonators
-        RcPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
-        RcPtr.initialize(repeating: 0.0)
-        RsPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
-        RsPtr.initialize(repeating: 0.0)
-        R = DSPSplitComplex(realp: RcPtr.baseAddress!,
-                            imagp: RsPtr.baseAddress!)
+        rPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: twoNumResonators)
+        rPtr.initialize(repeating: 0.0)
+        R = DSPSplitComplex(realp: rPtr.baseAddress!,
+                            imagp: rPtr.baseAddress! + numResonators)
 
-        ZcPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
-        ZcPtr.initialize(repeating: 1.0)
-        ZsPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
-        ZsPtr.initialize(repeating: 0.0)
-        Z = DSPSplitComplex(realp: ZcPtr.baseAddress!,
-                            imagp: ZsPtr.baseAddress!)
+        zPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: twoNumResonators)
+        zPtr.initialize(repeating: 0.0)
+        Z = DSPSplitComplex(realp: zPtr.baseAddress!,
+                            imagp: zPtr.baseAddress! + numResonators)
+        var one = Float(1.0)
+        vDSP_vfill(&one, Z.realp, 1, vDSP_Length(numResonators))
 
         let twoPiOverSampleRate = twoPi / sampleRate
-        WcPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
-        WcPtr.initialize(repeating: twoPiOverSampleRate)
-        WsPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
-        WsPtr.initialize(repeating: twoPiOverSampleRate)
-        W = DSPSplitComplex(realp: WcPtr.baseAddress!,
-                            imagp: WsPtr.baseAddress!)
+        wPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: twoNumResonators)
+        wPtr.initialize(repeating: twoPiOverSampleRate)
+        W = DSPSplitComplex(realp: wPtr.baseAddress!,
+                            imagp: wPtr.baseAddress! + numResonators)
         
         // multiply 2 * PI / sampleRate by frequency for each resonator
-        vDSP_vmul(WcPtr.baseAddress!, 1,
+        vDSP_vmul(W.realp, 1,
                   frequencies, 1,
-                  WcPtr.baseAddress!, 1,
+                  W.realp, 1,
                   vDSP_Length(numResonators))
-        vDSP_vmul(WsPtr.baseAddress!, 1,
+        vDSP_vmul(W.imagp, 1,
                   frequencies, 1,
-                  WsPtr.baseAddress!, 1,
+                  W.imagp, 1,
                   vDSP_Length(numResonators))
+        
         // then calculate cos and sin
         var count : Int32 = Int32(numResonators)
-        vvcosf(WcPtr.baseAddress!, WcPtr.baseAddress!, &count)
-        vvsinf(WsPtr.baseAddress!, WsPtr.baseAddress!, &count)
+        vvcosf(W.realp, W.realp, &count)
+        vvsinf(W.imagp, W.imagp, &count)
+        
+        smPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
+        rsqrtPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
     }
     
     deinit {
-        RcPtr.deallocate()
-        RsPtr.deallocate()
-        ZcPtr.deallocate()
-        ZsPtr.deallocate()
-        WcPtr.deallocate()
-        WsPtr.deallocate()
+        rPtr.deallocate()
+        zPtr.deallocate()
+        wPtr.deallocate()
+        smPtr.deallocate()
+        rsqrtPtr.deallocate()
     }
     
     func update(sample: Float) {
         var alphaSample = alpha * sample
         
         // resonator
-        
-//        vDSP_vsmsma(R.realp, 1,
-//                    &omAlpha,
-//                    Z.realp, 1,
-//                    &alphaSample,
-//                    R.realp, 1,
-//                    vDSP_Length(numResonators))
-//        vDSP_vsmsma(R.imagp, 1,
-//                    &omAlpha,
-//                    Z.imagp, 1,
-//                    &alphaSample,
-//                    R.imagp, 1,
-//                    vDSP_Length(numResonators))
-        
-        vDSP_vsmsma(RcPtr.baseAddress!, 1,
+        vDSP_vsmsma(rPtr.baseAddress!, 1,
                     &omAlpha,
-                    ZcPtr.baseAddress!, 1,
+                    zPtr.baseAddress!, 1,
                     &alphaSample,
-                    RcPtr.baseAddress!, 1,
-                    vDSP_Length(numResonators))
-        vDSP_vsmsma(RsPtr.baseAddress!, 1,
-                    &omAlpha,
-                    ZsPtr.baseAddress!, 1,
-                    &alphaSample,
-                    RsPtr.baseAddress!, 1,
-                    vDSP_Length(numResonators))
+                    rPtr.baseAddress!, 1,
+                    vDSP_Length(twoNumResonators))
 
         // phasor
         vDSP_zvmul(&Z, 1,
@@ -149,8 +130,10 @@ public class ResonatorBankVec {
      }
     
     func stabilize() {
+        vDSP.squareMagnitudes(Z, result: &smPtr)
         // use reciprocal square root
-        vDSP.multiply(Z, by: vForce.rsqrt(vDSP.add(multiplication: (ZcPtr, ZcPtr), multiplication: (ZsPtr, ZsPtr))), result: &Z)
+        vForce.rsqrt(smPtr, result: &rsqrtPtr)
+        vDSP.multiply(Z, by: rsqrtPtr, result: &Z)
     }
     
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {

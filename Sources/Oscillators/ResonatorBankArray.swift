@@ -32,11 +32,11 @@ public class ResonatorBankArray {
     public var numResonators: Int {
         resonators.count
     }
-    public private(set) var maxima: [Float]
+    public private(set) var amplitudes: [Float]
 
     public init(frequencies: [Float], sampleRate: Float, alpha: Float) {
         // initialize from passed frequencies
-        maxima = [Float](repeating: 0, count: frequencies.count)
+        amplitudes = [Float](repeating: 0, count: frequencies.count)
         
 //        print("Number of resonators to create: \(targetFrequencies.count)")
         
@@ -48,7 +48,7 @@ public class ResonatorBankArray {
     
     public init(alphas: [Float], sampleRate: Float, frequency: Float) {
         // initialize from passed frequencies
-        maxima = [Float](repeating: 0, count: alphas.count)
+        amplitudes = [Float](repeating: 0, count: alphas.count)
         
 //        print("Number of resonators to create: \(alphas.count)")
         
@@ -74,7 +74,7 @@ public class ResonatorBankArray {
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         for (index, resonator) in resonators.enumerated() {
             resonator.update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
-            self.maxima[index] = resonator.amplitude
+            self.amplitudes[index] = resonator.amplitude
         }
     }
     
@@ -99,7 +99,7 @@ public class ResonatorBankArray {
                 // collect all results when ready
                 for await tuples in group {
                     for tuple in tuples {
-                        self.maxima[tuple.0] = tuple.1
+                        self.amplitudes[tuple.0] = tuple.1
                     }
                 }
             }

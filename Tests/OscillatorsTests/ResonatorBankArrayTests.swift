@@ -64,8 +64,8 @@ final class ResonatorBankArrayTests: XCTestCase {
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)
         resonatorBankArray.update(frameData: frame, frameLength: 1024, sampleStride: 1)
-        let maxima = resonatorBankArray.maxima
-        for value in maxima {
+        let amplitudes = resonatorBankArray.amplitudes
+        for value in amplitudes {
             XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
         }
         frame.deallocate()
@@ -80,17 +80,18 @@ final class ResonatorBankArrayTests: XCTestCase {
                                                      sampleRate: AudioFixtures.defaultSampleRate,
                                                      alpha: DynamicsFixtures.defaultAlpha)
         resonatorBankArray1.updateConcurrent(frameData: frame, frameLength: 1024, sampleStride: 1)
-        let maxima1 = resonatorBankArray1.maxima
-        for value in maxima1 {
+        let amplitudes1 = resonatorBankArray1.amplitudes
+        for value in amplitudes1 {
             XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
         }
+        
         // odd number of oscillators
         let resonatorBankArray2 = ResonatorBankArray(frequencies: [6300.0005, 7350.0005, 8820.0],
                                                      sampleRate: AudioFixtures.defaultSampleRate,
                                                      alpha: DynamicsFixtures.defaultAlpha)
         resonatorBankArray2.updateConcurrent(frameData: frame, frameLength: 1024, sampleStride: 1)
-        let maxima2 = resonatorBankArray2.maxima
-        for value in maxima2 {
+        let amplitudes2 = resonatorBankArray2.amplitudes
+        for value in amplitudes2 {
             XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
         }
 

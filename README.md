@@ -67,12 +67,12 @@ All implementations use the Accelerate framework where relevant.
 
 Resonator banks implement independents resonators typically tuned to various frequencies within a range.
 
-All implementations use the Accelerate framework with unsafe pointers.
+All implementations use the Accelerate framework with unsafe pointers where relevant.
 
 ### Classes
 
 - `ResonatorBankArray`: a bank of independent resonators implemented as instances of the Swift resonator class. The update function for live processing triggers resonator updates in concurrent task groups.
-- `ResonatorBankSingle`: a bank of independent resonators implemented as a single array, resulting in single calls to Accelerate functions across the resonators.
+- `ResonatorBankVec`: a bank of independent resonators implemented as a single array (i.e. vectorized), resulting in single calls to Accelerate functions across the resonators.
 
 ### Concurrency and Update Heuristics
 

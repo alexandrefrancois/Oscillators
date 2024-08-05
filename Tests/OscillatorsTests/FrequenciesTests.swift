@@ -29,6 +29,22 @@ fileprivate let epsilon : Float = 0.000001
 
 final class FrequenciesTests: XCTestCase {
     
+    func testMusicalPitchFrequencies() throws {
+        let frequencies440 = Frequencies.musicalPitchFrequencies(from: 0, to: 116)
+        XCTAssertEqual(frequencies440[0], 16.3515968, accuracy: epsilon)
+        XCTAssertEqual(frequencies440[9], 27.5, accuracy: epsilon)
+        XCTAssertEqual(frequencies440[57], 440.0, accuracy: epsilon)
+        XCTAssertEqual(frequencies440[96], 4186.00879, accuracy: epsilon)
+        XCTAssertEqual(frequencies440[116], 13289.748, accuracy: epsilon)
+        
+        let frequencies441 = Frequencies.musicalPitchFrequencies(from: 0, to: 116, tuning: 441.0)
+        XCTAssertEqual(frequencies441[0], 16.38876, accuracy: epsilon)
+        XCTAssertEqual(frequencies441[9], 27.5625, accuracy: epsilon)
+        XCTAssertEqual(frequencies441[57], 441.0, accuracy: epsilon)
+        XCTAssertEqual(frequencies441[96], 4195.5225, accuracy: epsilon)
+        XCTAssertEqual(frequencies441[116], 13319.952, accuracy: epsilon)
+    }
+    
     func testDopplerVelocity() throws {
         let v440441 = Frequencies.dopplerVelocity(observedFrequency: 440, referenceFrequency: 441)
         XCTAssertEqual(v440441, -0.78458047, accuracy: epsilon)

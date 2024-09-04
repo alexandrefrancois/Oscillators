@@ -41,6 +41,27 @@ public struct Frequencies {
         }
     }
     
+    /// Compute and return an array of frequencies of the provided size,
+    /// in which the frequencies follow a log uniform distribution
+    /// between (and including) the start and end frequencies.
+    public static func logUniformFrequencies(fStart: Float, fEnd: Float, numF: Int = 1) -> [Float] {
+        if fEnd == fStart { // numF should only be 1
+            return [fStart]
+        }
+        guard numF >= 2 else { return [] }
+        
+        var freqs = [fStart]
+        let logStart: Float = log(fStart)
+        let logEnd = log(fEnd)
+        let logStep: Float = (logEnd - logStart) / (Float(numF) - 1)
+        for i in 1..<numF-1 {
+            let f = exp(logStart + Float(i) * logStep)
+            freqs.append(f)
+        }
+        freqs.append(fEnd)
+        return freqs
+    }
+    
     /// Compute the Doppler velocity from an observed and source frequency.
     /// - parameter observedFrequency: the frequency measured by the observer
     /// - parameter referenceFrequency: the frequency of the sound emitted by the source

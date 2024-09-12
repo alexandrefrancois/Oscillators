@@ -82,9 +82,9 @@ Resonator banks implement independents resonators typically tuned to various fre
 - `ResonatorBankVec`: a bank of independent resonators implemented as a single array (i.e. vectorized), resulting in single calls to Accelerate functions across the resonators. The use of unsafe pointers and of SIMD parallelism makes this implementation extremely efficient on most hardware.
 - `ResonatorBankArray`: a bank of independent resonators implemented as instances of the Swift resonator class. The update function for live processing triggers resonator updates in concurrent task groups.
 
-### Concurrency and Update Heuristics
+### Concurrency
 
-The Swift `ResonatorBankArray` class implementes 2 update functions:
+The Swift `ResonatorBankArray` class implements 2 update functions:
 - `update` calls the update function for each resonator sequentially
 - `updateConcurrent` calls update for each resonator concurrently, with update calls grouped in a fixed number of concurrent tasks
 
@@ -98,9 +98,9 @@ The package features C++ version of the Oscillator, Resonator and ResonatorBank 
 - `oscillator_cpp::Resonator`: resonator (same computations as the Swift `Resonator` implementation)
 - `oscillator_cpp::ResonatorBank`: resonator bank as vector of Resonator instances. The update function for live processing triggers resonator updates in sequential or concurrent task groups (using Apple's Grand Central Dispatch).
 
-### Concurrency and Update Heuristics
+### Concurrency
 
-The C++ `oscillator_cpp::ResonatorBank` class by defaults utilizes Apple's Grand Central Dispatch to implement the concurrent update functions `updateConcurrent`.
+The C++ `oscillator_cpp::ResonatorBank` class by defaults utilizes Apple's Grand Central Dispatch to implement the concurrent update function `updateConcurrent`.
 
 The code also provides a sample implementation of the `updateConcurrent` function utilizing `std::async`, which is not used by default.
 

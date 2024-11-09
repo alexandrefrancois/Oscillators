@@ -46,6 +46,8 @@ public class ResonatorBankVec {
     
     /// Accumulated resonance values, non-interlaced real (cos) | imaginary (sin) parts
     private var rPtr : UnsafeMutableBufferPointer<Float>
+    /// Smoothed accumulated resonance values, non-interlaced real (cos) | imaginary (sin) parts
+    private var rrPtr : UnsafeMutableBufferPointer<Float>
     /// Vector of complex representation of accumulated resonance values
     private var R : DSPSplitComplex
     /// Phasors
@@ -70,14 +72,16 @@ public class ResonatorBankVec {
         self.frequencies = frequencies
         self.numResonators = frequencies.count
         amplitudes = [Float](repeating: 0, count: numResonators)
-        
+
         twoNumResonators = 2 * numResonators
         
         // setup resonators
         rPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: twoNumResonators)
         rPtr.initialize(repeating: 0.0)
-        R = DSPSplitComplex(realp: rPtr.baseAddress!,
-                            imagp: rPtr.baseAddress! + numResonators)
+        rrPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: twoNumResonators)
+        rrPtr.initialize(repeating: 0.0)
+        R = DSPSplitComplex(realp: rrPtr.baseAddress!,
+                            imagp: rrPtr.baseAddress! + numResonators)
 
         zPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: twoNumResonators)
         zPtr.initialize(repeating: 0.0)
@@ -113,6 +117,7 @@ public class ResonatorBankVec {
     
     deinit {
         rPtr.deallocate()
+        rrPtr.deallocate()
         zPtr.deallocate()
         wPtr.deallocate()
         smPtr.deallocate()
@@ -129,6 +134,12 @@ public class ResonatorBankVec {
                     zPtr.baseAddress!, 1,
                     &alphaSample,
                     rPtr.baseAddress!, 1,
+                    vDSP_Length(twoNumResonators))
+        vDSP_vsmsma(rrPtr.baseAddress!, 1,
+                    &omAlpha,
+                    rPtr.baseAddress!, 1,
+                    &alpha,
+                    rrPtr.baseAddress!, 1,
                     vDSP_Length(twoNumResonators))
 
         // phasor

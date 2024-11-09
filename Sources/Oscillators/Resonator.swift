@@ -42,8 +42,13 @@ public class Resonator : Oscillator, ResonatorProtocol {
         1.0 / (sampleRate * alpha)
     }
     
-    private(set) var s: Float = 0.0
+    // complex: r = c + j s
     private(set) var c: Float = 0.0
+    private(set) var s: Float = 0.0
+
+    // Smoothed resonator output
+    private(set) var cc: Float = 0.0
+    private(set) var ss: Float = 0.0
 
     public var phase: Float = 0.0
     public var trackedFrequency: Float = 0.0
@@ -56,68 +61,70 @@ public class Resonator : Oscillator, ResonatorProtocol {
     
     func updateWithSample(_ sample: Float) {
         let alphaSample : Float = alpha * sample
-        s = omAlpha * s + alphaSample * Zs
         c = omAlpha * c + alphaSample * Zc
+        s = omAlpha * s + alphaSample * Zs
+        cc = omAlpha * cc + alpha * c
+        ss = omAlpha * ss + alpha * s
         incrementPhase()
     }
     
     public func update(sample: Float) {
         updateWithSample(sample)
-        amplitude = sqrt(s*s + c*c)
-        stabilize() // this is overkill - could be done every few 100 samples...
-   }
+        // smoothed amplitude
+        amplitude = sqrt(cc*cc + ss*ss)
+    }
     
     public func update(samples: [Float]) {
         for sample in samples {
             updateWithSample(sample)
         }
-        amplitude = sqrt(s*s + c*c)
-        stabilize()
+        // smoothed amplitude
+        amplitude = sqrt(cc*cc + ss*ss)
     }
 
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }
-        amplitude = sqrt(s*s + c*c)
-        stabilize()
+        // smoothed amplitude
+        amplitude = sqrt(cc*cc + ss*ss)
     }
     
     public func updateAndTrack(sample: Float) {
         updateWithSample(sample)
-        amplitude = sqrt(s*s + c*c)
+        // smoothed amplitude
+        amplitude = sqrt(cc*cc + ss*ss)
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(numSamples: 1)
         } else {
             trackedFrequency = frequency
         }
-        stabilize() // this is overkill - could be done every few 100 samples...
     }
     
     public func updateAndTrack(samples: [Float]) {
         for sample in samples {
             updateWithSample(sample)
         }
-        amplitude = sqrt(s*s + c*c)
+        // smoothed amplitude
+        amplitude = sqrt(cc*cc + ss*ss)
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(numSamples: samples.count)
         } else {
             trackedFrequency = frequency
         }
-        stabilize()
     }
 
     public func updateAndTrack(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }
-        amplitude = sqrt(s*s + c*c)
+        // smoothed amplitude
+        amplitude = sqrt(cc*cc + ss*ss)
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(numSamples: frameLength)
         } else {
             trackedFrequency = frequency
         }
-        stabilize()
     }
     
     func updateTrackedFrequency(numSamples: Int) {
@@ -129,9 +136,6 @@ public class Resonator : Oscillator, ResonatorProtocol {
         } else if phaseDrift > Float.pi {
             phaseDrift -= twoPi
         }
-
-//        trackedFrequency = frequency - phaseDrift / (twoPi * Float(numSamples) * sampleDuration)
-        
         let localAlpha = alpha * Float(numSamples)
         let localOmAlpha = 1.0 - localAlpha
         let instantaneousFrequency = frequency - phaseDrift * sampleRate / (twoPi * Float(numSamples))

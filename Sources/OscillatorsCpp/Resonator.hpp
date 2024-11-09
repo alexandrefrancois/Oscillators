@@ -36,9 +36,11 @@ private:
     float m_alpha;
     float m_omAlpha;
     
-    float m_sin;
     float m_cos;
-    std::vector<float> m_waveform2;
+    float m_sin;
+    // smoothed
+    float m_cc;
+    float m_ss;
 
     float m_trackedFrequency;
     float m_phase;
@@ -50,8 +52,8 @@ public:
     void setAlpha(float alpha);
     float omAlpha() const { return m_omAlpha; }
     float timeConstant() const { return 1.0 / (m_sampleRate * m_alpha); }
-    float s() const { return m_sin; }
-    float c() const { return m_cos; }
+    float c() const { return m_cc; }
+    float s() const { return m_ss; }
     float phase() const { return m_phase; }
     float trackedFrequency() const { return m_trackedFrequency; }
 

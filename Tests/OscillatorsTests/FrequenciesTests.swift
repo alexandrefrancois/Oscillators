@@ -46,18 +46,19 @@ final class FrequenciesTests: XCTestCase {
     }
     
     func testLogUniformFrequencies() throws {
-        let fStart = Float(10.0)
-        let fEnd = Float(100000.0)
-        let numF = Int(100)
+        let fMin = Float(32.70)
+        let fMax = Float(3950.68)
+        let numBins = Int(84)
+        let numBinsPerOctaves = Int(12)
         
-        let frequencies = Frequencies.logUniformFrequencies(fStart: fStart, fEnd: fEnd, numF: numF)
+        let frequencies = Frequencies.logUniformFrequencies(fMin: fMin, numBins: numBins, numBinsPerOctave: numBinsPerOctaves)
         
-        XCTAssertEqual(frequencies.count, numF)
-        XCTAssertEqual(frequencies[0], fStart)
-        XCTAssertEqual(frequencies[numF-1], fEnd)
+        XCTAssertEqual(frequencies.count, numBins)
+        XCTAssertEqual(frequencies[0], fMin)
+        XCTAssertEqual(frequencies[numBins-1], fMax, accuracy: 0.01)
         // ratios of consecutive frequencies is constant
         XCTAssertEqual(frequencies[2]/frequencies[1], frequencies[1]/frequencies[0], accuracy: 0.00001)
-        XCTAssertEqual(frequencies[numF-1]/frequencies[numF-2], frequencies[numF-2]/frequencies[numF-3], accuracy: 0.00001)
+        XCTAssertEqual(frequencies[numBins-1]/frequencies[numBins-2], frequencies[numBins-2]/frequencies[numBins-3], accuracy: 0.00001)
     }
     
     func testDopplerVelocity() throws {

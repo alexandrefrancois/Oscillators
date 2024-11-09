@@ -42,35 +42,37 @@ void Resonator::setAlpha(float alpha) {
 
 void Resonator::updateWithSample(float sample) {
     const float alphaSample = m_alpha * sample;
-    m_sin = m_omAlpha * m_sin + alphaSample * m_Zs;
     m_cos = m_omAlpha * m_cos + alphaSample * m_Zc;
+    m_sin = m_omAlpha * m_sin + alphaSample * m_Zs;
+    m_cc = m_omAlpha * m_cc + m_alpha * m_cos;
+    m_ss = m_omAlpha * m_ss + m_alpha * m_sin;
     incrementPhase();
 }
 
 void Resonator::update(const float sample) {
     updateWithSample(sample);
-    m_amplitude = sqrt(m_sin * m_sin + m_cos * m_cos);
+    m_amplitude = sqrt(m_cc * m_cc + m_ss * m_ss);
 }
 
 void Resonator::update(const std::vector<float> &samples) {
     for (float sample : samples) {
         updateWithSample(sample);
     }
-    m_amplitude = sqrt(m_sin * m_sin + m_cos * m_cos);
+    m_amplitude = sqrt(m_cc * m_cc + m_ss * m_ss);
 }
 
 void Resonator::update(const float *frameData, size_t frameLength, size_t sampleStride) {
     for (int i=0; i<frameLength; i += sampleStride) {
         updateWithSample(frameData[i]);
     }
-    m_amplitude = sqrt(m_sin * m_sin + m_cos * m_cos);
+    m_amplitude = sqrt(m_cc * m_cc + m_ss * m_ss);
 }
 
 void Resonator::updateAndTrack(const float *frameData, size_t frameLength, size_t sampleStride) {
     for (int i=0; i<frameLength; i += sampleStride) {
         updateWithSample(frameData[i]);
     }
-    m_amplitude = sqrt(m_sin * m_sin + m_cos * m_cos);
+    m_amplitude = sqrt(m_cc * m_cc + m_ss * m_ss);
     if (m_amplitude > trackFrequencyThreshold) {
         updateTrackedFrequency(frameLength);
     } else {

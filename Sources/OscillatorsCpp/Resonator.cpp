@@ -29,7 +29,10 @@ SOFTWARE.
 using namespace oscillators_cpp;
 
 Resonator::Resonator(float frequency, float sampleRate, float alpha) : Oscillator(frequency, sampleRate),
-    m_alpha(alpha), m_omAlpha(1.0 - alpha), m_trackedFrequency(m_frequency), m_phase(0.0){
+m_alpha(alpha), m_omAlpha(1.0 - alpha), m_trackedFrequency(m_frequency), m_phase(0.0){
+    // TODO: fixed and hard-coded for now
+    m_beta = 0.001 * 44100.0 / sampleRate;
+    m_omBeta = 1.0 - m_beta;
 }
 
 void Resonator::setAlpha(float alpha) {
@@ -44,8 +47,8 @@ void Resonator::updateWithSample(float sample) {
     const float alphaSample = m_alpha * sample;
     m_cos = m_omAlpha * m_cos + alphaSample * m_Zc;
     m_sin = m_omAlpha * m_sin + alphaSample * m_Zs;
-    m_cc = m_omAlpha * m_cc + m_alpha * m_cos;
-    m_ss = m_omAlpha * m_ss + m_alpha * m_sin;
+    m_cc = m_omBeta * m_cc + m_beta * m_cos;
+    m_ss = m_omBeta * m_ss + m_beta * m_sin;
     incrementPhase();
 }
 
@@ -81,7 +84,7 @@ void Resonator::updateAndTrack(const float *frameData, size_t frameLength, size_
 }
 
 void Resonator::updateTrackedFrequency(size_t numSamples) {
-    const float newPhase = atan2(m_sin, m_cos); // returns value in [-pi,pi]
+    const float newPhase = atan2(m_ss, m_cc); // returns value in [-pi,pi]
     float phaseDrift = newPhase - m_phase;
     m_phase = newPhase;
     if (phaseDrift <= -PI) {

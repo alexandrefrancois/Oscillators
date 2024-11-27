@@ -28,21 +28,27 @@ import XCTest
 final class ResonatorBankVecTests: XCTestCase {
     func testConstructor() throws {
         let frequencies = FrequenciesFixtures.frequencies
+        let alphas = frequencies.map {
+            Frequencies.alphaHeuristic(frequency: $0, sampleRate: AudioFixtures.defaultSampleRate)
+        }
         let resonatorBank = ResonatorBankVec(frequencies: frequencies,
                                              sampleRate: AudioFixtures.defaultSampleRate,
-                                             alpha: DynamicsFixtures.defaultAlpha)
-        
-        XCTAssertEqual(resonatorBank.alpha, DynamicsFixtures.defaultAlpha)
-        
+                                             alphas: alphas)
+                
         for i in 0..<resonatorBank.numResonators {
+            XCTAssertEqual(resonatorBank.alphas[i], Frequencies.alphaHeuristic(frequency: resonatorBank.frequencies[i], sampleRate: AudioFixtures.defaultSampleRate))
             XCTAssertEqual(resonatorBank.amplitudes[i], 0)
         }
     }
     
     func testUpdate() throws {
-        let resonatorBank = ResonatorBankVec(frequencies: FrequenciesFixtures.frequencies,
+        let frequencies = FrequenciesFixtures.frequencies
+        let alphas = frequencies.map {
+            Frequencies.alphaHeuristic(frequency: $0, sampleRate: AudioFixtures.defaultSampleRate)
+        }
+        let resonatorBank = ResonatorBankVec(frequencies: frequencies,
                                              sampleRate: AudioFixtures.defaultSampleRate,
-                                             alpha: DynamicsFixtures.defaultAlpha)
+                                             alphas: alphas)
         
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)

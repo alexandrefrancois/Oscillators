@@ -36,6 +36,9 @@ private:
     float m_alpha;
     float m_omAlpha;
     
+    float m_beta;
+    float m_omBeta;
+    
     float m_cos;
     float m_sin;
     // smoothed
@@ -52,6 +55,7 @@ public:
     void setAlpha(float alpha);
     float omAlpha() const { return m_omAlpha; }
     float timeConstant() const { return 1.0 / (m_sampleRate * m_alpha); }
+    float beta() const { return m_beta; }
     float c() const { return m_cc; }
     float s() const { return m_ss; }
     float phase() const { return m_phase; }

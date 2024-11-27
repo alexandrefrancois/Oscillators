@@ -42,6 +42,13 @@ public class Resonator : Oscillator, ResonatorProtocol {
         1.0 / (sampleRate * alpha)
     }
     
+    public var beta: Float {
+        didSet {
+            omBeta = 1.0 - beta
+        }
+    }
+    private(set) var omBeta : Float = 0.0
+    
     // complex: r = c + j s
     private(set) var c: Float = 0.0
     private(set) var s: Float = 0.0
@@ -56,6 +63,11 @@ public class Resonator : Oscillator, ResonatorProtocol {
     public init(frequency: Float, sampleRate: Float, alpha: Float) {
         self.alpha = alpha
         self.omAlpha = 1.0 - alpha
+        
+        // TODO: fixed and hard coded for now
+        self.beta = 0.001 * 44100.0 / sampleRate
+        self.omBeta = 1.0 - self.beta
+        
         super.init(frequency: frequency, sampleRate: sampleRate)
     }
     
@@ -63,8 +75,8 @@ public class Resonator : Oscillator, ResonatorProtocol {
         let alphaSample : Float = alpha * sample
         c = omAlpha * c + alphaSample * Zc
         s = omAlpha * s + alphaSample * Zs
-        cc = omAlpha * cc + alpha * c
-        ss = omAlpha * ss + alpha * s
+        cc = omBeta * cc + beta * c
+        ss = omBeta * ss + beta * s
         incrementPhase()
     }
     
@@ -128,7 +140,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
     }
     
     func updateTrackedFrequency(numSamples: Int) {
-        let newPhase = atan2(s,c) // returns value in [-pi,pi]
+        let newPhase = atan2(ss,cc) // returns value in [-pi,pi]
         var phaseDrift = newPhase - phase
         phase = newPhase
         if phaseDrift <= -Float.pi {
@@ -136,10 +148,13 @@ public class Resonator : Oscillator, ResonatorProtocol {
         } else if phaseDrift > Float.pi {
             phaseDrift -= twoPi
         }
-        let localAlpha = alpha * Float(numSamples)
-        let localOmAlpha = 1.0 - localAlpha
-        let instantaneousFrequency = frequency - phaseDrift * sampleRate / (twoPi * Float(numSamples))
-        trackedFrequency = (localOmAlpha * trackedFrequency) + (localAlpha * instantaneousFrequency)
+        
+//        let localAlpha = alpha * Float(numSamples)
+//        let localOmAlpha = 1.0 - localAlpha
+//        let instantaneousFrequency = frequency - phaseDrift * sampleRate / (twoPi * Float(numSamples))
+//        trackedFrequency = (localOmAlpha * trackedFrequency) + (localAlpha * instantaneousFrequency)
+        
+        trackedFrequency = frequency - phaseDrift * sampleRate / (twoPi * Float(numSamples))
     }
     
 }

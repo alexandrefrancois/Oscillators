@@ -34,33 +34,32 @@ public class ResonatorBankArray {
     }
     public private(set) var amplitudes: [Float]
 
-    public init(frequencies: [Float], sampleRate: Float, alpha: Float) {
+    public init(frequencies: [Float], sampleRate: Float, alphas: [Float]) {
+        assert(frequencies.count == alphas.count)
         // initialize from passed frequencies
         amplitudes = [Float](repeating: 0, count: frequencies.count)
-        
-//        print("Number of resonators to create: \(targetFrequencies.count)")
-        
+        // setup an oscillator for each frequency
+        for (idx, frequency) in frequencies.enumerated() {
+            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alphas[idx]))
+        }
+    }
+    
+    /// A constructor that takes a function of frequency and sample rate to compute alphas
+    public init(frequencies: [Float], sampleRate: Float, alphaHeuristic: (Float, Float) -> Float) {
+        // initialize from passed frequencies
+        amplitudes = [Float](repeating: 0, count: frequencies.count)
         // setup an oscillator for each frequency
         for frequency in frequencies {
-            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alpha))
+            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alphaHeuristic(frequency, sampleRate)))
         }
     }
     
     public init(alphas: [Float], sampleRate: Float, frequency: Float) {
         // initialize from passed frequencies
         amplitudes = [Float](repeating: 0, count: alphas.count)
-        
-//        print("Number of resonators to create: \(alphas.count)")
-        
         // setup an oscillator for each alpha
         for alpha in alphas {
             resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alpha))
-        }
-    }
-
-    public func setAllAlphas(_ alpha: Float) {
-        for resonator in resonators {
-            resonator.alpha = alpha
         }
     }
         

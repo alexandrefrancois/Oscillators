@@ -42,6 +42,19 @@ final class ResonatorBankArrayTests: XCTestCase {
         }
     }
  
+    func testConstructorWithAlphaHeuristics() throws {
+        let frequencies = FrequenciesFixtures.frequencies
+        let resonatorBankArray = ResonatorBankArray(frequencies: frequencies,
+                                                    sampleRate: AudioFixtures.defaultSampleRate,
+                                                    alphaHeuristic: Frequencies.alphaHeuristic(frequency:sampleRate:))
+        
+        XCTAssertEqual(resonatorBankArray.resonators.count, frequencies.count)
+        for (index, resonator) in resonatorBankArray.resonators.enumerated() {
+            XCTAssertEqual(resonator.frequency, frequencies[index])
+            XCTAssertEqual(resonator.alpha, Frequencies.alphaHeuristic(frequency: resonator.frequency, sampleRate: AudioFixtures.defaultSampleRate))
+        }
+    }
+    
     func testConstructorFromAlphas() throws {
         let frequency : Float = 440.0
         let alphas = DynamicsFixtures.alphas

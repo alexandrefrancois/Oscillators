@@ -29,21 +29,20 @@ fileprivate let twoPi = Float.pi * 2.0
 
 /// A bank of independent resonators implemented as a single array, computations use the Accelerate framework with manual memory management (unsafe pointers)
 public class ResonatorBankVec {
-    public var alpha : Float {
-        didSet {
-            omAlpha = 1.0 - alpha
-        }
-    }
-    private(set) var omAlpha : Float = 0.0
-
     public private(set) var sampleRate : Float
 
     public private(set) var numResonators : Int
     public private(set) var frequencies : [Float] // tuning in Hz
     public private(set) var amplitudes : [Float]
 
-    private var twoNumResonators : Int
+    public  let alphas : [Float] // can be tuned independently for each frequency
+    private let omAlphas : [Float] // can be tuned independently for each frequency
+
+    private var beta : Float
+    private var omBeta : Float
     
+    private var twoNumResonators : Int
+
     /// Accumulated resonance values, non-interlaced real (cos) | imaginary (sin) parts
     private var rPtr : UnsafeMutableBufferPointer<Float>
     /// Smoothed accumulated resonance values, non-interlaced real (cos) | imaginary (sin) parts
@@ -63,9 +62,10 @@ public class ResonatorBankVec {
     /// Reverse square root buffer (intermediate calculations)
     private var rsqrtPtr : UnsafeMutableBufferPointer<Float>
 
-    public init(frequencies: [Float], sampleRate: Float, alpha: Float) {
-        self.alpha = alpha
-        self.omAlpha = 1.0 - alpha
+    public init(frequencies: [Float], sampleRate: Float, alphas: [Float]) {
+        // check that frequencies and alphas have the same size
+        assert(frequencies.count == alphas.count)
+        
         self.sampleRate = sampleRate
 
         // initialize from passed frequencies
@@ -73,6 +73,14 @@ public class ResonatorBankVec {
         self.numResonators = frequencies.count
         amplitudes = [Float](repeating: 0, count: numResonators)
 
+        // These must be 2 * numResonators size
+        self.alphas = alphas + alphas
+        self.omAlphas = vDSP.add(multiplication: (self.alphas, -1.0), 1.0)
+
+        // TODO: fixed and hard-coded for now...
+        self.beta = 0.001 * 44100.0 / sampleRate
+        self.omBeta = 1.0 - beta
+        
         twoNumResonators = 2 * numResonators
         
         // setup resonators
@@ -126,19 +134,20 @@ public class ResonatorBankVec {
     
     /// Update all resonators in parallel
     func update(sample: Float) {
-        var alphaSample = alpha * sample
+        let alphasSample = vDSP.multiply(sample, alphas)
         
         // resonator
-        vDSP_vsmsma(rPtr.baseAddress!, 1,
-                    &omAlpha,
+        vDSP_vmma(rPtr.baseAddress!, 1,
+                    omAlphas, 1,
                     zPtr.baseAddress!, 1,
-                    &alphaSample,
+                    alphasSample, 1,
                     rPtr.baseAddress!, 1,
                     vDSP_Length(twoNumResonators))
+        
         vDSP_vsmsma(rrPtr.baseAddress!, 1,
-                    &omAlpha,
+                    &omBeta,
                     rPtr.baseAddress!, 1,
-                    &alpha,
+                    &beta,
                     rrPtr.baseAddress!, 1,
                     vDSP_Length(twoNumResonators))
 

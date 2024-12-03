@@ -32,8 +32,10 @@ SOFTWARE.
 - (void)setAlpha:(float)alpha;
 - (float)omAlpha;
 - (float)timeConstant;
-- (float)s;
 - (float)c;
+- (float)s;
+- (float)cc;
+- (float)ss;
 - (float)phase;
 - (float)trackedFrequency;
 - (void)updateWithSample:(float)sample

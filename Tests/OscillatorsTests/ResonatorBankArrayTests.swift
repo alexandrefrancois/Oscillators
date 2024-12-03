@@ -28,16 +28,16 @@ import XCTest
 final class ResonatorBankArrayTests: XCTestCase {
     func testConstructorFromFrequencies() throws {
         let frequencies = FrequenciesFixtures.frequencies
-//        let expectedFrequencies = targetFrequencies.map { targetFrequency in
-//            Frequencies.closestFrequency(targetFrequency: targetFrequency, sampleDuration: AudioFixtures.sampleDuration44100)
-//        }
+        let alphas = frequencies.map {
+            Frequencies.alphaHeuristic(frequency: $0, sampleRate: AudioFixtures.defaultSampleRate)
+        }
         let resonatorBankArray = ResonatorBankArray(frequencies: frequencies,
                                                     sampleRate: AudioFixtures.defaultSampleRate,
-                                                    alpha: DynamicsFixtures.defaultAlpha)
+                                                    alphas: alphas)
         
         XCTAssertEqual(resonatorBankArray.resonators.count, frequencies.count)
         for (index, resonator) in resonatorBankArray.resonators.enumerated() {
-            XCTAssertEqual(resonator.alpha, DynamicsFixtures.defaultAlpha)
+            XCTAssertEqual(resonator.alpha, Frequencies.alphaHeuristic(frequency: resonator.frequency, sampleRate: AudioFixtures.defaultSampleRate))
             XCTAssertEqual(resonator.frequency, frequencies[index])
         }
     }
@@ -71,9 +71,13 @@ final class ResonatorBankArrayTests: XCTestCase {
     }
 
     func testUpdate() throws {
-        let resonatorBankArray = ResonatorBankArray(frequencies: [5512.5, 6300.0005, 7350.0005, 8820.0],
+        let frequencies = FrequenciesFixtures.frequencies
+        let alphas = frequencies.map {
+            Frequencies.alphaHeuristic(frequency: $0, sampleRate: AudioFixtures.defaultSampleRate)
+        }
+        let resonatorBankArray = ResonatorBankArray(frequencies: frequencies,
                                                     sampleRate: AudioFixtures.defaultSampleRate,
-                                                    alpha: DynamicsFixtures.defaultAlpha)
+                                                    alphas: alphas)
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)
         resonatorBankArray.update(frameData: frame, frameLength: 1024, sampleStride: 1)
@@ -89,9 +93,13 @@ final class ResonatorBankArrayTests: XCTestCase {
         frame.initialize(repeating: 0.5, count: 1024)
         
         // even number of oscillators
-        let resonatorBankArray1 = ResonatorBankArray(frequencies: [5512.5, 6300.0005, 7350.0005, 8820.0],
+        let frequenciesEven: [Float] = [5512.5, 6300.0005, 7350.0005, 8820.0]
+        let alphasEven = frequenciesEven.map {
+            Frequencies.alphaHeuristic(frequency: $0, sampleRate: AudioFixtures.defaultSampleRate)
+        }
+        let resonatorBankArray1 = ResonatorBankArray(frequencies: frequenciesEven,
                                                      sampleRate: AudioFixtures.defaultSampleRate,
-                                                     alpha: DynamicsFixtures.defaultAlpha)
+                                                     alphas: alphasEven)
         resonatorBankArray1.updateConcurrent(frameData: frame, frameLength: 1024, sampleStride: 1)
         let amplitudes1 = resonatorBankArray1.amplitudes
         for value in amplitudes1 {
@@ -99,9 +107,13 @@ final class ResonatorBankArrayTests: XCTestCase {
         }
         
         // odd number of oscillators
-        let resonatorBankArray2 = ResonatorBankArray(frequencies: [6300.0005, 7350.0005, 8820.0],
+        let frequenciesOdd: [Float] = [5512.5, 6300.0005, 7350.0005, 8820.0]
+        let alphasOdd = frequenciesOdd.map {
+            Frequencies.alphaHeuristic(frequency: $0, sampleRate: AudioFixtures.defaultSampleRate)
+        }
+        let resonatorBankArray2 = ResonatorBankArray(frequencies: frequenciesOdd,
                                                      sampleRate: AudioFixtures.defaultSampleRate,
-                                                     alpha: DynamicsFixtures.defaultAlpha)
+                                                     alphas: alphasOdd)
         resonatorBankArray2.updateConcurrent(frameData: frame, frameLength: 1024, sampleStride: 1)
         let amplitudes2 = resonatorBankArray2.amplitudes
         for value in amplitudes2 {

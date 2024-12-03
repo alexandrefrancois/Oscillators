@@ -56,8 +56,10 @@ public:
     float omAlpha() const { return m_omAlpha; }
     float timeConstant() const { return 1.0 / (m_sampleRate * m_alpha); }
     float beta() const { return m_beta; }
-    float c() const { return m_cc; }
-    float s() const { return m_ss; }
+    float c() const { return m_cos; }
+    float s() const { return m_sin; }
+    float cc() const { return m_cc; }
+    float ss() const { return m_ss; }
     float phase() const { return m_phase; }
     float trackedFrequency() const { return m_trackedFrequency; }
 

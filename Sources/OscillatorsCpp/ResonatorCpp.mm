@@ -64,12 +64,20 @@ using namespace oscillators_cpp;
     return self.resonator->trackedFrequency();
 }
 
+- (float)c {
+    return self.resonator->c();
+}
+
 - (float)s {
     return self.resonator->s();
 }
 
-- (float)c {
-    return self.resonator->c();
+- (float)cc {
+    return self.resonator->cc();
+}
+
+- (float)ss {
+    return self.resonator->ss();
 }
 
 - (float)phase {

@@ -88,6 +88,7 @@ ResonatorBankVec::ResonatorBankVec(size_t numResonators, float* frequencies, flo
     vvcosf(W.realp, W.realp, &count);
     vvsinf(W.imagp, W.imagp, &count);
     
+    m_alphasSample = new float[m_twoNumResonators];
     m_smPtr = new float[m_numResonators];
     m_rsqrtPtr = new float[m_numResonators];
 }
@@ -97,6 +98,7 @@ ResonatorBankVec::~ResonatorBankVec() {
     delete [] m_rrPtr;
     delete [] m_zPtr;
     delete [] m_wPtr;
+    delete [] m_alphasSample;
     delete [] m_smPtr;
     delete [] m_rsqrtPtr;
 }
@@ -135,14 +137,13 @@ float ResonatorBankVec::amplitudeValue(size_t index) {
 }
 
 void ResonatorBankVec::update(const float sample) {
-    float alphasSample[m_twoNumResonators];
-    vDSP_vsmul(m_alphas, 1, &sample, alphasSample, 1, m_twoNumResonators);
+    vDSP_vsmul(m_alphas, 1, &sample, m_alphasSample, 1, m_twoNumResonators);
         
     // resonator
     vDSP_vmma(m_rPtr, 1,
               m_omAlphas, 1,
               m_zPtr, 1,
-              alphasSample, 1,
+              m_alphasSample, 1,
               m_rPtr, 1,
               m_twoNumResonators);
     

@@ -52,6 +52,9 @@ private:
     /// Phasor multipliers
     float* m_wPtr;
     
+    /// hold sample value * alphas
+    float* m_alphasSample;
+
     /// Squared magnitudes buffer (ntermediate calculations)
     float* m_smPtr;
     /// Reverse square root buffer (intermediate calculations)

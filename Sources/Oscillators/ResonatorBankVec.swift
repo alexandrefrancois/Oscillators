@@ -57,6 +57,8 @@ public class ResonatorBankVec {
     private var wPtr : UnsafeMutableBufferPointer<Float>
     /// Vector of complex representation of phasor multiplier values
     private var W : DSPSplitComplex
+    /// hold sample value * alphas
+    private var alphasSample : UnsafeMutableBufferPointer<Float>
     /// Squared magnitudes buffer (ntermediate calculations)
     private var smPtr : UnsafeMutableBufferPointer<Float>
     /// Reverse square root buffer (intermediate calculations)
@@ -119,6 +121,7 @@ public class ResonatorBankVec {
         vvcosf(W.realp, W.realp, &count)
         vvsinf(W.imagp, W.imagp, &count)
         
+        alphasSample = UnsafeMutableBufferPointer<Float>.allocate(capacity: twoNumResonators)
         smPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
         rsqrtPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
     }
@@ -128,19 +131,21 @@ public class ResonatorBankVec {
         rrPtr.deallocate()
         zPtr.deallocate()
         wPtr.deallocate()
+        alphasSample.deallocate()
         smPtr.deallocate()
         rsqrtPtr.deallocate()
     }
     
     /// Update all resonators in parallel
     func update(sample: Float) {
-        let alphasSample = vDSP.multiply(sample, alphas)
+        var sampleVar = sample
+        vDSP_vsmul(alphas, 1, &sampleVar, alphasSample.baseAddress!, 1, vDSP_Length(twoNumResonators));
         
         // resonator
         vDSP_vmma(rPtr.baseAddress!, 1,
                     omAlphas, 1,
                     zPtr.baseAddress!, 1,
-                    alphasSample, 1,
+                  alphasSample.baseAddress!, 1,
                     rPtr.baseAddress!, 1,
                     vDSP_Length(twoNumResonators))
         

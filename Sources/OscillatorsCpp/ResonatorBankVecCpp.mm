@@ -67,6 +67,14 @@ using namespace oscillators_cpp;
     return self.resonatorBank->timeConstantValue(index);
 }
 
+- (void)copyPowers:(float*)dest size: (int)size {
+    self.resonatorBank->copyPowers(dest, size);
+}
+
+- (float)powerValue:(int)index {
+    return self.resonatorBank->powerValue(index);
+}
+
 - (void)copyAmplitudes:(float*)dest size: (int)size {
     self.resonatorBank->copyAmplitudes(dest, size);
 }
@@ -83,8 +91,8 @@ using namespace oscillators_cpp;
     self.resonatorBank->update(frame, frameLength, sampleStride);
 }
 
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride amplitudes:(float*)amplitudes {
-    self.resonatorBank->update(frame, frameLength, sampleStride, amplitudes);
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride powers:(float*)powers amplitudes:(float*)amplitudes {
+    self.resonatorBank->update(frame, frameLength, sampleStride, powers, amplitudes);
 }
 
 @end

@@ -31,7 +31,7 @@ using namespace oscillators_cpp;
 Resonator::Resonator(float frequency, float sampleRate, float alpha) : Oscillator(frequency, sampleRate),
 m_alpha(alpha), m_omAlpha(1.0 - alpha), m_trackedFrequency(m_frequency), m_phase(0.0){
     // TODO: fixed and hard-coded for now
-    m_beta = 0.001 * 44100.0 / sampleRate;
+    m_beta = alpha; // 0.001 * 44100.0 / sampleRate;
     m_omBeta = 1.0 - m_beta;
 }
 
@@ -54,21 +54,24 @@ void Resonator::updateWithSample(float sample) {
 
 void Resonator::update(const float sample) {
     updateWithSample(sample);
-    m_amplitude = sqrt(m_cc * m_cc + m_ss * m_ss);
+    m_power = m_cc * m_cc + m_ss * m_ss;
+    m_amplitude = sqrt(m_power);
 }
 
 void Resonator::update(const std::vector<float> &samples) {
     for (float sample : samples) {
         updateWithSample(sample);
     }
-    m_amplitude = sqrt(m_cc * m_cc + m_ss * m_ss);
+    m_power = m_cc * m_cc + m_ss * m_ss;
+    m_amplitude = sqrt(m_power);
 }
 
 void Resonator::update(const float *frameData, size_t frameLength, size_t sampleStride) {
     for (int i=0; i<frameLength; i += sampleStride) {
         updateWithSample(frameData[i]);
     }
-    m_amplitude = sqrt(m_cc * m_cc + m_ss * m_ss);
+    m_power = m_cc * m_cc + m_ss * m_ss;
+    m_amplitude = sqrt(m_power);
 }
 
 void Resonator::updateAndTrack(const float *frameData, size_t frameLength, size_t sampleStride) {

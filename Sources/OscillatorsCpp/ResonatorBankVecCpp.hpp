@@ -34,6 +34,7 @@ private:
     float m_sampleRate;
     size_t m_numResonators;
     float* m_frequencies;
+    float* m_powers;
     float* m_amplitudes;
     float* m_alphas;
     float* m_omAlphas;
@@ -65,7 +66,7 @@ public:
     ResonatorBankVec & operator=(const ResonatorBankVec&) = delete;
     ResonatorBankVec(const ResonatorBankVec&) = delete;
 
-    ResonatorBankVec(size_t numResonators, float* frequencies, float sampleRate, float* alphas);
+    ResonatorBankVec(size_t numResonators, /* const */ float* frequencies, float sampleRate, /* const */ float* alphas);
     ~ResonatorBankVec();
 
     float sampleRate() { return m_sampleRate; }
@@ -75,13 +76,15 @@ public:
     void setAllAlphas(float alpha);
     float timeConstantValue(size_t index);
 
+    void copyPowers(float *dest, size_t size);
+    float powerValue(size_t index);
     void copyAmplitudes(float *dest, size_t size);
     float amplitudeValue(size_t index);
 
     void update(const float sample);
     void update(const std::vector<float> &samples);
     void update(const float *frameData, size_t frameLength, size_t sampleStride);
-    void update(const float *frameData, size_t frameLength, size_t sampleStride, float* amplitudes);
+    void update(const float *frameData, size_t frameLength, size_t sampleStride, float* powers, float* amplitudes);
 
     void stabilize();
 };

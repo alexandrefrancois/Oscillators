@@ -32,13 +32,15 @@ SOFTWARE.
 - (float)frequencyValue:(int)index;
 - (float)alphaValue:(int)index;
 - (float)timeConstantValue:(int)index;
+- (void)copyPowers:(float*)dest size:(int)size; // this is a bit ugly but avoids memory management issues
+- (float)powerValue:(int)index;
 - (void)copyAmplitudes:(float*)dest size:(int)size; // this is a bit ugly but avoids memory management issues
 - (float)amplitudeValue:(int)index;
 - (void)update:(float)sample
 NS_SWIFT_NAME(update(sample:));
 - (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
 NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride amplitudes:(float*)amplitudes
-NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:amplitudes:));
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride powers:(float*)powers amplitudes:(float*)amplitudes
+NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:powers:amplitudes:));
 @end
 

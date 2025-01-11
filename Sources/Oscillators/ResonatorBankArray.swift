@@ -32,11 +32,13 @@ public class ResonatorBankArray {
     public var numResonators: Int {
         resonators.count
     }
+    public private(set) var powers: [Float]
     public private(set) var amplitudes: [Float]
 
     public init(frequencies: [Float], sampleRate: Float, alphas: [Float]) {
         assert(frequencies.count == alphas.count)
         // initialize from passed frequencies
+        powers = [Float](repeating: 0, count: frequencies.count)
         amplitudes = [Float](repeating: 0, count: frequencies.count)
         // setup an oscillator for each frequency
         for (idx, frequency) in frequencies.enumerated() {
@@ -47,6 +49,7 @@ public class ResonatorBankArray {
     /// A constructor that takes a function of frequency and sample rate to compute alphas
     public init(frequencies: [Float], sampleRate: Float, alphaHeuristic: (Float, Float) -> Float) {
         // initialize from passed frequencies
+        powers = [Float](repeating: 0, count: frequencies.count)
         amplitudes = [Float](repeating: 0, count: frequencies.count)
         // setup an oscillator for each frequency
         for frequency in frequencies {
@@ -56,6 +59,7 @@ public class ResonatorBankArray {
     
     public init(alphas: [Float], sampleRate: Float, frequency: Float) {
         // initialize from passed frequencies
+        powers = [Float](repeating: 0, count: alphas.count)
         amplitudes = [Float](repeating: 0, count: alphas.count)
         // setup an oscillator for each alpha
         for alpha in alphas {
@@ -73,6 +77,7 @@ public class ResonatorBankArray {
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         for (index, resonator) in resonators.enumerated() {
             resonator.update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
+            self.powers[index] = resonator.power
             self.amplitudes[index] = resonator.amplitude
         }
     }
@@ -81,15 +86,15 @@ public class ResonatorBankArray {
     public func updateConcurrent(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         let semaphore = DispatchSemaphore(value: 0)
         Task {
-            await withTaskGroup(of: [(Int, Float)].self) { group in
+            await withTaskGroup(of: [(Int, Float, Float)].self) { group in
                 let resonatorStride = numTasks;
                 for offset in 0..<resonatorStride {
                     group.addTask(priority: .high) {
-                        var retVal = [(Int, Float)]()
+                        var retVal = [(Int, Float, Float)]()
                         var index = offset
                         while index < self.resonators.count {
                             self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
-                            retVal.append((index, self.resonators[index].amplitude))
+                            retVal.append((index, self.resonators[index].power, self.resonators[index].amplitude))
                             index += resonatorStride
                         }
                         return retVal
@@ -98,7 +103,8 @@ public class ResonatorBankArray {
                 // collect all results when ready
                 for await tuples in group {
                     for tuple in tuples {
-                        self.amplitudes[tuple.0] = tuple.1
+                        self.powers[tuple.0] = tuple.1
+                        self.amplitudes[tuple.0] = tuple.2
                     }
                 }
             }

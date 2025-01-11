@@ -33,6 +33,8 @@ SOFTWARE.
 - (float)alphaValue:(int)index;
 - (float)timeConstantValue:(int)index;
 - (void)setAllAlphas:(float)alpha;
+- (void)copyPowers:(float*)dest size:(int)size; // this is a bit ugly but avoids memory management issues
+- (float)powerValue:(int)index;
 - (void)copyAmplitudes:(float*)dest size:(int)size; // this is a bit ugly but avoids memory management issues
 - (float)amplitudeValue:(int)index;
 - (void)update:(float)sample

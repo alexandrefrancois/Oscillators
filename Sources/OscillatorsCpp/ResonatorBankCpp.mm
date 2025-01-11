@@ -71,6 +71,14 @@ using namespace oscillators_cpp;
     return self.resonatorBank->timeConstantValue(index);
 }
 
+- (void)copyPowers:(float*)dest size: (int)size {
+    self.resonatorBank->copyPowers(dest, size);
+}
+
+- (float)powerValue:(int)index {
+    return self.resonatorBank->powerValue(index);
+}
+
 - (void)copyAmplitudes:(float*)dest size: (int)size {
     self.resonatorBank->copyAmplitudes(dest, size);
 }

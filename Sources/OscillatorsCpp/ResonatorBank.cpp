@@ -83,6 +83,19 @@ float ResonatorBank::timeConstantValue(size_t index) {
     return m_resonators[index]->timeConstant();
 }
 
+void ResonatorBank::copyPowers(float *dest, size_t size) {
+    for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
+        dest[i]=m_resonators[i]->power();
+    }
+}
+
+float ResonatorBank::powerValue(size_t index) {
+    if (index >= m_resonators.size()) {
+        throw std::out_of_range("Bad index passed to amplitudeValue()");
+    }
+    return m_resonators[index]->power();
+}
+
 void ResonatorBank::copyAmplitudes(float *dest, size_t size) {
     for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
         dest[i]=m_resonators[i]->amplitude();

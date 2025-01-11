@@ -65,6 +65,8 @@ public:
     void setAllAlphas(float alpha);
     float timeConstantValue(size_t index);
 
+    void copyPowers(float *dest, size_t size);
+    float powerValue(size_t index);
     void copyAmplitudes(float *dest, size_t size);
     float amplitudeValue(size_t index);
 

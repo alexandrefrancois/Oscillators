@@ -33,6 +33,8 @@ constexpr float trackFrequencyThreshold = 0.001;
 
 class Resonator : public Oscillator {
 private:
+    float m_power; // squared amplitude
+    
     float m_alpha;
     float m_omAlpha;
     
@@ -51,6 +53,7 @@ private:
 public:
     Resonator(float frequency, float sampleRate, float alpha);
 
+    float power() const { return m_power; }
     float alpha() const { return m_alpha; }
     void setAlpha(float alpha);
     float omAlpha() const { return m_omAlpha; }

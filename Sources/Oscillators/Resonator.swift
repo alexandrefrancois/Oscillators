@@ -31,6 +31,8 @@ fileprivate let trackFrequencyThreshold = Float(0.001)
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
 public class Resonator : Oscillator, ResonatorProtocol {
+    public var power: Float = 1.0
+
     public var alpha: Float {
         didSet {
             omAlpha = 1.0 - alpha
@@ -65,7 +67,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
         self.omAlpha = 1.0 - alpha
         
         // TODO: fixed and hard coded for now
-        self.beta = 0.001 * 44100.0 / sampleRate
+        self.beta = alpha
         self.omBeta = 1.0 - self.beta
         
         super.init(frequency: frequency, sampleRate: sampleRate)
@@ -83,7 +85,8 @@ public class Resonator : Oscillator, ResonatorProtocol {
     public func update(sample: Float) {
         updateWithSample(sample)
         // smoothed amplitude
-        amplitude = sqrt(cc*cc + ss*ss)
+        power = cc*cc + ss*ss
+        amplitude = sqrt(power)
     }
     
     public func update(samples: [Float]) {
@@ -91,7 +94,8 @@ public class Resonator : Oscillator, ResonatorProtocol {
             updateWithSample(sample)
         }
         // smoothed amplitude
-        amplitude = sqrt(cc*cc + ss*ss)
+        power = cc*cc + ss*ss
+        amplitude = sqrt(power)
     }
 
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
@@ -99,13 +103,15 @@ public class Resonator : Oscillator, ResonatorProtocol {
             updateWithSample(frameData[sampleIndex])
         }
         // smoothed amplitude
-        amplitude = sqrt(cc*cc + ss*ss)
+        power = cc*cc + ss*ss
+        amplitude = sqrt(power)
     }
     
     public func updateAndTrack(sample: Float) {
         updateWithSample(sample)
         // smoothed amplitude
-        amplitude = sqrt(cc*cc + ss*ss)
+        power = cc*cc + ss*ss
+        amplitude = sqrt(power)
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(numSamples: 1)
         } else {
@@ -118,7 +124,8 @@ public class Resonator : Oscillator, ResonatorProtocol {
             updateWithSample(sample)
         }
         // smoothed amplitude
-        amplitude = sqrt(cc*cc + ss*ss)
+        power = cc*cc + ss*ss
+        amplitude = sqrt(power)
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(numSamples: samples.count)
         } else {
@@ -131,7 +138,8 @@ public class Resonator : Oscillator, ResonatorProtocol {
             updateWithSample(frameData[sampleIndex])
         }
         // smoothed amplitude
-        amplitude = sqrt(cc*cc + ss*ss)
+        power = cc*cc + ss*ss
+        amplitude = sqrt(power)
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(numSamples: frameLength)
         } else {

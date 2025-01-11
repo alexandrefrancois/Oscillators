@@ -60,6 +60,6 @@ public struct Frequencies {
     }
     
     public static func alphaHeuristic(frequency: Float, sampleRate: Float) -> Float {
-        return powf(10.0, -(5 - 0.8*log10(frequency))) * (44100.0 / sampleRate)
+        return 1 - exp(-frequency / (sampleRate * log10(frequency)))
     }
 }

@@ -33,13 +33,14 @@ public class ResonatorBankVec {
 
     public private(set) var numResonators : Int
     public private(set) var frequencies : [Float] // tuning in Hz
+    public private(set) var powers : [Float]
     public private(set) var amplitudes : [Float]
 
     public  let alphas : [Float] // can be tuned independently for each frequency
     private let omAlphas : [Float] // can be tuned independently for each frequency
 
-    private var beta : Float
-    private var omBeta : Float
+//    private var beta : Float
+//    private var omBeta : Float
     
     private var twoNumResonators : Int
 
@@ -73,6 +74,7 @@ public class ResonatorBankVec {
         // initialize from passed frequencies
         self.frequencies = frequencies
         self.numResonators = frequencies.count
+        powers = [Float](repeating: 0, count: numResonators)
         amplitudes = [Float](repeating: 0, count: numResonators)
 
         // These must be 2 * numResonators size
@@ -80,8 +82,8 @@ public class ResonatorBankVec {
         self.omAlphas = vDSP.add(multiplication: (self.alphas, -1.0), 1.0)
 
         // TODO: fixed and hard-coded for now...
-        self.beta = 0.001 * 44100.0 / sampleRate
-        self.omBeta = 1.0 - beta
+//        self.beta = 0.001 * 44100.0 / sampleRate
+//        self.omBeta = 1.0 - beta
         
         twoNumResonators = 2 * numResonators
         
@@ -143,19 +145,29 @@ public class ResonatorBankVec {
         
         // resonator
         vDSP_vmma(rPtr.baseAddress!, 1,
-                    omAlphas, 1,
-                    zPtr.baseAddress!, 1,
+                  omAlphas, 1,
+                  zPtr.baseAddress!, 1,
                   alphasSample.baseAddress!, 1,
-                    rPtr.baseAddress!, 1,
-                    vDSP_Length(twoNumResonators))
+                  rPtr.baseAddress!, 1,
+                  vDSP_Length(twoNumResonators))
         
-        vDSP_vsmsma(rrPtr.baseAddress!, 1,
-                    &omBeta,
-                    rPtr.baseAddress!, 1,
-                    &beta,
-                    rrPtr.baseAddress!, 1,
-                    vDSP_Length(twoNumResonators))
+        
+  // this is for single fixed value of beta
+//        vDSP_vsmsma(rrPtr.baseAddress!, 1,
+//                    &omBeta,
+//                    rPtr.baseAddress!, 1,
+//                    &beta,
+//                    rrPtr.baseAddress!, 1,
+//                    vDSP_Length(twoNumResonators))
 
+        // Smoothing using beta = alpha
+        vDSP_vmma(rrPtr.baseAddress!, 1,
+                  omAlphas, 1,
+                  rPtr.baseAddress!, 1,
+                  alphas, 1,
+                  rrPtr.baseAddress!, 1,
+                  vDSP_Length(twoNumResonators))
+        
         // phasor
         vDSP_zvmul(&Z, 1,
                    &W, 1,
@@ -181,10 +193,9 @@ public class ResonatorBankVec {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             update(sample: frameData[sampleIndex])
         }
-        stabilize()
-        
+//        stabilize() // this is overkill
         // compute amplitudes
-        vDSP.squareMagnitudes(R, result: &amplitudes)
-        amplitudes = vForce.sqrt(amplitudes)
+        vDSP.squareMagnitudes(R, result: &powers)
+        amplitudes = vForce.sqrt(powers)
     }
 }

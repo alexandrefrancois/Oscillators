@@ -66,7 +66,7 @@ public:
     ResonatorBankVec & operator=(const ResonatorBankVec&) = delete;
     ResonatorBankVec(const ResonatorBankVec&) = delete;
 
-    ResonatorBankVec(size_t numResonators, /* const */ float* frequencies, float sampleRate, /* const */ float* alphas);
+    ResonatorBankVec(size_t numResonators, const float* frequencies, const float* alphas, float sampleRate);
     ~ResonatorBankVec();
 
     float sampleRate() { return m_sampleRate; }

@@ -36,9 +36,9 @@ using namespace oscillators_cpp;
 
 @implementation ResonatorBankVecCpp
 
-- (instancetype)initWithNumResonators:(int)numResonators frequencies:(float*)frequencies sampleRate:(float)sampleRate alphas:(float*)alphas {
+- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies alphas:(const float*)alphas sampleRate:(float)sampleRate {
     if (self = [super init]) {
-        self.resonatorBank = new ResonatorBankVec(numResonators, frequencies, sampleRate, alphas);
+        self.resonatorBank = new ResonatorBankVec(numResonators, frequencies, alphas, sampleRate);
     }
     return self;
 }

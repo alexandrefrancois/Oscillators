@@ -44,9 +44,9 @@ public struct Frequencies {
     /// Compute and return an array of frequencies of the provided size,
     /// in which the frequencies follow a log uniform distribution
     /// between (and including) the start and end frequencies.
-    public static func logUniformFrequencies(fMin: Float = 32.70, numBins: Int = 84, numBinsPerOctave: Int = 12) -> [Float] {
+    public static func logUniformFrequencies(minFrequency: Float = 32.70, numBins: Int = 84, numBinsPerOctave: Int = 12) -> [Float] {
         return (0..<numBins).map { bin in
-            fMin * powf(2.0, Float(bin) / Float(numBinsPerOctave))
+            minFrequency * powf(2.0, Float(bin) / Float(numBinsPerOctave))
         }
     }
     

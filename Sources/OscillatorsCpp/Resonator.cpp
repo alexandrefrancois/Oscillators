@@ -28,7 +28,7 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-Resonator::Resonator(float frequency, float sampleRate, float alpha) : Oscillator(frequency, sampleRate),
+Resonator::Resonator(float frequency, float alpha, float sampleRate) : Oscillator(frequency, sampleRate),
 m_alpha(alpha), m_omAlpha(1.0 - alpha), m_trackedFrequency(m_frequency), m_phase(0.0){
     // TODO: fixed and hard-coded for now
     m_beta = alpha; // 0.001 * 44100.0 / sampleRate;

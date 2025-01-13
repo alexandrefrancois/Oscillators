@@ -31,7 +31,8 @@ using namespace oscillators_cpp;
 constexpr float PI = 3.14159274101257324219; // PI
 constexpr float twoPi = 2.0 * PI;
 
-ResonatorBankVec::ResonatorBankVec(size_t numResonators, /* const */ float* frequencies, float sampleRate, /* const */ float* alphas) : m_sampleRate(sampleRate), m_numResonators(numResonators), m_twoNumResonators(2*numResonators) {
+ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencies, const float* alphas, float sampleRate)
+: m_sampleRate(sampleRate), m_numResonators(numResonators), m_twoNumResonators(2*numResonators) {
     
     constexpr float zero = 0.0f;
     constexpr float one = 1.0f;

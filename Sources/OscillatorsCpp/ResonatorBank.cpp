@@ -34,7 +34,7 @@ using namespace oscillators_cpp;
 
 constexpr size_t resonatorStride = 6;
 
-ResonatorBank::ResonatorBank(size_t numResonators, float* frequencies, float sampleRate, float* alphas) : m_sampleRate(sampleRate) {
+ResonatorBank::ResonatorBank(size_t numResonators, const float* frequencies, const float* alphas, float sampleRate) : m_sampleRate(sampleRate) {
     m_resonators.reserve(numResonators);
     for (size_t i=0; i<numResonators; ++i) {
         m_resonators.emplace_back(std::make_unique<Resonator>(frequencies[i], sampleRate, alphas[i]));

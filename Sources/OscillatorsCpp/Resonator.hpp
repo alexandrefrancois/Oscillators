@@ -51,7 +51,7 @@ private:
     float m_phase;
 
 public:
-    Resonator(float frequency, float sampleRate, float alpha);
+    Resonator(float frequency, float alpha, float sampleRate);
 
     float power() const { return m_power; }
     float alpha() const { return m_alpha; }

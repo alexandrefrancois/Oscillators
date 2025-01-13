@@ -27,7 +27,7 @@ SOFTWARE.
 
 // Wrapper for the Resonator class
 @interface ResonatorCpp : OscillatorCpp
-- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate alpha:(float)alpha;
+- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha sampleRate:(float)sampleRate;
 - (float)alpha;
 - (void)setAlpha:(float)alpha;
 - (float)omAlpha;

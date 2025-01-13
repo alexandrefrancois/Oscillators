@@ -33,9 +33,9 @@ using namespace oscillators_cpp;
 
 @implementation ResonatorCpp
 
-- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate alpha:(float)alpha {
+- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha sampleRate:(float)sampleRate {
     if (self = [super init]) {
-        self.oscillator = new Resonator(frequency, sampleRate, alpha);
+        self.oscillator = new Resonator(frequency, alpha, sampleRate);
     }
     return self;
 }

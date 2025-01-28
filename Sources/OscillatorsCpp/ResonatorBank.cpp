@@ -37,7 +37,7 @@ constexpr size_t resonatorStride = 6;
 ResonatorBank::ResonatorBank(size_t numResonators, const float* frequencies, const float* alphas, float sampleRate) : m_sampleRate(sampleRate) {
     m_resonators.reserve(numResonators);
     for (size_t i=0; i<numResonators; ++i) {
-        m_resonators.emplace_back(std::make_unique<Resonator>(frequencies[i], sampleRate, alphas[i]));
+        m_resonators.emplace_back(std::make_unique<Resonator>(frequencies[i], alphas[i], sampleRate));
     }
 #ifndef STD_CONCURRENCY
     m_dispatchGroup = dispatch_group_create();

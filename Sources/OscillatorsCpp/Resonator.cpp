@@ -82,7 +82,8 @@ void Resonator::updateAndTrack(const float *frameData, size_t frameLength, size_
         updateWithSample(frameData[i]);
     }
     stabilize(); // this is overkill but necessary
-    m_amplitude = sqrt(m_cc * m_cc + m_ss * m_ss);
+    m_power = m_cc * m_cc + m_ss * m_ss;
+    m_amplitude = sqrt(m_power);
     if (m_amplitude > trackFrequencyThreshold) {
         updateTrackedFrequency(frameLength);
     } else {

@@ -194,7 +194,7 @@ void ResonatorBankVec::update(const std::vector<float> &samples) {
     for (float sample : samples) {
         update(sample);
     }
-//    stabilize(); // this is overkill!
+    stabilize(); // this is overkill but necessary
     // compute amplitudes
     DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
     vDSP_zvmags(&R, 1, m_powers, 1, m_numResonators);
@@ -209,7 +209,7 @@ void ResonatorBankVec::update(const float *frameData, size_t frameLength, size_t
     for (int i=0; i<frameLength; i += sampleStride) {
         update(frameData[i]);
     }
-//    stabilize(); // this is overkill!
+    stabilize(); // this is overkill but necessary
     // compute amplitudes
     DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
     vDSP_zvmags(&R, 1, m_powers, 1, m_numResonators);
@@ -224,7 +224,7 @@ void ResonatorBankVec::update(const float *frameData, size_t frameLength, size_t
     for (int i=0; i<frameLength; i += sampleStride) {
         update(frameData[i]);
     }
-//    stabilize(); // this is overkill!
+    stabilize(); // this is overkill but necessary
     // compute amplitudes
     DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
     vDSP_zvmags(&R, 1, powers, 1, m_numResonators);

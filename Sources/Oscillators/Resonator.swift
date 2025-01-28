@@ -84,6 +84,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
     
     public func update(sample: Float) {
         updateWithSample(sample)
+        stabilize() // this is overkill but necessary
         // smoothed amplitude
         power = cc*cc + ss*ss
         amplitude = sqrt(power)
@@ -93,6 +94,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
         for sample in samples {
             updateWithSample(sample)
         }
+        stabilize() // this is overkill but necessary
         // smoothed amplitude
         power = cc*cc + ss*ss
         amplitude = sqrt(power)
@@ -102,6 +104,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }
+        stabilize() // this is overkill but necessary
         // smoothed amplitude
         power = cc*cc + ss*ss
         amplitude = sqrt(power)
@@ -109,6 +112,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
     
     public func updateAndTrack(sample: Float) {
         updateWithSample(sample)
+        stabilize() // this is overkill but necessary
         // smoothed amplitude
         power = cc*cc + ss*ss
         amplitude = sqrt(power)
@@ -123,6 +127,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
         for sample in samples {
             updateWithSample(sample)
         }
+        stabilize() // this is overkill but necessary
         // smoothed amplitude
         power = cc*cc + ss*ss
         amplitude = sqrt(power)
@@ -137,6 +142,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }
+        stabilize() // this is overkill but necessary
         // smoothed amplitude
         power = cc*cc + ss*ss
         amplitude = sqrt(power)

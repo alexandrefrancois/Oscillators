@@ -34,7 +34,7 @@ public class Generator : Oscillator, GeneratorProtocol {
     public func getNextSample() -> Float {
         let nextSample = sample;
         incrementPhase()
-        stabilize() // this is overkill - could be done every few 100 samples...
+        stabilize() // this is overkill but necessary
         return nextSample
     }
     

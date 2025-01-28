@@ -193,7 +193,7 @@ public class ResonatorBankVec {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             update(sample: frameData[sampleIndex])
         }
-//        stabilize() // this is overkill
+        stabilize() // this is overkill but necessary
         // compute amplitudes
         vDSP.squareMagnitudes(R, result: &powers)
         amplitudes = vForce.sqrt(powers)

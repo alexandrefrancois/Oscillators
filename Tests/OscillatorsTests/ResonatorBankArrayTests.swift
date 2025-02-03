@@ -32,8 +32,8 @@ final class ResonatorBankArrayTests: XCTestCase {
             Frequencies.alphaHeuristic(frequency: $0, sampleRate: AudioFixtures.defaultSampleRate)
         }
         let resonatorBankArray = ResonatorBankArray(frequencies: frequencies,
-                                                    sampleRate: AudioFixtures.defaultSampleRate,
-                                                    alphas: alphas)
+                                                    alphas: alphas,
+                                                    sampleRate: AudioFixtures.defaultSampleRate)
         
         XCTAssertEqual(resonatorBankArray.resonators.count, frequencies.count)
         for (index, resonator) in resonatorBankArray.resonators.enumerated() {
@@ -76,8 +76,8 @@ final class ResonatorBankArrayTests: XCTestCase {
             Frequencies.alphaHeuristic(frequency: $0, sampleRate: AudioFixtures.defaultSampleRate)
         }
         let resonatorBankArray = ResonatorBankArray(frequencies: frequencies,
-                                                    sampleRate: AudioFixtures.defaultSampleRate,
-                                                    alphas: alphas)
+                                                    alphas: alphas,
+                                                    sampleRate: AudioFixtures.defaultSampleRate)
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)
         resonatorBankArray.update(frameData: frame, frameLength: 1024, sampleStride: 1)
@@ -98,8 +98,8 @@ final class ResonatorBankArrayTests: XCTestCase {
             Frequencies.alphaHeuristic(frequency: $0, sampleRate: AudioFixtures.defaultSampleRate)
         }
         let resonatorBankArray1 = ResonatorBankArray(frequencies: frequenciesEven,
-                                                     sampleRate: AudioFixtures.defaultSampleRate,
-                                                     alphas: alphasEven)
+                                                     alphas: alphasEven,
+                                                     sampleRate: AudioFixtures.defaultSampleRate)
         resonatorBankArray1.updateConcurrent(frameData: frame, frameLength: 1024, sampleStride: 1)
         let amplitudes1 = resonatorBankArray1.amplitudes
         for value in amplitudes1 {
@@ -112,8 +112,8 @@ final class ResonatorBankArrayTests: XCTestCase {
             Frequencies.alphaHeuristic(frequency: $0, sampleRate: AudioFixtures.defaultSampleRate)
         }
         let resonatorBankArray2 = ResonatorBankArray(frequencies: frequenciesOdd,
-                                                     sampleRate: AudioFixtures.defaultSampleRate,
-                                                     alphas: alphasOdd)
+                                                     alphas: alphasOdd,
+                                                     sampleRate: AudioFixtures.defaultSampleRate)
         resonatorBankArray2.updateConcurrent(frameData: frame, frameLength: 1024, sampleStride: 1)
         let amplitudes2 = resonatorBankArray2.amplitudes
         for value in amplitudes2 {

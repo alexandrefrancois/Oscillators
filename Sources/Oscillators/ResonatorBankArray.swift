@@ -35,14 +35,14 @@ public class ResonatorBankArray {
     public private(set) var powers: [Float]
     public private(set) var amplitudes: [Float]
 
-    public init(frequencies: [Float], sampleRate: Float, alphas: [Float]) {
+    public init(frequencies: [Float], alphas: [Float], sampleRate: Float) {
         assert(frequencies.count == alphas.count)
         // initialize from passed frequencies
         powers = [Float](repeating: 0, count: frequencies.count)
         amplitudes = [Float](repeating: 0, count: frequencies.count)
         // setup an oscillator for each frequency
         for (idx, frequency) in frequencies.enumerated() {
-            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alphas[idx]))
+            resonators.append(Resonator(frequency: frequency, alpha: alphas[idx], sampleRate: sampleRate))
         }
     }
     
@@ -53,23 +53,25 @@ public class ResonatorBankArray {
         amplitudes = [Float](repeating: 0, count: frequencies.count)
         // setup an oscillator for each frequency
         for frequency in frequencies {
-            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alphaHeuristic(frequency, sampleRate)))
+            resonators.append(Resonator(frequency: frequency, alpha: alphaHeuristic(frequency, sampleRate), sampleRate: sampleRate))
         }
     }
     
     public init(alphas: [Float], sampleRate: Float, frequency: Float) {
-        // initialize from passed frequencies
+        // initialize from passed alphas
         powers = [Float](repeating: 0, count: alphas.count)
         amplitudes = [Float](repeating: 0, count: alphas.count)
         // setup an oscillator for each alpha
         for alpha in alphas {
-            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alpha))
+            resonators.append(Resonator(frequency: frequency, alpha: alpha, sampleRate: sampleRate))
         }
     }
         
     public func update(sample: Float) {
-        for resonator in resonators {
+        for (index, resonator) in resonators.enumerated() {
             resonator.update(sample: sample)
+            self.powers[index] = resonator.power
+            self.amplitudes[index] = resonator.amplitude
         }
     }
     

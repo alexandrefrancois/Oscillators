@@ -62,7 +62,7 @@ public class Resonator : Oscillator, ResonatorProtocol {
     public var phase: Float = 0.0
     public var trackedFrequency: Float = 0.0
     
-    public init(frequency: Float, sampleRate: Float, alpha: Float) {
+    public init(frequency: Float, alpha: Float, sampleRate: Float) {
         self.alpha = alpha
         self.omAlpha = 1.0 - alpha
         

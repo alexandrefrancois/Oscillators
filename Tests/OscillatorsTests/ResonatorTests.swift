@@ -31,15 +31,14 @@ final class ResonatorTests: XCTestCase {
     
     func testConstructor() throws {
         let resonator = Resonator(frequency: 440.0,
-                                  sampleRate: AudioFixtures.defaultSampleRate,
-                                  alpha: DynamicsFixtures.defaultAlpha)
+                                  alpha: DynamicsFixtures.defaultAlpha, sampleRate: AudioFixtures.defaultSampleRate)
         
         XCTAssertEqual(resonator.alpha, DynamicsFixtures.defaultAlpha)
     }
     
     func testSetAlpha() throws {
         var alpha: Float = 0.99
-        let resonator = Resonator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: alpha)
+        let resonator = Resonator(frequency: 440.0, alpha: alpha, sampleRate: AudioFixtures.defaultSampleRate)
         XCTAssertEqual(resonator.alpha, alpha)
         XCTAssertEqual(resonator.omAlpha, 1.0-alpha)
 
@@ -49,7 +48,7 @@ final class ResonatorTests: XCTestCase {
     }
     
     func testUpdateWithSample() throws {
-        let resonator = Resonator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: 1.0)
+        let resonator = Resonator(frequency: 440.0, alpha: 1.0, sampleRate: AudioFixtures.defaultSampleRate)
         let expectedC = resonator.Zc
         let expectedS = resonator.Zs
         resonator.updateWithSample(1.0)

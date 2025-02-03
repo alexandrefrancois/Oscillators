@@ -51,7 +51,7 @@ final class FrequenciesTests: XCTestCase {
         let numBins = Int(84)
         let numBinsPerOctaves = Int(12)
         
-        let frequencies = Frequencies.logUniformFrequencies(fMin: fMin, numBins: numBins, numBinsPerOctave: numBinsPerOctaves)
+        let frequencies = Frequencies.logUniformFrequencies(minFrequency: fMin, numBins: numBins, numBinsPerOctave: numBinsPerOctaves)
         
         XCTAssertEqual(frequencies.count, numBins)
         XCTAssertEqual(frequencies[0], fMin)

@@ -32,8 +32,8 @@ final class ResonatorBankVecTests: XCTestCase {
             Frequencies.alphaHeuristic(frequency: $0, sampleRate: AudioFixtures.defaultSampleRate)
         }
         let resonatorBank = ResonatorBankVec(frequencies: frequencies,
-                                             sampleRate: AudioFixtures.defaultSampleRate,
-                                             alphas: alphas)
+                                             alphas: alphas,
+                                             sampleRate: AudioFixtures.defaultSampleRate)
                 
         for i in 0..<resonatorBank.numResonators {
             XCTAssertEqual(resonatorBank.alphas[i], Frequencies.alphaHeuristic(frequency: resonatorBank.frequencies[i], sampleRate: AudioFixtures.defaultSampleRate))
@@ -47,8 +47,8 @@ final class ResonatorBankVecTests: XCTestCase {
             Frequencies.alphaHeuristic(frequency: $0, sampleRate: AudioFixtures.defaultSampleRate)
         }
         let resonatorBank = ResonatorBankVec(frequencies: frequencies,
-                                             sampleRate: AudioFixtures.defaultSampleRate,
-                                             alphas: alphas)
+                                             alphas: alphas,
+                                             sampleRate: AudioFixtures.defaultSampleRate)
         
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)

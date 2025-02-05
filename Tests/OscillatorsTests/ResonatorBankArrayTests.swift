@@ -46,7 +46,8 @@ final class ResonatorBankArrayTests: XCTestCase {
         let frequencies = FrequenciesFixtures.frequencies
         let resonatorBankArray = ResonatorBankArray(frequencies: frequencies,
                                                     sampleRate: AudioFixtures.defaultSampleRate,
-                                                    alphaHeuristic: Frequencies.alphaHeuristic(frequency:sampleRate:))
+                                                    k: 1.0,
+                                                    alphaHeuristic: Frequencies.alphaHeuristic(frequency:sampleRate:k:))
         
         XCTAssertEqual(resonatorBankArray.resonators.count, frequencies.count)
         for (index, resonator) in resonatorBankArray.resonators.enumerated() {

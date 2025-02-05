@@ -47,13 +47,13 @@ public class ResonatorBankArray {
     }
     
     /// A constructor that takes a function of frequency and sample rate to compute alphas
-    public init(frequencies: [Float], sampleRate: Float, alphaHeuristic: (Float, Float) -> Float) {
+    public init(frequencies: [Float], sampleRate: Float, k: Float = 1.0, alphaHeuristic: (Float, Float, Float) -> Float) {
         // initialize from passed frequencies
         powers = [Float](repeating: 0, count: frequencies.count)
         amplitudes = [Float](repeating: 0, count: frequencies.count)
         // setup an oscillator for each frequency
         for frequency in frequencies {
-            resonators.append(Resonator(frequency: frequency, alpha: alphaHeuristic(frequency, sampleRate), sampleRate: sampleRate))
+            resonators.append(Resonator(frequency: frequency, alpha: alphaHeuristic(frequency, sampleRate, k), sampleRate: sampleRate))
         }
     }
     

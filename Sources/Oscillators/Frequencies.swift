@@ -59,7 +59,7 @@ public struct Frequencies {
         return speedOfSound * (observedFrequency - referenceFrequency) / referenceFrequency
     }
     
-    public static func alphaHeuristic(frequency: Float, sampleRate: Float) -> Float {
-        return 1 - exp(-frequency / (sampleRate * log10(frequency)))
+    public static func alphaHeuristic(frequency: Float, sampleRate: Float, k: Float = 1) -> Float {
+        return 1 - exp(-frequency / (sampleRate * k * log10(1+frequency)))
     }
 }

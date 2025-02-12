@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,10 @@ SOFTWARE.
 /// An oscillator is characterized by its frequency and amplitude
 /// Phase calculations depend on sampling rate
 public protocol OscillatorProtocol {
-    var frequency : Float { get set }
     var amplitude : Float { get set }
-    var sampleRate : Float { get set }
     var sample : Float { get }
+    
+    func getNextSample() -> Float
+    func getNextSamples(numSamples: Int) -> [Float]
+    func getNextSamples(samples: inout [Float])
 }

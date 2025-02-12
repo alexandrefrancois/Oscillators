@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2024 Alexandre R. J. Francois
+Copyright (c) 2024-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,10 +32,10 @@ SOFTWARE.
 - (float)frequencyValue:(int)index;
 - (float)alphaValue:(int)index;
 - (float)timeConstantValue:(int)index;
-- (void)copyPowers:(float*)dest size:(int)size; // this is a bit ugly but avoids memory management issues
-- (float)powerValue:(int)index;
-- (void)copyAmplitudes:(float*)dest size:(int)size; // this is a bit ugly but avoids memory management issues
-- (float)amplitudeValue:(int)index;
+- (void)getPowers:(float*)dest size:(int)size;
+//- (float)powerValue:(int)index;
+- (void)getAmplitudes:(float*)dest size:(int)size;
+//- (float)amplitudeValue:(int)index;
 - (void)update:(float)sample
 NS_SWIFT_NAME(update(sample:));
 - (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride

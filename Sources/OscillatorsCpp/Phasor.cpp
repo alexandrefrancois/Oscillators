@@ -1,8 +1,7 @@
-#include "Oscillator.hpp"
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "Phasor.hpp"
+
 #include <cmath>
 #include <iostream>
 
@@ -30,25 +31,25 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-Oscillator::Oscillator(float frequency, float sampleRate)
-: m_frequency(frequency), m_sampleRate(sampleRate), m_amplitude(0.0),
+Phasor::Phasor(float frequency, float sampleRate)
+: m_frequency(frequency), m_sampleRate(sampleRate),
 m_Zc(1.0), m_Zs(0.0) {
     updateMultiplier();
 }
 
-void Oscillator::updateMultiplier() {
+void Phasor::updateMultiplier() {
     const float omega = twoPi * m_frequency / m_sampleRate;
     m_Wc = cos(omega);
     m_Ws = sin(omega);
     m_Wcps = m_Wc + m_Ws;
 }
 
-void Oscillator::setFrequency(float frequency) {
+void Phasor::setFrequency(float frequency) {
     m_frequency = frequency;
     updateMultiplier();
 }
 
-void Oscillator::incrementPhase() {
+void Phasor::incrementPhase() {
     // complex multiplication with 3 real multiplications
     const float ac = m_Wc * m_Zc;
     const float bd = m_Ws * m_Zs;
@@ -57,7 +58,7 @@ void Oscillator::incrementPhase() {
     m_Zs = abcd - ac - bd;
 }
 
-void Oscillator::stabilize(){
+void Phasor::stabilize(){
     // approximation for 1 / sqrt(x) around 1 (Taylor expansion)
     // sqrt(m_Zc*m_Zc + m_Zs*m_Zs) should be 1
     const float k = (3.0 - m_Zc*m_Zc - m_Zs*m_Zs) / 2.0;

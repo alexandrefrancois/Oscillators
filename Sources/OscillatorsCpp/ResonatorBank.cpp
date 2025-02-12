@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -83,31 +83,31 @@ float ResonatorBank::timeConstantValue(size_t index) {
     return m_resonators[index]->timeConstant();
 }
 
-void ResonatorBank::copyPowers(float *dest, size_t size) {
+void ResonatorBank::getPowers(float *dest, size_t size) {
     for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
         dest[i]=m_resonators[i]->power();
     }
 }
 
-float ResonatorBank::powerValue(size_t index) {
-    if (index >= m_resonators.size()) {
-        throw std::out_of_range("Bad index passed to amplitudeValue()");
-    }
-    return m_resonators[index]->power();
-}
+//float ResonatorBank::powerValue(size_t index) {
+//    if (index >= m_resonators.size()) {
+//        throw std::out_of_range("Bad index passed to amplitudeValue()");
+//    }
+//    return m_resonators[index]->power();
+//}
 
-void ResonatorBank::copyAmplitudes(float *dest, size_t size) {
+void ResonatorBank::getAmplitudes(float *dest, size_t size) {
     for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
         dest[i]=m_resonators[i]->amplitude();
     }
 }
 
-float ResonatorBank::amplitudeValue(size_t index) {
-    if (index >= m_resonators.size()) {
-        throw std::out_of_range("Bad index passed to amplitudeValue()");
-    }
-    return m_resonators[index]->amplitude();
-}
+//float ResonatorBank::amplitudeValue(size_t index) {
+//    if (index >= m_resonators.size()) {
+//        throw std::out_of_range("Bad index passed to amplitudeValue()");
+//    }
+//    return m_resonators[index]->amplitude();
+//}
 
 void ResonatorBank::update(const float sample) {
     for (auto &resonatorPtr : m_resonators) {

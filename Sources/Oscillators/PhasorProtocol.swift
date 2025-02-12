@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,49 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef Oscillator_hpp
-#define Oscillator_hpp
-
-#include <vector>
-
-namespace oscillators_cpp {
-
-constexpr float PI = 3.14159274101257324219; // PI
-constexpr float twoPi = 2.0 * PI;
-
-// Base oscillator class
-class Oscillator {
-protected:
-    float m_frequency;
-    float m_amplitude;
-    float m_sampleRate;
-    
-    // Phasor
-    float m_Zc;
-    float m_Zs;
-    float m_Wc;
-    float m_Ws;
-    float m_Wcps;
-
-    void updateMultiplier();
-
-public:
-    Oscillator & operator=(const Oscillator&) = delete;
-    Oscillator(const Oscillator&) = delete;
-    virtual ~Oscillator() = default;
-    
-    Oscillator(float frequency, float sampleRate);
-
-    float frequency() const { return m_frequency; }
-    void setFrequency(float frequency);
-    float amplitude() const { return m_amplitude; }
-    float sampleRate() const { return m_sampleRate; }
-
-    void incrementPhase();
-    void stabilize();
-};
-
-} // oscillators_cpp
-
-#endif /* Oscillator_hpp */
-
+/// An oscillator is characterized by its frequency and amplitude
+/// Phase calculations depend on sampling rate
+public protocol PhasorProtocol {
+    var frequency : Float { get set }
+    var sampleRate : Float { get set }
+}

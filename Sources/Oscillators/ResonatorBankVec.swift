@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -33,8 +33,14 @@ public class ResonatorBankVec {
 
     public private(set) var numResonators : Int
     public private(set) var frequencies : [Float] // tuning in Hz
-    public private(set) var powers : [Float]
-    public private(set) var amplitudes : [Float]
+    public var powers : [Float] {
+        var powers = [Float](repeating: 0, count: numResonators)
+        vDSP.squareMagnitudes(R, result: &powers)
+        return powers
+    }
+    public var amplitudes : [Float] {
+        vForce.sqrt(powers)
+    }
 
     public  let alphas : [Float] // can be tuned independently for each frequency
     private let omAlphas : [Float] // can be tuned independently for each frequency
@@ -74,8 +80,8 @@ public class ResonatorBankVec {
         // initialize from passed frequencies
         self.frequencies = frequencies
         self.numResonators = frequencies.count
-        powers = [Float](repeating: 0, count: numResonators)
-        amplitudes = [Float](repeating: 0, count: numResonators)
+//        powers = [Float](repeating: 0, count: numResonators)
+//        amplitudes = [Float](repeating: 0, count: numResonators)
 
         // These must be 2 * numResonators size
         self.alphas = alphas + alphas
@@ -195,7 +201,7 @@ public class ResonatorBankVec {
         }
         stabilize() // this is overkill but necessary
         // compute amplitudes
-        vDSP.squareMagnitudes(R, result: &powers)
-        amplitudes = vForce.sqrt(powers)
+//        vDSP.squareMagnitudes(R, result: &powers)
+//        amplitudes = vForce.sqrt(powers)
     }
 }

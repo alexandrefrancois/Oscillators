@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,40 +22,47 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#import <Foundation/Foundation.h>
+#ifndef Phasor_hpp
+#define Phasor_hpp
 
-#import "OscillatorCpp.h"
-#import "OscillatorCppProtected.h"
+#include <vector>
 
-using namespace oscillators_cpp;
+namespace oscillators_cpp {
 
-@implementation OscillatorCpp
+constexpr float PI = 3.14159274101257324219; // PI
+constexpr float twoPi = 2.0 * PI;
 
-- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate {
-    if (self = [super init]) {
-        self.oscillator = new Oscillator(frequency, sampleRate);
-    }
-    return self;
-}
+// Phasor class: base for individual oscillators
+class Phasor {
+protected:
+    float m_frequency;
+    float m_sampleRate;
+    
+    // Phasor
+    float m_Zc;
+    float m_Zs;
+    float m_Wc;
+    float m_Ws;
+    float m_Wcps;
 
-- (void)dealloc {
-    delete self.oscillator;
-}
+    void updateMultiplier();
 
-- (float)frequency {
-    return self.oscillator->frequency();
-}
+public:
+    Phasor & operator=(const Phasor&) = delete;
+    Phasor(const Phasor&) = delete;
+    virtual ~Phasor() = default;
+    
+    Phasor(float frequency, float sampleRate);
 
-- (void)setFrequency:(float)frequency {
-    self.oscillator->setFrequency(frequency);
-}
+    float frequency() const { return m_frequency; }
+    void setFrequency(float frequency);
+    float sampleRate() const { return m_sampleRate; }
 
-- (float)amplitude {
-    return self.oscillator->amplitude();
-}
+    void incrementPhase();
+    void stabilize();
+};
 
-- (float)sampleRate {
-    return self.oscillator->sampleRate();
-}
+} // oscillators_cpp
 
-@end
+#endif /* Phasor_hpp */
+

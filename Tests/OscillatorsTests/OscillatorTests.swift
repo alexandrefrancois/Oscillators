@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,11 +25,11 @@ SOFTWARE.
 import XCTest
 @testable import Oscillators
 
-fileprivate let epsilon : Float = 0.001
+fileprivate let epsilon : Float = 0.0001
 fileprivate let twoPi = Float.pi * 2.0
 
 final class OscillatorTests: XCTestCase {
-    
+        
     func testConstructor() throws {
         let frequency = Float(440.0)
         let sampleRate = AudioFixtures.defaultSampleRate
@@ -42,49 +42,46 @@ final class OscillatorTests: XCTestCase {
         XCTAssertEqual(oscillator.amplitude, 1.0)
     }
     
-    func testUpdateMultiplier() throws {
-        let frequency = Float(440.0)
-        let sampleRate = AudioFixtures.defaultSampleRate
-
-        let oscillator = Oscillator(frequency: frequency, sampleRate: sampleRate)
-
-        // initial values
-        var omega = twoPi * frequency / sampleRate
-        XCTAssertEqual(oscillator.Wc, cos(omega))
-        XCTAssertEqual(oscillator.Ws, sin(omega))
-        XCTAssertEqual(oscillator.Wcps, cos(omega)+sin(omega))
-        
-        // change frequency
-        oscillator.frequency = Float(880.0)
-        omega = twoPi * oscillator.frequency / oscillator.sampleRate
-        XCTAssertEqual(oscillator.Wc, cos(omega))
-        XCTAssertEqual(oscillator.Ws, sin(omega))
-        XCTAssertEqual(oscillator.Wcps, cos(omega)+sin(omega))
-
-        // change sampleRate
-        oscillator.sampleRate = Float(48000.0)
-        omega = twoPi * oscillator.frequency / oscillator.sampleRate
-        XCTAssertEqual(oscillator.Wc, cos(omega))
-        XCTAssertEqual(oscillator.Ws, sin(omega))
-        XCTAssertEqual(oscillator.Wcps, cos(omega)+sin(omega))
-
+    func testGetNextSample() throws {
+        let amplitude : Float = 0.5
+        let oscillator = Oscillator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, amplitude: amplitude)
+        let nextSample = oscillator.getNextSample()
+        XCTAssertEqual(nextSample, amplitude, accuracy: epsilon)
     }
     
-    func testPhasor() throws {
-        let oscillator = Oscillator(frequency: 441.0, sampleRate: AudioFixtures.defaultSampleRate)
-        let twoPiFrequency : Float = twoPi * oscillator.frequency
+    func testGetNextSamples1() throws {
+        let frequency : Float = 440.0
+        let amplitude : Float = 0.5
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let oscillator = Oscillator(frequency: frequency, sampleRate: sampleRate, amplitude: amplitude)
+        let numSamples = 10000
+        let samples = oscillator.getNextSamples(numSamples: numSamples)
+        XCTAssertEqual(samples.count, numSamples)
         
-        // This checks that the phasor's frequency does not drift after a number of iterations
-        // that corresponds to a multiple of the number of samples in the oscillator's period
-        let alpha : Float = twoPiFrequency
-        for i in 0..<4410000 {
-            oscillator.incrementPhase()
-            if i % 1024 == 0 {
-                oscillator.stabilize()
-            }
-        }
-        XCTAssertEqual(oscillator.Zc, cos(alpha), accuracy: epsilon, "\(oscillator.Zc - cos(alpha))")
-        XCTAssertEqual(oscillator.Zs, sin(alpha), accuracy: epsilon, "\(oscillator.Zs - sin(alpha))")
+        let twoPiFrequency : Float = twoPi * frequency
+        let delta : Float = twoPiFrequency / sampleRate
+        XCTAssertEqual(samples[0], amplitude, accuracy: epsilon)
+        XCTAssertEqual(samples[666], amplitude * cos(666 * delta), accuracy: epsilon)
+        XCTAssertEqual(samples[3333], amplitude * cos(3333 * delta), accuracy: epsilon)
+        XCTAssertEqual(samples[7777], amplitude * cos(7777 * delta), accuracy: epsilon)
+        XCTAssertEqual(samples[9999], amplitude * cos(9999 * delta), accuracy: epsilon)
     }
 
+    func testGetNextSamples2() throws {
+        let frequency : Float = 440.0
+        let amplitude : Float = 0.5
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let oscillator = Oscillator(frequency: frequency, sampleRate: sampleRate, amplitude: amplitude)
+        let numSamples = 10000
+        var samples = [Float](repeating: 0.0, count: numSamples)
+        oscillator.getNextSamples(samples: &samples)
+        
+        let twoPiFrequency : Float = twoPi * frequency
+        let delta : Float = twoPiFrequency / sampleRate
+        XCTAssertEqual(samples[0], amplitude, accuracy: epsilon)
+        XCTAssertEqual(samples[666], amplitude * cos(666 * delta), accuracy: epsilon)
+        XCTAssertEqual(samples[3333], amplitude * cos(3333 * delta), accuracy: epsilon)
+        XCTAssertEqual(samples[7777], amplitude * cos(7777 * delta), accuracy: epsilon)
+        XCTAssertEqual(samples[9999], amplitude * cos(9999 * delta), accuracy: epsilon)
+    }
 }

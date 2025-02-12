@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,16 +25,14 @@ SOFTWARE.
 #ifndef Resonator_hpp
 #define Resonator_hpp
 
-#include "Oscillator.hpp"
+#include "Phasor.hpp"
 
 namespace oscillators_cpp {
 
 constexpr float trackFrequencyThreshold = 0.001;
 
-class Resonator : public Oscillator {
+class Resonator : public Phasor {
 private:
-    float m_power; // squared amplitude
-    
     float m_alpha;
     float m_omAlpha;
     
@@ -46,14 +44,15 @@ private:
     // smoothed
     float m_cc;
     float m_ss;
-
+    
     float m_trackedFrequency;
     float m_phase;
-
+    
 public:
     Resonator(float frequency, float alpha, float sampleRate);
-
-    float power() const { return m_power; }
+    
+    float power() const { return m_cc * m_cc + m_ss * m_ss; }
+    float amplitude() const { return sqrt(m_cc * m_cc + m_ss * m_ss); }
     float alpha() const { return m_alpha; }
     void setAlpha(float alpha);
     float omAlpha() const { return m_omAlpha; }

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2024 Alexandre R. J. Francois
+Copyright (c) 2024-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -67,21 +67,21 @@ using namespace oscillators_cpp;
     return self.resonatorBank->timeConstantValue(index);
 }
 
-- (void)copyPowers:(float*)dest size: (int)size {
-    self.resonatorBank->copyPowers(dest, size);
+- (void)getPowers:(float*)dest size: (int)size {
+    self.resonatorBank->getPowers(dest, size);
 }
 
-- (float)powerValue:(int)index {
-    return self.resonatorBank->powerValue(index);
+//- (float)powerValue:(int)index {
+//    return self.resonatorBank->powerValue(index);
+//}
+
+- (void)getAmplitudes:(float*)dest size: (int)size {
+    self.resonatorBank->getAmplitudes(dest, size);
 }
 
-- (void)copyAmplitudes:(float*)dest size: (int)size {
-    self.resonatorBank->copyAmplitudes(dest, size);
-}
-
-- (float)amplitudeValue:(int)index {
-    return self.resonatorBank->amplitudeValue(index);
-}
+//- (float)amplitudeValue:(int)index {
+//    return self.resonatorBank->amplitudeValue(index);
+//}
 
 - (void)update:(float)sample {
     self.resonatorBank->update(sample);

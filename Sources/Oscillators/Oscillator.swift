@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,65 +30,43 @@ fileprivate let twoPi = Float.pi * 2.0
 /// an oscillator is characterized by its frequency and amplitude.
 /// Waveform values are computed recursively with a complex phasor.
 /// Incremental calculations depend on frequency and sampling rate.
-public class Oscillator : OscillatorProtocol {
-    public var frequency: Float {
-        didSet {
-            updateMultiplier()
-        }
-    }
-    public var sampleRate: Float {
-        didSet {
-            updateMultiplier()
-        }
-    }
+public class Oscillator : Phasor, OscillatorProtocol {
     public var amplitude: Float = 1.0
-
     public var sample : Float {
         amplitude * Zc
     }
     
-    // Phasor variables
-    // Phasor: Z = Zc + i Zs
-    // Multiplier: W = Wc + i Ws
-    internal var Zc : Float = 1.0
-    internal var Zs : Float = 0.0
-    internal var Wc : Float = 0.0
-    internal var Ws : Float = 0.0
-    internal var Wcps : Float = 0.0 // pre-computed Oc + Os
-    
-    init(frequency: Float, sampleRate: Float) {
-        self.sampleRate = sampleRate
-        self.frequency = frequency
-        updateMultiplier()
-    }
-
-    func updateMultiplier() {
-        let omega = twoPi * frequency / sampleRate
-        Wc = cos(omega)
-        Ws = sin(omega)
-        Wcps = Wc + Ws
+    public init(frequency: Float, sampleRate: Float, amplitude: Float = 1.0) {
+        super.init(frequency: frequency, sampleRate: sampleRate)
+        self.amplitude = amplitude
     }
     
-    /// Compute next value of the phasor
-    /// Z <- Z * W
-    internal func incrementPhase() {
-        // W <- W * O
-        // complex multiplication with 3 real multiplications
-        let ac = Wc*Zc
-        let bd = Ws*Zs
-        let abcd = (Wcps) * (Zc+Zs)
-        Zc = ac - bd
-        Zs = abcd - ac - bd
+    public func getNextSample() -> Float {
+        let nextSample = sample;
+        incrementPhase()
+        stabilize() // this is overkill but necessary
+        return nextSample
     }
     
-    /// Apply re-normalization correction to compensate for
-    /// numerical drift, use Taylor expansion around 1 to approximate
-    /// 1/sqrt(x) to reduce computational cost.
-    /// This can be applied every few hundred (?) samples
-    internal func stabilize() {
-        let k = (3.0 - Zc*Zc - Zs*Zs) / 2.0
-        Zc *= k
-        Zs *= k
+    public func getNextSamples(numSamples: Int) -> [Float] {
+        var samples = [Float]()
+        var samplesToGet = numSamples
+        while samplesToGet > 0 {
+            samples.append(sample)
+            samplesToGet -= 1
+            incrementPhase()
+        }
+        stabilize()
+        return samples
     }
     
+    public func getNextSamples(samples: inout [Float]) {
+        var sampleIdx = 0
+        while sampleIdx < samples.count {
+            samples[sampleIdx] = sample
+            sampleIdx += 1
+            incrementPhase()
+        }
+        stabilize()
+    }
 }

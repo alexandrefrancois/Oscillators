@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,21 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import XCTest
-@testable import OscillatorsCpp
+#ifndef PhasorCppProtected_h
+#define PhasorCppProtected_h
 
-fileprivate let epsilon : Float = 0.0001
-fileprivate let twoPi = Float.pi * 2.0
+#include "Phasor.hpp"
 
-final class OscillatorCppTests: XCTestCase {
-    
-    func testConstructor() throws {
-        let oscillator = OscillatorCpp(frequency: 440.5, sampleRate: AudioFixtures.defaultSampleRate)
-        guard let oscillator = oscillator else { return XCTAssert(false, "OscillatorCpp could not be instantiated") }
-        
-        XCTAssertEqual(oscillator.frequency(), 440.5, accuracy: epsilon)
-        XCTAssertEqual(oscillator.amplitude(), 0.0, accuracy: epsilon)
-        XCTAssertEqual(oscillator.sampleRate(), AudioFixtures.defaultSampleRate)
-    }
-    
-}
+@interface PhasorCpp()
+@property oscillators_cpp::Phasor *oscillator;
+@end
+
+#endif /* PhasorCppProtected_h */

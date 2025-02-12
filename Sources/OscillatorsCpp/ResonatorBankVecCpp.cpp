@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2024 Alexandre R. J. Francois
+Copyright (c) 2024-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -41,10 +41,10 @@ ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencie
     // initialize from passed frequencies
     m_frequencies = new float[m_numResonators];
     memcpy(m_frequencies, frequencies, m_numResonators * sizeof(float));
-    m_powers = new float[m_numResonators];
-    vDSP_vfill(&zero, m_powers, 1, m_numResonators);
-    m_amplitudes = new float[m_numResonators];
-    vDSP_vfill(&zero, m_amplitudes, 1, m_numResonators);
+//    m_powers = new float[m_numResonators];
+//    vDSP_vfill(&zero, m_powers, 1, m_numResonators);
+//    m_amplitudes = new float[m_numResonators];
+//    vDSP_vfill(&zero, m_amplitudes, 1, m_numResonators);
 
     // These must be 2 * numResonators size
     m_alphas = new float[m_twoNumResonators];
@@ -97,8 +97,8 @@ ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencie
 
 ResonatorBankVec::~ResonatorBankVec() {
     delete [] m_frequencies;
-    delete [] m_powers;
-    delete [] m_amplitudes;
+//    delete [] m_powers;
+//    delete [] m_amplitudes;
     delete [] m_alphas;
     delete [] m_rPtr;
     delete [] m_rrPtr;
@@ -131,27 +131,31 @@ float ResonatorBankVec::timeConstantValue(size_t index) {
     return m_alphas[index] > 0.0 ? 1.0 / (m_sampleRate * m_alphas[index]) : 0.0f;
 }
 
-void ResonatorBankVec::copyPowers(float *dest, size_t size) {
-    memcpy(dest, m_powers, m_numResonators * sizeof(float));
+void ResonatorBankVec::getPowers(float *dest, size_t size) {
+    DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
+    vDSP_zvmags(&R, 1, dest, 1, m_numResonators);
 }
 
-float ResonatorBankVec::powerValue(size_t index) {
-    if (index >= m_numResonators) {
-        throw std::out_of_range("Bad index passed to amplitudeValue()");
-    }
-    return m_powers[index];
+//float ResonatorBankVec::powerValue(size_t index) {
+//    if (index >= m_numResonators) {
+//        throw std::out_of_range("Bad index passed to amplitudeValue()");
+//    }
+//    return m_powers[index];
+//}
+
+void ResonatorBankVec::getAmplitudes(float *dest, size_t size) {
+    DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
+    vDSP_zvmags(&R, 1, dest, 1, m_numResonators);
+    int count = static_cast<int>(m_numResonators);
+    vvsqrtf(dest, dest, &count);
 }
 
-void ResonatorBankVec::copyAmplitudes(float *dest, size_t size) {
-    memcpy(dest, m_amplitudes, m_numResonators * sizeof(float));
-}
-
-float ResonatorBankVec::amplitudeValue(size_t index) {
-    if (index >= m_numResonators) {
-        throw std::out_of_range("Bad index passed to amplitudeValue()");
-    }
-    return m_amplitudes[index];
-}
+//float ResonatorBankVec::amplitudeValue(size_t index) {
+//    if (index >= m_numResonators) {
+//        throw std::out_of_range("Bad index passed to amplitudeValue()");
+//    }
+//    return m_amplitudes[index];
+//}
 
 void ResonatorBankVec::update(const float sample) {
     vDSP_vsmul(m_alphas, 1, &sample, m_alphasSample, 1, m_twoNumResonators);
@@ -196,10 +200,10 @@ void ResonatorBankVec::update(const std::vector<float> &samples) {
     }
     stabilize(); // this is overkill but necessary
     // compute amplitudes
-    DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
-    vDSP_zvmags(&R, 1, m_powers, 1, m_numResonators);
-    int count = static_cast<int>(m_numResonators);
-    vvsqrtf(m_amplitudes, m_powers, &count);
+//    DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
+//    vDSP_zvmags(&R, 1, m_powers, 1, m_numResonators);
+//    int count = static_cast<int>(m_numResonators);
+//    vvsqrtf(m_amplitudes, m_powers, &count);
 }
 
 /// Process a frame of samples.
@@ -211,10 +215,10 @@ void ResonatorBankVec::update(const float *frameData, size_t frameLength, size_t
     }
     stabilize(); // this is overkill but necessary
     // compute amplitudes
-    DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
-    vDSP_zvmags(&R, 1, m_powers, 1, m_numResonators);
-    int count = static_cast<int>(m_numResonators);
-    vvsqrtf(m_amplitudes, m_powers, &count);
+//    DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
+//    vDSP_zvmags(&R, 1, m_powers, 1, m_numResonators);
+//    int count = static_cast<int>(m_numResonators);
+//    vvsqrtf(m_amplitudes, m_powers, &count);
 }
 
 /// Process a frame of samples.
@@ -226,10 +230,10 @@ void ResonatorBankVec::update(const float *frameData, size_t frameLength, size_t
     }
     stabilize(); // this is overkill but necessary
     // compute amplitudes
-    DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
-    vDSP_zvmags(&R, 1, powers, 1, m_numResonators);
-    int count = static_cast<int>(m_numResonators);
-    vvsqrtf(amplitudes, powers, &count);
+//    DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
+//    vDSP_zvmags(&R, 1, powers, 1, m_numResonators);
+//    int count = static_cast<int>(m_numResonators);
+//    vvsqrtf(amplitudes, powers, &count);
 }
 
 /// Apply norm correction to phasor.

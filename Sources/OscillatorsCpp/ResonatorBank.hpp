@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -65,10 +65,10 @@ public:
     void setAllAlphas(float alpha);
     float timeConstantValue(size_t index);
 
-    void copyPowers(float *dest, size_t size);
-    float powerValue(size_t index);
-    void copyAmplitudes(float *dest, size_t size);
-    float amplitudeValue(size_t index);
+    void getPowers(float *dest, size_t size);
+//    float powerValue(size_t index);
+    void getAmplitudes(float *dest, size_t size);
+//    float amplitudeValue(size_t index);
 
     void update(const float sample);
     void update(const std::vector<float> &samples);

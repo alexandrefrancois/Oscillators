@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2024 Alexandre R. J. Francois
+Copyright (c) 2024-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -59,7 +59,7 @@ final class ResonatorBankVecCppTests: XCTestCase {
         // get values for all amplitudes
         let size = resonatorBankCpp.numResonators()
         var amplitudes = [Float](repeating: 0.0, count: Int(size))
-        resonatorBankCpp.copyAmplitudes(&amplitudes, size: size)
+        resonatorBankCpp.getAmplitudes(&amplitudes, size: size)
         for value in amplitudes {
             XCTAssertGreaterThan(value, 0.0, "Resonator not updated")
         }

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,36 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/// An oscillator used to generate a periodic signal
-public protocol GeneratorProtocol {
-    var amplitude : Float { get set }
-    func getNextSample() -> Float
-    func getNextSamples(numSamples: Int) -> [Float]
-    func getNextSamples(samples: inout [Float])
+#import <Foundation/Foundation.h>
+
+#import "PhasorCpp.h"
+#import "PhasorCppProtected.h"
+
+using namespace oscillators_cpp;
+
+@implementation PhasorCpp
+
+- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate {
+    if (self = [super init]) {
+        self.oscillator = new Phasor(frequency, sampleRate);
+    }
+    return self;
 }
+
+- (void)dealloc {
+    delete self.oscillator;
+}
+
+- (float)frequency {
+    return self.oscillator->frequency();
+}
+
+- (void)setFrequency:(float)frequency {
+    self.oscillator->setFrequency(frequency);
+}
+
+- (float)sampleRate {
+    return self.oscillator->sampleRate();
+}
+
+@end

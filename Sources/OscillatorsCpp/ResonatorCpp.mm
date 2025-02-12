@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 #import "ResonatorCpp.h"
-#import "OscillatorCppProtected.h"
+#import "PhasorCppProtected.h"
 
 #import <Foundation/Foundation.h>
 
@@ -42,6 +42,16 @@ using namespace oscillators_cpp;
 
 - (Resonator*)resonator {
     return (Resonator*)self.oscillator;
+}
+
+
+- (float)power {
+    return self.resonator->power();
+}
+
+
+- (float)amplitude {
+    return self.resonator->amplitude();
 }
 
 - (float)alpha {

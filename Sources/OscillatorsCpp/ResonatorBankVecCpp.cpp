@@ -127,14 +127,6 @@ float ResonatorBankVec::alphaValue(size_t index) {
     return m_alphas[index];
 }
 
-float ResonatorBankVec::timeConstantValue(size_t index) {
-    if (index >= m_numResonators) {
-        throw std::out_of_range("Bad index passed to timeConstantValue()");
-    }
-    // if alpha is 0 then time constant should be infinity...
-    return m_alphas[index] > 0.0 ? 1.0 / (m_sampleRate * m_alphas[index]) : 0.0f;
-}
-
 float ResonatorBankVec::betaValue(size_t index) {
     if (index >= m_numResonators) {
         throw std::out_of_range("Bad index passed to alphaValue()");

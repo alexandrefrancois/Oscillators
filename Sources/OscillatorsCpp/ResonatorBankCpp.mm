@@ -67,10 +67,6 @@ using namespace oscillators_cpp;
     self.resonatorBank->setAllAlphas(alpha);
 }
 
-- (float)timeConstantValue:(int)index {
-    return self.resonatorBank->timeConstantValue(index);
-}
-
 - (void)getPowers:(float*)dest size: (int)size {
     self.resonatorBank->getPowers(dest, size);
 }

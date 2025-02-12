@@ -54,7 +54,6 @@ public:
     float alpha() const { return m_alpha; }
     void setAlpha(float alpha);
     float omAlpha() const { return m_omAlpha; }
-    float timeConstant() const { return 1.0 / (m_sampleRate * m_alpha); }
     float beta() const { return m_beta; }
     void setBeta(float beta);
     float c() const { return m_cos; }

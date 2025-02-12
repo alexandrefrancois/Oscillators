@@ -39,14 +39,14 @@ public class ResonatorBankArray {
         resonators.map { $0.amplitude }
     }
 
-    public init(frequencies: [Float], alphas: [Float], sampleRate: Float) {
+    public init(frequencies: [Float], alphas: [Float], betas: [Float], sampleRate: Float) {
         assert(frequencies.count == alphas.count)
         // initialize from passed frequencies
 //        powers = [Float](repeating: 0, count: frequencies.count)
 //        amplitudes = [Float](repeating: 0, count: frequencies.count)
         // setup an oscillator for each frequency
         for (idx, frequency) in frequencies.enumerated() {
-            resonators.append(Resonator(frequency: frequency, alpha: alphas[idx], sampleRate: sampleRate))
+            resonators.append(Resonator(frequency: frequency, alpha: alphas[idx], beta: betas[idx], sampleRate: sampleRate))
         }
     }
     

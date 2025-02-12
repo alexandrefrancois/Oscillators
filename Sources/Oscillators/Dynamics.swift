@@ -32,7 +32,7 @@ public struct Dynamics {
     /// - parameter sampleDuration: same
     /// - returns: the time constant value
     public static func timeConstant(alpha: Float, sampleRate: Float) -> Float {
-        1.0 / (sampleRate * alpha)
+        -Float(1.0) / (sampleRate * log(Float(1.0) - alpha))
     }
     
     /// Compute the alpha value from time constant value for a given sample rate
@@ -40,6 +40,6 @@ public struct Dynamics {
     /// - parameter sampleDuration: same
     /// - returns: the alpha value
     public static func alpha(timeConstant: Float, sampleRate: Float) -> Float {
-        1.0 / (sampleRate * timeConstant)
+        Float(1.0) - exp( -Float(1.0) / (sampleRate * timeConstant))
     }
 }

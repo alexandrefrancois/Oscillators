@@ -33,7 +33,6 @@ SOFTWARE.
 - (float)alpha;
 - (void)setAlpha:(float)alpha;
 - (float)omAlpha; // used in test...
-- (float)timeConstant;
 - (float)beta;
 - (void)setBeta:(float)beta;
 - (float)c;

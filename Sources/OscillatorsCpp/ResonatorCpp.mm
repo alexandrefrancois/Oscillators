@@ -66,10 +66,6 @@ using namespace oscillators_cpp;
     return self.resonator->omAlpha();
 }
 
-- (float)timeConstant {
-    return self.resonator->timeConstant();
-}
-
 - (float)beta {
     return self.resonator->beta();
 }

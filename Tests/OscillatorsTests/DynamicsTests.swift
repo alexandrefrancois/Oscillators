@@ -30,11 +30,11 @@ fileprivate let epsilon : Float = 0.000001
 final class DynamicsTests: XCTestCase {
     func testTimeConstant() throws {
         let t = Dynamics.timeConstant(alpha: DynamicsFixtures.defaultAlpha, sampleRate: AudioFixtures.defaultSampleRate)
-        XCTAssertEqual(t, 0.099999994, accuracy: epsilon)
+        XCTAssertEqual(t, 0.09999806, accuracy: epsilon)
     }
     func testAlpha() throws {
         let a = Dynamics.alpha(timeConstant: DynamicsFixtures.defaultTimeConstant, sampleRate: AudioFixtures.defaultSampleRate)
-        XCTAssertEqual(a, 0.00022675736, accuracy: epsilon)
+        XCTAssertEqual(a, 0.000226736069, accuracy: epsilon)
     }
 
 }

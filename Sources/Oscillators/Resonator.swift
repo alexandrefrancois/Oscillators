@@ -45,10 +45,6 @@ public class Resonator : Phasor, ResonatorProtocol {
     }
     private(set) var omAlpha : Float = 0.0
     
-    public var timeConstant : Float {
-        1.0 / (sampleRate * alpha)
-    }
-    
     public var beta: Float {
         didSet {
             omBeta = 1.0 - beta

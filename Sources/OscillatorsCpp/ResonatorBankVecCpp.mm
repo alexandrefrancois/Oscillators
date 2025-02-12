@@ -63,10 +63,6 @@ using namespace oscillators_cpp;
     return self.resonatorBank->alphaValue(index);
 }
 
-- (float)timeConstantValue:(int)index {
-    return self.resonatorBank->timeConstantValue(index);
-}
-
 - (float)betaValue:(int)index {
     return self.resonatorBank->betaValue(index);
 }

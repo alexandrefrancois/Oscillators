@@ -76,38 +76,17 @@ void ResonatorBank::setAllAlphas(float alpha) {
     }
 }
 
-float ResonatorBank::timeConstantValue(size_t index) {
-    if (index >= m_resonators.size()) {
-        throw std::out_of_range("Bad index passed to timeConstantValue()");
-    }
-    return m_resonators[index]->timeConstant();
-}
-
 void ResonatorBank::getPowers(float *dest, size_t size) {
     for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
         dest[i]=m_resonators[i]->power();
     }
 }
 
-//float ResonatorBank::powerValue(size_t index) {
-//    if (index >= m_resonators.size()) {
-//        throw std::out_of_range("Bad index passed to amplitudeValue()");
-//    }
-//    return m_resonators[index]->power();
-//}
-
 void ResonatorBank::getAmplitudes(float *dest, size_t size) {
     for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
         dest[i]=m_resonators[i]->amplitude();
     }
 }
-
-//float ResonatorBank::amplitudeValue(size_t index) {
-//    if (index >= m_resonators.size()) {
-//        throw std::out_of_range("Bad index passed to amplitudeValue()");
-//    }
-//    return m_resonators[index]->amplitude();
-//}
 
 void ResonatorBank::update(const float sample) {
     for (auto &resonatorPtr : m_resonators) {

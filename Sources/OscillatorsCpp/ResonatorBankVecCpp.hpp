@@ -72,7 +72,6 @@ public:
     float frequencyValue(size_t index);
     float alphaValue(size_t index);
     void setAllAlphas(float alpha);
-    float timeConstantValue(size_t index);
     float betaValue(size_t index);
 
     void getPowers(float *dest, size_t size);

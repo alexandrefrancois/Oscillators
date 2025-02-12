@@ -28,7 +28,6 @@ public protocol ResonatorProtocol {
     var power : Float { get }
     var amplitude : Float { get }
     var alpha : Float { get set }
-    var timeConstant : Float { get }
     var frequency : Float { get }
     
     /// This function performs an update of the resonator amplitude from a single sample

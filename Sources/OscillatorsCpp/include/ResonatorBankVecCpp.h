@@ -31,7 +31,6 @@ SOFTWARE.
 - (int)numResonators;
 - (float)frequencyValue:(int)index;
 - (float)alphaValue:(int)index;
-- (float)timeConstantValue:(int)index;
 - (float)betaValue:(int)index;
 - (void)getPowers:(float*)dest size:(int)size;
 - (void)getAmplitudes:(float*)dest size:(int)size;

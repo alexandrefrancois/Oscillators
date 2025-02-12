@@ -163,7 +163,7 @@ public class ResonatorBankVec {
         vDSP_vmma(rrPtr.baseAddress!, 1,
                   omBetas, 1,
                   rPtr.baseAddress!, 1,
-                  omAlphas, 1,
+                  betas, 1,
                   rrPtr.baseAddress!, 1,
                   vDSP_Length(twoNumResonators))
         

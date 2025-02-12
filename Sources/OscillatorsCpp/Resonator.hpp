@@ -35,13 +35,11 @@ class Resonator : public Phasor {
 private:
     float m_alpha;
     float m_omAlpha;
-    
-    float m_beta;
-    float m_omBeta;
-    
     float m_cos;
     float m_sin;
     // smoothed
+    float m_beta;
+    float m_omBeta;
     float m_cc;
     float m_ss;
     
@@ -49,7 +47,7 @@ private:
     float m_phase;
     
 public:
-    Resonator(float frequency, float alpha, float sampleRate);
+    Resonator(float frequency, float alpha, float beta, float sampleRate);
     
     float power() const { return m_cc * m_cc + m_ss * m_ss; }
     float amplitude() const { return sqrt(m_cc * m_cc + m_ss * m_ss); }
@@ -58,6 +56,7 @@ public:
     float omAlpha() const { return m_omAlpha; }
     float timeConstant() const { return 1.0 / (m_sampleRate * m_alpha); }
     float beta() const { return m_beta; }
+    void setBeta(float beta);
     float c() const { return m_cos; }
     float s() const { return m_sin; }
     float cc() const { return m_cc; }

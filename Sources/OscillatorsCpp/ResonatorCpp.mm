@@ -33,9 +33,9 @@ using namespace oscillators_cpp;
 
 @implementation ResonatorCpp
 
-- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha sampleRate:(float)sampleRate {
+- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha beta:(float)beta sampleRate:(float)sampleRate {
     if (self = [super init]) {
-        self.oscillator = new Resonator(frequency, alpha, sampleRate);
+        self.oscillator = new Resonator(frequency, alpha, beta, sampleRate);
     }
     return self;
 }
@@ -68,6 +68,14 @@ using namespace oscillators_cpp;
 
 - (float)timeConstant {
     return self.resonator->timeConstant();
+}
+
+- (float)beta {
+    return self.resonator->beta();
+}
+
+- (void)setBeta:(float)beta {
+    self.resonator->setBeta(beta);
 }
 
 - (float)trackedFrequency {

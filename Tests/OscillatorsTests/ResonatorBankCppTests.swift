@@ -30,9 +30,11 @@ final class ResonatorBankCppTests: XCTestCase {
     func testConstructorFromFrequencies() throws {
         var frequencies = FrequenciesFixtures.frequencies
         var alphas = [Float](repeating: DynamicsFixtures.defaultAlpha, count: frequencies.count)
+        var betas = [Float](repeating: DynamicsFixtures.defaultAlpha, count: frequencies.count)
         let resonatorBankCpp = ResonatorBankCpp(numResonators: (Int32)(frequencies.count),
                                                 frequencies: &frequencies,
                                                 alphas: &alphas,
+                                                betas: &betas,
                                                 sampleRate: AudioFixtures.defaultSampleRate)
         guard let resonatorBankCpp = resonatorBankCpp else { return XCTAssert(false) }
 
@@ -45,9 +47,11 @@ final class ResonatorBankCppTests: XCTestCase {
     func testUpdate() throws {
         var freqs: [Float] = [5512.5, 6300.0005, 7350.0005, 8820.0]
         var alphas = [Float](repeating: DynamicsFixtures.defaultAlpha, count: freqs.count)
+        var betas = [Float](repeating: DynamicsFixtures.defaultAlpha, count: freqs.count)
         let resonatorBankCpp = ResonatorBankCpp(numResonators: (Int32)(freqs.count),
                                                 frequencies: &freqs,
                                                 alphas: &alphas,
+                                                betas: &betas,
                                                 sampleRate: AudioFixtures.defaultSampleRate)
         guard let resonatorBankCpp = resonatorBankCpp else { return XCTAssert(false) }
 
@@ -77,6 +81,7 @@ final class ResonatorBankCppTests: XCTestCase {
         let resonatorBankCpp1 = ResonatorBankCpp(numResonators: (Int32)(freqs1.count),
                                                  frequencies: &freqs1,
                                                  alphas: &alphas1,
+                                                 betas: &alphas1,
                                                  sampleRate: AudioFixtures.defaultSampleRate)
         guard let resonatorBankCpp1 = resonatorBankCpp1 else { return XCTAssert(false) }
 
@@ -96,6 +101,7 @@ final class ResonatorBankCppTests: XCTestCase {
         let resonatorBankCpp2 = ResonatorBankCpp(numResonators: (Int32)(freqs2.count),
                                                  frequencies: &freqs2,
                                                  alphas: &alphas2,
+                                                 betas: &alphas2,
                                                  sampleRate: AudioFixtures.defaultSampleRate)
         guard let resonatorBankCpp2 = resonatorBankCpp2 else { return XCTAssert(false) }
 

@@ -44,9 +44,8 @@ public class ResonatorBankVec {
 
     public  let alphas : [Float] // can be tuned independently for each frequency
     private let omAlphas : [Float] // can be tuned independently for each frequency
-
-//    private var beta : Float
-//    private var omBeta : Float
+    private var betas : [Float]
+    private var omBetas : [Float]
     
     private var twoNumResonators : Int
 
@@ -71,7 +70,7 @@ public class ResonatorBankVec {
     /// Reverse square root buffer (intermediate calculations)
     private var rsqrtPtr : UnsafeMutableBufferPointer<Float>
 
-    public init(frequencies: [Float], alphas: [Float], sampleRate: Float) {
+    public init(frequencies: [Float], alphas: [Float], betas: [Float]? = nil, sampleRate: Float) {
         // check that frequencies and alphas have the same size
         assert(frequencies.count == alphas.count)
         
@@ -86,10 +85,13 @@ public class ResonatorBankVec {
         // These must be 2 * numResonators size
         self.alphas = alphas + alphas
         self.omAlphas = vDSP.add(multiplication: (self.alphas, -1.0), 1.0)
-
-        // TODO: fixed and hard-coded for now...
-//        self.beta = 0.001 * 44100.0 / sampleRate
-//        self.omBeta = 1.0 - beta
+        if let betas = betas {
+            self.betas = betas + betas
+            self.omBetas = vDSP.add(multiplication: (self.betas, -1.0), 1.0)
+        } else {
+            self.betas = self.alphas
+            self.omBetas = self.omAlphas
+        }
         
         twoNumResonators = 2 * numResonators
         
@@ -157,20 +159,11 @@ public class ResonatorBankVec {
                   rPtr.baseAddress!, 1,
                   vDSP_Length(twoNumResonators))
         
-        
-  // this is for single fixed value of beta
-//        vDSP_vsmsma(rrPtr.baseAddress!, 1,
-//                    &omBeta,
-//                    rPtr.baseAddress!, 1,
-//                    &beta,
-//                    rrPtr.baseAddress!, 1,
-//                    vDSP_Length(twoNumResonators))
-
-        // Smoothing using beta = alpha
+        // Smoothing using beta
         vDSP_vmma(rrPtr.baseAddress!, 1,
-                  omAlphas, 1,
+                  omBetas, 1,
                   rPtr.baseAddress!, 1,
-                  alphas, 1,
+                  omAlphas, 1,
                   rrPtr.baseAddress!, 1,
                   vDSP_Length(twoNumResonators))
         

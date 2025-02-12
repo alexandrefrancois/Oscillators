@@ -28,11 +28,8 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-Resonator::Resonator(float frequency, float alpha, float sampleRate) : Phasor(frequency, sampleRate),
-m_alpha(alpha), m_omAlpha(1.0 - alpha), m_trackedFrequency(m_frequency), m_phase(0.0){
-    // TODO: fixed and hard-coded for now
-    m_beta = alpha; // 0.001 * 44100.0 / sampleRate;
-    m_omBeta = 1.0 - m_beta;
+Resonator::Resonator(float frequency, float alpha, float beta, float sampleRate) : Phasor(frequency, sampleRate),
+m_alpha(alpha), m_omAlpha(1.0 - alpha), m_beta(beta), m_omBeta(1.0 - beta), m_trackedFrequency(m_frequency), m_phase(0.0) {
 }
 
 void Resonator::setAlpha(float alpha) {
@@ -41,6 +38,14 @@ void Resonator::setAlpha(float alpha) {
     }
     m_alpha = alpha;
     m_omAlpha = 1.0 - m_alpha;
+}
+
+void Resonator::setBeta(float beta) {
+    if (beta < 0.0 || beta >1.0) {
+        throw std::out_of_range("Bad beta passed to setBeta()");
+    }
+    m_beta = beta;
+    m_omBeta = 1.0 - m_beta;
 }
 
 void Resonator::updateWithSample(float sample) {
@@ -55,8 +60,6 @@ void Resonator::updateWithSample(float sample) {
 void Resonator::update(const float sample) {
     updateWithSample(sample);
     stabilize(); // this is overkill but necessary
-//    m_power = m_cc * m_cc + m_ss * m_ss;
-//    m_amplitude = sqrt(m_power);
 }
 
 void Resonator::update(const std::vector<float> &samples) {
@@ -64,8 +67,6 @@ void Resonator::update(const std::vector<float> &samples) {
         updateWithSample(sample);
     }
     stabilize(); // this is overkill but necessary
-//    m_power = m_cc * m_cc + m_ss * m_ss;
-//    m_amplitude = sqrt(m_power);
 }
 
 void Resonator::update(const float *frameData, size_t frameLength, size_t sampleStride) {
@@ -73,8 +74,6 @@ void Resonator::update(const float *frameData, size_t frameLength, size_t sample
         updateWithSample(frameData[i]);
     }
     stabilize(); // this is overkill but necessary
-//    m_power = m_cc * m_cc + m_ss * m_ss;
-//    m_amplitude = sqrt(m_power);
 }
 
 void Resonator::updateAndTrack(const float *frameData, size_t frameLength, size_t sampleStride) {
@@ -82,8 +81,6 @@ void Resonator::updateAndTrack(const float *frameData, size_t frameLength, size_
         updateWithSample(frameData[i]);
     }
     stabilize(); // this is overkill but necessary
-//    m_power = m_cc * m_cc + m_ss * m_ss;
-//    m_amplitude = sqrt(m_power);
     if (amplitude() > trackFrequencyThreshold) {
         updateTrackedFrequency(frameLength);
     } else {

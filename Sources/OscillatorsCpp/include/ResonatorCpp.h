@@ -27,13 +27,15 @@ SOFTWARE.
 
 // Wrapper for the Resonator class
 @interface ResonatorCpp : PhasorCpp
-- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha sampleRate:(float)sampleRate;
+- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha beta:(float)beta sampleRate:(float)sampleRate;
 - (float)power;
 - (float)amplitude;
 - (float)alpha;
 - (void)setAlpha:(float)alpha;
-- (float)omAlpha;
+- (float)omAlpha; // used in test...
 - (float)timeConstant;
+- (float)beta;
+- (void)setBeta:(float)beta;
 - (float)c;
 - (float)s;
 - (float)cc;

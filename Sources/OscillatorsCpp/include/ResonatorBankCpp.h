@@ -26,7 +26,7 @@ SOFTWARE.
 
 // Wrapper for the ResonatorBank class
 @interface ResonatorBankCpp : NSObject
-- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies alphas:(const float*)alphas sampleRate:(float)sampleRate;
+- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies alphas:(const float*)alphas betas:(const float*)betas sampleRate:(float)sampleRate;
 - (float)sampleRate;
 - (int)numResonators;
 - (float)frequencyValue:(int)index;
@@ -34,9 +34,7 @@ SOFTWARE.
 - (float)timeConstantValue:(int)index;
 - (void)setAllAlphas:(float)alpha;
 - (void)getPowers:(float*)dest size:(int)size;
-//- (float)powerValue:(int)index;
 - (void)getAmplitudes:(float*)dest size:(int)size;
-//- (float)amplitudeValue:(int)index;
 - (void)update:(float)sample
 NS_SWIFT_NAME(update(sample:));
 - (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride

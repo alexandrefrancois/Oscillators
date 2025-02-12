@@ -30,9 +30,11 @@ final class ResonatorBankVecCppTests: XCTestCase {
     func testConstructor() throws {
         var frequencies = FrequenciesFixtures.frequencies
         var alphas = [Float](repeating: DynamicsFixtures.defaultAlpha, count: frequencies.count)
+        var betas = [Float](repeating: DynamicsFixtures.defaultAlpha, count: frequencies.count)
         let resonatorBankCpp = ResonatorBankVecCpp(numResonators: (Int32)(frequencies.count),
                                                    frequencies: &frequencies,
                                                    alphas: &alphas,
+                                                   betas: &betas,
                                                    sampleRate: AudioFixtures.defaultSampleRate)
         guard let resonatorBankCpp = resonatorBankCpp else { return XCTAssert(false) }
         
@@ -45,9 +47,11 @@ final class ResonatorBankVecCppTests: XCTestCase {
     func testUpdate() throws {
         var freqs: [Float] = [5512.5, 6300.0005, 7350.0005, 8820.0]
         var alphas = [Float](repeating: DynamicsFixtures.defaultAlpha, count: freqs.count)
+        var betas = [Float](repeating: DynamicsFixtures.defaultAlpha, count: freqs.count)
         let resonatorBankCpp = ResonatorBankVecCpp(numResonators: (Int32)(freqs.count),
                                                    frequencies: &freqs,
                                                    alphas: &alphas,
+                                                   betas: &betas,
                                                    sampleRate: AudioFixtures.defaultSampleRate)
         guard let resonatorBankCpp = resonatorBankCpp else { return XCTAssert(false) }
         

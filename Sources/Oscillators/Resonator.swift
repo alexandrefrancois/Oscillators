@@ -67,14 +67,11 @@ public class Resonator : Phasor, ResonatorProtocol {
     public var phase: Float = 0.0
     public var trackedFrequency: Float = 0.0
     
-    public init(frequency: Float, alpha: Float, sampleRate: Float) {
+    public init(frequency: Float, alpha: Float, beta: Float? = nil, sampleRate: Float) {
         self.alpha = alpha
         self.omAlpha = 1.0 - alpha
-        
-        // TODO: fixed and hard coded for now
-        self.beta = alpha
+        self.beta = beta ?? alpha
         self.omBeta = 1.0 - self.beta
-        
         super.init(frequency: frequency, sampleRate: sampleRate)
     }
     
@@ -90,9 +87,6 @@ public class Resonator : Phasor, ResonatorProtocol {
     public func update(sample: Float) {
         updateWithSample(sample)
         stabilize() // this is overkill but necessary
-        // smoothed amplitude
-//        power = cc*cc + ss*ss
-//        amplitude = sqrt(power)
     }
     
     public func update(samples: [Float]) {
@@ -100,9 +94,6 @@ public class Resonator : Phasor, ResonatorProtocol {
             updateWithSample(sample)
         }
         stabilize() // this is overkill but necessary
-        // smoothed amplitude
-//        power = cc*cc + ss*ss
-//        amplitude = sqrt(power)
     }
 
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
@@ -110,17 +101,11 @@ public class Resonator : Phasor, ResonatorProtocol {
             updateWithSample(frameData[sampleIndex])
         }
         stabilize() // this is overkill but necessary
-        // smoothed amplitude
-//        power = cc*cc + ss*ss
-//        amplitude = sqrt(power)
     }
     
     public func updateAndTrack(sample: Float) {
         updateWithSample(sample)
         stabilize() // this is overkill but necessary
-        // smoothed amplitude
-//        power = cc*cc + ss*ss
-//        amplitude = sqrt(power)
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(numSamples: 1)
         } else {
@@ -133,9 +118,6 @@ public class Resonator : Phasor, ResonatorProtocol {
             updateWithSample(sample)
         }
         stabilize() // this is overkill but necessary
-        // smoothed amplitude
-//        power = cc*cc + ss*ss
-//        amplitude = sqrt(power)
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(numSamples: samples.count)
         } else {
@@ -148,9 +130,6 @@ public class Resonator : Phasor, ResonatorProtocol {
             updateWithSample(frameData[sampleIndex])
         }
         stabilize() // this is overkill but necessary
-        // smoothed amplitude
-//        power = cc*cc + ss*ss
-//        amplitude = sqrt(power)
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(numSamples: frameLength)
         } else {

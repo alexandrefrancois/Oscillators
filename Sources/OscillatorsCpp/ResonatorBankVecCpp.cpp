@@ -31,7 +31,7 @@ using namespace oscillators_cpp;
 constexpr float PI = 3.14159274101257324219; // PI
 constexpr float twoPi = 2.0 * PI;
 
-ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencies, const float* alphas, float sampleRate)
+ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, float sampleRate)
 : m_sampleRate(sampleRate), m_numResonators(numResonators), m_twoNumResonators(2*numResonators) {
     
     constexpr float zero = 0.0f;
@@ -55,10 +55,14 @@ ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencie
     vDSP_vfill(&one, m_omAlphas, 1, m_twoNumResonators);
     vDSP_vsmsa(m_alphas, 1, &minusOne, &one, m_omAlphas, 1, m_twoNumResonators);
     
-    // TODO: fixed and hard-coded for now...
-//    m_beta = 0.001 * 44100.0 / m_sampleRate;
-//    m_omBeta = 1.0 - m_beta;
-    
+    m_betas = new float[m_twoNumResonators];
+    memcpy(m_betas, betas, m_numResonators * sizeof(float));
+    memcpy(m_betas + m_numResonators, betas, m_numResonators * sizeof(float));
+        
+    m_omBetas = new float[m_twoNumResonators];
+    vDSP_vfill(&one, m_omBetas, 1, m_twoNumResonators);
+    vDSP_vsmsa(m_betas, 1, &minusOne, &one, m_omBetas, 1, m_twoNumResonators);
+
     // setup resonators
     m_rPtr = new float[m_twoNumResonators];
     vDSP_vfill(&zero, m_rPtr, 1, m_twoNumResonators);
@@ -131,17 +135,17 @@ float ResonatorBankVec::timeConstantValue(size_t index) {
     return m_alphas[index] > 0.0 ? 1.0 / (m_sampleRate * m_alphas[index]) : 0.0f;
 }
 
+float ResonatorBankVec::betaValue(size_t index) {
+    if (index >= m_numResonators) {
+        throw std::out_of_range("Bad index passed to alphaValue()");
+    }
+    return m_alphas[index];
+}
+
 void ResonatorBankVec::getPowers(float *dest, size_t size) {
     DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
     vDSP_zvmags(&R, 1, dest, 1, m_numResonators);
 }
-
-//float ResonatorBankVec::powerValue(size_t index) {
-//    if (index >= m_numResonators) {
-//        throw std::out_of_range("Bad index passed to amplitudeValue()");
-//    }
-//    return m_powers[index];
-//}
 
 void ResonatorBankVec::getAmplitudes(float *dest, size_t size) {
     DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
@@ -149,13 +153,6 @@ void ResonatorBankVec::getAmplitudes(float *dest, size_t size) {
     int count = static_cast<int>(m_numResonators);
     vvsqrtf(dest, dest, &count);
 }
-
-//float ResonatorBankVec::amplitudeValue(size_t index) {
-//    if (index >= m_numResonators) {
-//        throw std::out_of_range("Bad index passed to amplitudeValue()");
-//    }
-//    return m_amplitudes[index];
-//}
 
 void ResonatorBankVec::update(const float sample) {
     vDSP_vsmul(m_alphas, 1, &sample, m_alphasSample, 1, m_twoNumResonators);
@@ -167,20 +164,12 @@ void ResonatorBankVec::update(const float sample) {
               m_alphasSample, 1,
               m_rPtr, 1,
               m_twoNumResonators);
-  
-    // this is for fixed value of beta
-//    vDSP_vsmsma(m_rrPtr, 1,
-//                &m_omBeta,
-//                m_rPtr, 1,
-//                &m_beta,
-//                m_rrPtr, 1,
-//                m_twoNumResonators);
-    
+
     // Smoothing with alphas
     vDSP_vmma(m_rrPtr, 1,
-              m_omAlphas, 1,
+              m_omBetas, 1,
               m_rPtr, 1,
-              m_alphas, 1,
+              m_betas, 1,
               m_rrPtr, 1,
               m_twoNumResonators);
  

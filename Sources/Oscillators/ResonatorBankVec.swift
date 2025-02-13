@@ -29,6 +29,12 @@ fileprivate let twoPi = Float.pi * 2.0
 
 /// A bank of independent resonators implemented as a single array, computations use the Accelerate framework with manual memory management (unsafe pointers)
 public class ResonatorBankVec {
+    public static func alphasHeuristic(frequencies: [Float], sampleRate: Float, k: Float = 1) -> [Float] {
+        frequencies.map { frequency in
+            Resonator.alphaHeuristic(frequency: frequency, sampleRate: sampleRate, k: k)
+        }
+    }
+
     public private(set) var sampleRate : Float
 
     public private(set) var numResonators : Int

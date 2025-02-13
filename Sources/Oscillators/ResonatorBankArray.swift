@@ -28,6 +28,12 @@ fileprivate let numTasks = 6
 
 /// An array of independent resonator instances
 public class ResonatorBankArray {
+    public static func alphasHeuristic(frequencies: [Float], sampleRate: Float, k: Float = 1) -> [Float] {
+        frequencies.map { frequency in
+            Resonator.alphaHeuristic(frequency: frequency, sampleRate: sampleRate, k: k)
+        }
+    }
+
     public private(set) var resonators = [Resonator]()
     public var numResonators: Int {
         resonators.count

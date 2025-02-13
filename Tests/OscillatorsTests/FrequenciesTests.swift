@@ -54,12 +54,36 @@ final class FrequenciesTests: XCTestCase {
         let frequencies = Frequencies.logUniformFrequencies(minFrequency: fMin, numBins: numBins, numBinsPerOctave: numBinsPerOctaves)
         
         XCTAssertEqual(frequencies.count, numBins)
-        XCTAssertEqual(frequencies[0], fMin)
-        XCTAssertEqual(frequencies[numBins-1], fMax, accuracy: 0.01)
+        XCTAssertEqual(frequencies.first!, fMin)
+        XCTAssertEqual(frequencies.last!, fMax, accuracy: 0.01)
         // ratios of consecutive frequencies is constant
         XCTAssertEqual(frequencies[2]/frequencies[1], frequencies[1]/frequencies[0], accuracy: 0.00001)
         XCTAssertEqual(frequencies[numBins-1]/frequencies[numBins-2], frequencies[numBins-2]/frequencies[numBins-3], accuracy: 0.00001)
     }
+    
+    func testMelFrequencies() throws {
+        let numMels = Int(128)
+        let minFrequency: Float = 0.0
+        let maxFrequency: Float = 11025.0
+
+        // Matlab Audio Toolkit
+        let frequencies = Frequencies.melFrequencies(numMels: numMels, minFrequency: minFrequency, maxFrequency: maxFrequency, htk: false)
+        let frequenciesHTK = Frequencies.melFrequencies(numMels: numMels, minFrequency: minFrequency, maxFrequency: maxFrequency, htk: true)
+        
+        XCTAssertEqual(frequencies.count, numMels)
+        XCTAssertEqual(frequenciesHTK.count, numMels)
+        XCTAssertEqual(frequencies.first!, minFrequency)
+        XCTAssertEqual(frequencies.last!, maxFrequency, accuracy: 0.001)
+        XCTAssertEqual(frequenciesHTK.first!, minFrequency)
+        XCTAssertEqual(frequenciesHTK.last!, maxFrequency, accuracy: 0.001)
+
+        // Check against known values
+        for i in 0..<numMels {
+            XCTAssertEqual(FrequenciesFixtures.melFrequencies[i], frequencies[i], accuracy: 0.01)
+            XCTAssertEqual(FrequenciesFixtures.melFrequenciesHTK[i], frequenciesHTK[i], accuracy: 0.01)
+        }
+    }
+
     
     func testDopplerVelocity() throws {
         let v440441 = Frequencies.dopplerVelocity(observedFrequency: 440, referenceFrequency: 441)

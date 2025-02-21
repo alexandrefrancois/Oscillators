@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 import Foundation
+import Accelerate
 
 /// Speed of sound at room temperature, in m/s
 fileprivate let speedOfSound: Float = 346.0
@@ -142,5 +143,29 @@ extension Frequencies {
     public static func dopplerVelocity(observedFrequency: Float, referenceFrequency: Float) -> Float {
         guard referenceFrequency > 0 else { return 0 }
         return speedOfSound * (observedFrequency - referenceFrequency) / referenceFrequency
+    }
+}
+
+extension Frequencies {
+    
+    /// Compute the equalizer coefficients for given frequencies and alphas
+    /// - parameter frequencies: the frequencies for the resonator bank
+    /// - parameter alphas: alphas (accumulation) for the resonator bank
+    /// - parameter betas: the betas (smoothing) for the resonator bank
+    /// - returns: an array of coefficients (one per frequency)
+    public static func frequencySweep(frequencies: [Float], alphas: [Float], betas: [Float]? = nil, sampleRate: Float) -> [Float] {
+        var output = [Float](repeating: 0, count: frequencies.count)
+        let bank = ResonatorBankVec(frequencies: frequencies, alphas: alphas, betas: betas ?? nil, sampleRate: sampleRate)
+        for (idx, frequency) in frequencies.enumerated() {
+            let oscillator = Oscillator(frequency: frequency, sampleRate: sampleRate)
+            let duration = 10 * Dynamics.timeConstant(alpha: alphas[idx], sampleRate: sampleRate)
+            let numSamples = Int(duration * sampleRate)
+            let frame = oscillator.getNextSamples(numSamples: numSamples)
+            bank.update(frame: frame)
+            let powers = bank.powers
+            output[idx] = 0.25 / sqrt(vDSP.sum(powers))
+            bank.reset()
+        }
+        return output
     }
 }

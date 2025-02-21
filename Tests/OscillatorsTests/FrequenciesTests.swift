@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -65,7 +65,7 @@ final class FrequenciesTests: XCTestCase {
         let numMels = Int(128)
         let minFrequency: Float = 0.0
         let maxFrequency: Float = 11025.0
-
+        
         // Matlab Audio Toolkit
         let frequencies = Frequencies.melFrequencies(numMels: numMels, minFrequency: minFrequency, maxFrequency: maxFrequency, htk: false)
         let frequenciesHTK = Frequencies.melFrequencies(numMels: numMels, minFrequency: minFrequency, maxFrequency: maxFrequency, htk: true)
@@ -76,19 +76,41 @@ final class FrequenciesTests: XCTestCase {
         XCTAssertEqual(frequencies.last!, maxFrequency, accuracy: 0.001)
         XCTAssertEqual(frequenciesHTK.first!, minFrequency)
         XCTAssertEqual(frequenciesHTK.last!, maxFrequency, accuracy: 0.001)
-
+        
         // Check against known values
         for i in 0..<numMels {
             XCTAssertEqual(FrequenciesFixtures.melFrequencies[i], frequencies[i], accuracy: 0.01)
             XCTAssertEqual(FrequenciesFixtures.melFrequenciesHTK[i], frequenciesHTK[i], accuracy: 0.01)
         }
     }
-
+    
     
     func testDopplerVelocity() throws {
         let v440441 = Frequencies.dopplerVelocity(observedFrequency: 440, referenceFrequency: 441)
         XCTAssertEqual(v440441, -0.78458047, accuracy: epsilon)
         let v441440 = Frequencies.dopplerVelocity(observedFrequency: 441, referenceFrequency: 440)
         XCTAssertEqual(v441440, 0.78636366, accuracy: epsilon)
+    }
+    
+    func testFrequencySweep() throws {
+        let fMin = Float(32.70)
+        let numBins = Int(100)
+        let numBinsPerOctaves = Int(12)
+        
+        let frequencies = Frequencies.logUniformFrequencies(minFrequency: fMin, numBins: numBins, numBinsPerOctave: numBinsPerOctaves)
+        
+        let sampleRate = Float(44100.0)
+        let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate)
+        XCTAssertEqual(alphas.count, frequencies.count)
+        
+        let duration = Float(0.1)
+        let eq = Frequencies.frequencySweep(frequencies: frequencies, alphas: alphas, sampleRate: sampleRate)
+        
+        XCTAssertEqual(eq.count, frequencies.count)
+        XCTAssertEqual(eq[0], 0.357496858)
+        XCTAssertEqual(eq[8], 0.315346807)
+        XCTAssertEqual(eq[38], 0.374736041)
+        XCTAssertEqual(eq[97], 0.448924184)
+        XCTAssertEqual(eq[99], 0.474918872)
     }
 }

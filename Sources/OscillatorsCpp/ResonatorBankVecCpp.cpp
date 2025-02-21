@@ -41,10 +41,6 @@ ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencie
     // initialize from passed frequencies
     m_frequencies = new float[m_numResonators];
     memcpy(m_frequencies, frequencies, m_numResonators * sizeof(float));
-//    m_powers = new float[m_numResonators];
-//    vDSP_vfill(&zero, m_powers, 1, m_numResonators);
-//    m_amplitudes = new float[m_numResonators];
-//    vDSP_vfill(&zero, m_amplitudes, 1, m_numResonators);
 
     // These must be 2 * numResonators size
     m_alphas = new float[m_twoNumResonators];
@@ -101,8 +97,6 @@ ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencie
 
 ResonatorBankVec::~ResonatorBankVec() {
     delete [] m_frequencies;
-//    delete [] m_powers;
-//    delete [] m_amplitudes;
     delete [] m_alphas;
     delete [] m_rPtr;
     delete [] m_rrPtr;
@@ -135,11 +129,19 @@ float ResonatorBankVec::betaValue(size_t index) {
 }
 
 void ResonatorBankVec::getPowers(float *dest, size_t size) {
+    if (size < m_numResonators)
+    {
+        throw std::out_of_range("Buffer passed to getPowers() is not large enough");
+    }
     DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
     vDSP_zvmags(&R, 1, dest, 1, m_numResonators);
 }
 
 void ResonatorBankVec::getAmplitudes(float *dest, size_t size) {
+    if (size < m_numResonators)
+    {
+        throw std::out_of_range("Buffer passed to getAmplitudes() is not large enough");
+    }
     DSPSplitComplex R = {m_rrPtr, m_rrPtr + m_numResonators};
     vDSP_zvmags(&R, 1, dest, 1, m_numResonators);
     int count = static_cast<int>(m_numResonators);

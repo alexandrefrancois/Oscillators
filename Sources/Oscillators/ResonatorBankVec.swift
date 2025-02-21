@@ -85,8 +85,6 @@ public class ResonatorBankVec {
         // initialize from passed frequencies
         self.frequencies = frequencies
         self.numResonators = frequencies.count
-//        powers = [Float](repeating: 0, count: numResonators)
-//        amplitudes = [Float](repeating: 0, count: numResonators)
 
         // These must be 2 * numResonators size
         self.alphas = alphas + alphas
@@ -192,15 +190,29 @@ public class ResonatorBankVec {
     
     /// Process a frame of samples.
     /// Apply stabilization (norm correction) at the end
-    /// Compute amplitudes (phasor magnitudes) at the end
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             update(sample: frameData[sampleIndex])
         }
         stabilize() // this is overkill but necessary
-        // compute amplitudes
-//        vDSP.squareMagnitudes(R, result: &powers)
-//        amplitudes = vForce.sqrt(powers)
+    }
+    
+    /// Process a frame of samples.
+    /// Apply stabilization (norm correction) at the end
+    public func update(frame: [Float]) {
+        for sample in frame {
+            update(sample: sample)
+        }
+        stabilize() // this is overkill but necessary
+    }
+    
+    public func reset() {
+        rPtr.initialize(repeating: 0.0)
+        rrPtr.initialize(repeating: 0.0)
+        var one = Float(1.0)
+        vDSP_vfill(&one, Z.realp, 1, vDSP_Length(numResonators))
+        var zero = Float(0.0)
+        vDSP_vfill(&zero, Z.imagp, 1, vDSP_Length(numResonators))
     }
 }

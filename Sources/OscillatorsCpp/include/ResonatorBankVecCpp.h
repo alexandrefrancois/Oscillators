@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2024-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/// An oscillator used to generate a periodic signal
-public protocol GeneratorProtocol {
-    var amplitude : Float { get set }
-    func getNextSample() -> Float
-    func getNextSamples(numSamples: Int) -> [Float]
-    func getNextSamples(samples: inout [Float])
-}
+#import <Foundation/Foundation.h>
+
+// Wrapper for the ResonatorBank class
+@interface ResonatorBankVecCpp : NSObject
+- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies alphas:(const float*)alphas betas:(const float*)betas sampleRate:(float)sampleRate;
+- (float)sampleRate;
+- (int)numResonators;
+- (float)frequencyValue:(int)index;
+- (float)alphaValue:(int)index;
+- (float)betaValue:(int)index;
+- (void)getPowers:(float*)dest size:(int)size;
+- (void)getAmplitudes:(float*)dest size:(int)size;
+- (void)update:(float)sample
+NS_SWIFT_NAME(update(sample:));
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
+NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride powers:(float*)powers amplitudes:(float*)amplitudes
+NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:powers:amplitudes:));
+@end
+

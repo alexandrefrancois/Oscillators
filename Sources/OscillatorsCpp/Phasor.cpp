@@ -22,23 +22,46 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#import <Foundation/Foundation.h>
+#include "Phasor.hpp"
 
-// Wrapper for the ResonatorBank class
-@interface ResonatorBankCpp : NSObject
-- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies alphas:(const float*)alphas betas:(const float*)betas sampleRate:(float)sampleRate;
-- (float)sampleRate;
-- (int)numResonators;
-- (float)frequencyValue:(int)index;
-- (float)alphaValue:(int)index;
-- (void)setAllAlphas:(float)alpha;
-- (void)getPowers:(float*)dest size:(int)size;
-- (void)getAmplitudes:(float*)dest size:(int)size;
-- (void)update:(float)sample
-NS_SWIFT_NAME(update(sample:));
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
-- (void)updateConcurrent:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(updateConcurrent(frameData:frameLength:sampleStride:));
-@end
+#include <cmath>
+#include <iostream>
 
+#include <Accelerate/Accelerate.h>
+
+using namespace oscillators_cpp;
+
+Phasor::Phasor(float frequency, float sampleRate)
+: m_frequency(frequency), m_sampleRate(sampleRate),
+m_Zc(1.0), m_Zs(0.0) {
+    updateMultiplier();
+}
+
+void Phasor::updateMultiplier() {
+    const float omega = twoPi * m_frequency / m_sampleRate;
+    m_Wc = cos(omega);
+    m_Ws = sin(omega);
+    m_Wcps = m_Wc + m_Ws;
+}
+
+void Phasor::setFrequency(float frequency) {
+    m_frequency = frequency;
+    updateMultiplier();
+}
+
+void Phasor::incrementPhase() {
+    // complex multiplication with 3 real multiplications
+    const float ac = m_Wc * m_Zc;
+    const float bd = m_Ws * m_Zs;
+    const float abcd = m_Wcps * (m_Zc + m_Zs);
+    m_Zc = ac - bd;
+    m_Zs = abcd - ac - bd;
+}
+
+void Phasor::stabilize(){
+    // approximation for 1 / sqrt(x) around 1 (Taylor expansion)
+    // sqrt(m_Zc*m_Zc + m_Zs*m_Zs) should be 1
+    const float k = (3.0 - m_Zc*m_Zc - m_Zs*m_Zs) / 2.0;
+    m_Zc *= k;
+    m_Zs *= k;
+}

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2025 Alexandre R. J. Francois
+Copyright (c) 2024-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,61 +22,69 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef ResonatorBank_hpp
-#define ResonatorBank_hpp
-
-#include "Resonator.hpp"
+#ifndef ResonatorBankVec_hpp
+#define ResonatorBankVec_hpp
 
 #include <vector>
 
-// use GCD concurrency by default
-// uncomment the next line to use std::async instead
-// #define STD_CONCURRENCY
-
-#ifndef STD_CONCURRENCY
-#include <dispatch/dispatch.h>
-#endif
-
 namespace oscillators_cpp {
 
-class ResonatorBank {
+class ResonatorBankVec {
 private:
     float m_sampleRate;
-    std::vector<std::unique_ptr<Resonator> > m_resonators;
+    size_t m_numResonators;
+    float* m_frequencies;
+    float* m_alphas;
+    float* m_omAlphas;
+    float* m_betas;
+    float* m_omBetas;
+    
+    size_t m_twoNumResonators;
 
-#ifndef STD_CONCURRENCY
-    dispatch_group_t m_dispatchGroup;
-    dispatch_queue_t m_dispatchQueue;
-#endif
+    /// Accumulated resonance values, non-interlaced real (cos) | imaginary (sin) parts
+    float* m_rPtr;
+    /// Smoothed accumulated resonance values, non-interlaced real (cos) | imaginary (sin) parts
+    float* m_rrPtr;
+    
+    /// Phasors
+    float* m_zPtr;
+    /// Phasor multipliers
+    float* m_wPtr;
+    
+    /// hold sample value * alphas
+    float* m_alphasSample;
 
+    /// Squared magnitudes buffer (ntermediate calculations)
+    float* m_smPtr;
+    /// Reverse square root buffer (intermediate calculations)
+    float* m_rsqrtPtr;
+
+    
 public:
-    ResonatorBank & operator=(const ResonatorBank&) = delete;
-    ResonatorBank(const ResonatorBank&) = delete;
+    ResonatorBankVec & operator=(const ResonatorBankVec&) = delete;
+    ResonatorBankVec(const ResonatorBankVec&) = delete;
 
-    ResonatorBank(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, float sampleRate);
-#ifndef STD_CONCURRENCY
-    ~ResonatorBank();
-#endif
+    ResonatorBankVec(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, float sampleRate);
+    ~ResonatorBankVec();
 
     float sampleRate() { return m_sampleRate; }
-    size_t numResonators() { return m_resonators.size(); }
+    size_t numResonators() { return m_numResonators; }
     float frequencyValue(size_t index);
     float alphaValue(size_t index);
     void setAllAlphas(float alpha);
+    float betaValue(size_t index);
+
     void getPowers(float *dest, size_t size);
     void getAmplitudes(float *dest, size_t size);
+
     void update(const float sample);
     void update(const std::vector<float> &samples);
     void update(const float *frameData, size_t frameLength, size_t sampleStride);
-    void updateConcurrent(const float *frameData, size_t frameLength, size_t sampleStride);
-    
-#ifdef STD_CONCURRENCY
-private:
-    void updateEvery(size_t mod, size_t offset, const float *frameData, size_t frameLength, size_t sampleStride);
-#endif
+    void update(const float *frameData, size_t frameLength, size_t sampleStride, float* powers, float* amplitudes);
 
+    void stabilize();
 };
 
 } // oscillators_cpp
 
-#endif /* ResonatorBank_hpp */
+#endif /* ResonatorBankVec_hpp */

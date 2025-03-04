@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,17 +23,22 @@ SOFTWARE.
 */
 
 #import <Foundation/Foundation.h>
-#import "OscillatorCpp.h"
+#import "PhasorCpp.h"
 
 // Wrapper for the Resonator class
-@interface ResonatorCpp : OscillatorCpp
-- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate alpha:(float)alpha;
+@interface ResonatorCpp : PhasorCpp
+- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha beta:(float)beta sampleRate:(float)sampleRate;
+- (float)power;
+- (float)amplitude;
 - (float)alpha;
 - (void)setAlpha:(float)alpha;
-- (float)omAlpha;
-- (float)timeConstant;
-- (float)s;
+- (float)omAlpha; // used in test...
+- (float)beta;
+- (void)setBeta:(float)beta;
 - (float)c;
+- (float)s;
+- (float)cc;
+- (float)ss;
 - (float)phase;
 - (float)trackedFrequency;
 - (void)updateWithSample:(float)sample

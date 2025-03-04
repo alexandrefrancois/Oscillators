@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -34,10 +34,10 @@ using namespace oscillators_cpp;
 
 constexpr size_t resonatorStride = 6;
 
-ResonatorBank::ResonatorBank(size_t numResonators, float* frequencies, float sampleRate, float* alphas) : m_sampleRate(sampleRate) {
+ResonatorBank::ResonatorBank(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, float sampleRate) : m_sampleRate(sampleRate) {
     m_resonators.reserve(numResonators);
     for (size_t i=0; i<numResonators; ++i) {
-        m_resonators.emplace_back(std::make_unique<Resonator>(frequencies[i], sampleRate, alphas[i]));
+        m_resonators.emplace_back(std::make_unique<Resonator>(frequencies[i], alphas[i], betas[i], sampleRate));
     }
 #ifndef STD_CONCURRENCY
     m_dispatchGroup = dispatch_group_create();
@@ -76,24 +76,16 @@ void ResonatorBank::setAllAlphas(float alpha) {
     }
 }
 
-float ResonatorBank::timeConstantValue(size_t index) {
-    if (index >= m_resonators.size()) {
-        throw std::out_of_range("Bad index passed to timeConstantValue()");
+void ResonatorBank::getPowers(float *dest, size_t size) {
+    for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
+        dest[i]=m_resonators[i]->power();
     }
-    return m_resonators[index]->timeConstant();
 }
 
-void ResonatorBank::copyAmplitudes(float *dest, size_t size) {
+void ResonatorBank::getAmplitudes(float *dest, size_t size) {
     for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
         dest[i]=m_resonators[i]->amplitude();
     }
-}
-
-float ResonatorBank::amplitudeValue(size_t index) {
-    if (index >= m_resonators.size()) {
-        throw std::out_of_range("Bad index passed to amplitudeValue()");
-    }
-    return m_resonators[index]->amplitude();
 }
 
 void ResonatorBank::update(const float sample) {

@@ -1,8 +1,7 @@
-#include "Oscillator.hpp"
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,44 +22,36 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <cmath>
-#include <iostream>
+#import <Foundation/Foundation.h>
 
-#include <Accelerate/Accelerate.h>
+#import "PhasorCpp.h"
+#import "PhasorCppProtected.h"
 
 using namespace oscillators_cpp;
 
-Oscillator::Oscillator(float frequency, float sampleRate)
-: m_frequency(frequency), m_sampleRate(sampleRate), m_amplitude(0.0),
-m_Zc(1.0), m_Zs(0.0) {
-    updateMultiplier();
+@implementation PhasorCpp
+
+- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate {
+    if (self = [super init]) {
+        self.oscillator = new Phasor(frequency, sampleRate);
+    }
+    return self;
 }
 
-void Oscillator::updateMultiplier() {
-    const float omega = twoPi * m_frequency / m_sampleRate;
-    m_Wc = cos(omega);
-    m_Ws = sin(omega);
-    m_Wcps = m_Wc + m_Ws;
+- (void)dealloc {
+    delete self.oscillator;
 }
 
-void Oscillator::setFrequency(float frequency) {
-    m_frequency = frequency;
-    updateMultiplier();
+- (float)frequency {
+    return self.oscillator->frequency();
 }
 
-void Oscillator::incrementPhase() {
-    // complex multiplication with 3 real multiplications
-    const float ac = m_Wc * m_Zc;
-    const float bd = m_Ws * m_Zs;
-    const float abcd = m_Wcps * (m_Zc + m_Zs);
-    m_Zc = ac - bd;
-    m_Zs = abcd - ac - bd;
+- (void)setFrequency:(float)frequency {
+    self.oscillator->setFrequency(frequency);
 }
 
-void Oscillator::stabilize(){
-    // approximation for 1 / sqrt(x) around 1 (Taylor expansion)
-    // sqrt(m_Zc*m_Zc + m_Zs*m_Zs) should be 1
-    const float k = (3.0 - m_Zc*m_Zc - m_Zs*m_Zs) / 2.0;
-    m_Zc *= k;
-    m_Zs *= k;
+- (float)sampleRate {
+    return self.oscillator->sampleRate();
 }
+
+@end

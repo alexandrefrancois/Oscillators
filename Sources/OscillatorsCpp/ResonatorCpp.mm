@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 #import "ResonatorCpp.h"
-#import "OscillatorCppProtected.h"
+#import "PhasorCppProtected.h"
 
 #import <Foundation/Foundation.h>
 
@@ -33,15 +33,25 @@ using namespace oscillators_cpp;
 
 @implementation ResonatorCpp
 
-- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate alpha:(float)alpha {
+- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha beta:(float)beta sampleRate:(float)sampleRate {
     if (self = [super init]) {
-        self.oscillator = new Resonator(frequency, sampleRate, alpha);
+        self.oscillator = new Resonator(frequency, alpha, beta, sampleRate);
     }
     return self;
 }
 
 - (Resonator*)resonator {
     return (Resonator*)self.oscillator;
+}
+
+
+- (float)power {
+    return self.resonator->power();
+}
+
+
+- (float)amplitude {
+    return self.resonator->amplitude();
 }
 
 - (float)alpha {
@@ -56,20 +66,32 @@ using namespace oscillators_cpp;
     return self.resonator->omAlpha();
 }
 
-- (float)timeConstant {
-    return self.resonator->timeConstant();
+- (float)beta {
+    return self.resonator->beta();
+}
+
+- (void)setBeta:(float)beta {
+    self.resonator->setBeta(beta);
 }
 
 - (float)trackedFrequency {
     return self.resonator->trackedFrequency();
 }
 
+- (float)c {
+    return self.resonator->c();
+}
+
 - (float)s {
     return self.resonator->s();
 }
 
-- (float)c {
-    return self.resonator->c();
+- (float)cc {
+    return self.resonator->cc();
+}
+
+- (float)ss {
+    return self.resonator->ss();
 }
 
 - (float)phase {

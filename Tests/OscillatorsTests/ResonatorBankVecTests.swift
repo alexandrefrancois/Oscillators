@@ -28,21 +28,29 @@ import XCTest
 final class ResonatorBankVecTests: XCTestCase {
     func testConstructor() throws {
         let frequencies = FrequenciesFixtures.frequencies
+        let sampleRate = AudioFixtures.defaultSampleRate
+        var alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        var betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let resonatorBank = ResonatorBankVec(frequencies: frequencies,
-                                             sampleRate: AudioFixtures.defaultSampleRate,
-                                             alpha: DynamicsFixtures.defaultAlpha)
-        
-        XCTAssertEqual(resonatorBank.alpha, DynamicsFixtures.defaultAlpha)
-        
+                                             alphas: alphas,
+                                             betas: betas,
+                                             sampleRate: AudioFixtures.defaultSampleRate)
+                
         for i in 0..<resonatorBank.numResonators {
+            XCTAssertEqual(resonatorBank.alphas[i], Resonator.alphaHeuristic(frequency: resonatorBank.frequencies[i], sampleRate: AudioFixtures.defaultSampleRate))
             XCTAssertEqual(resonatorBank.amplitudes[i], 0)
         }
     }
     
     func testUpdate() throws {
-        let resonatorBank = ResonatorBankVec(frequencies: FrequenciesFixtures.frequencies,
-                                             sampleRate: AudioFixtures.defaultSampleRate,
-                                             alpha: DynamicsFixtures.defaultAlpha)
+        let frequencies = FrequenciesFixtures.frequencies
+        let sampleRate = AudioFixtures.defaultSampleRate
+        var alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        var betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let resonatorBank = ResonatorBankVec(frequencies: frequencies,
+                                             alphas: alphas,
+                                             betas: betas,
+                                             sampleRate: AudioFixtures.defaultSampleRate)
         
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)

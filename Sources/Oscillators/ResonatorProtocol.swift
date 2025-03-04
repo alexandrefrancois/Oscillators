@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,9 @@ SOFTWARE.
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
 public protocol ResonatorProtocol {
+    var power : Float { get }
+    var amplitude : Float { get }
     var alpha : Float { get set }
-    var timeConstant : Float { get }
     var frequency : Float { get }
     
     /// This function performs an update of the resonator amplitude from a single sample

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,8 +28,8 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-Resonator::Resonator(float frequency, float sampleRate, float alpha) : Oscillator(frequency, sampleRate),
-    m_alpha(alpha), m_omAlpha(1.0 - alpha), m_trackedFrequency(m_frequency), m_phase(0.0){
+Resonator::Resonator(float frequency, float alpha, float beta, float sampleRate) : Phasor(frequency, sampleRate),
+m_alpha(alpha), m_omAlpha(1.0 - alpha), m_beta(beta), m_omBeta(1.0 - beta), m_trackedFrequency(m_frequency), m_phase(0.0) {
 }
 
 void Resonator::setAlpha(float alpha) {
@@ -40,38 +40,48 @@ void Resonator::setAlpha(float alpha) {
     m_omAlpha = 1.0 - m_alpha;
 }
 
+void Resonator::setBeta(float beta) {
+    if (beta < 0.0 || beta >1.0) {
+        throw std::out_of_range("Bad beta passed to setBeta()");
+    }
+    m_beta = beta;
+    m_omBeta = 1.0 - m_beta;
+}
+
 void Resonator::updateWithSample(float sample) {
     const float alphaSample = m_alpha * sample;
-    m_sin = m_omAlpha * m_sin + alphaSample * m_Zs;
     m_cos = m_omAlpha * m_cos + alphaSample * m_Zc;
+    m_sin = m_omAlpha * m_sin + alphaSample * m_Zs;
+    m_cc = m_omBeta * m_cc + m_beta * m_cos;
+    m_ss = m_omBeta * m_ss + m_beta * m_sin;
     incrementPhase();
 }
 
 void Resonator::update(const float sample) {
     updateWithSample(sample);
-    m_amplitude = sqrt(m_sin * m_sin + m_cos * m_cos);
+    stabilize(); // this is overkill but necessary
 }
 
 void Resonator::update(const std::vector<float> &samples) {
     for (float sample : samples) {
         updateWithSample(sample);
     }
-    m_amplitude = sqrt(m_sin * m_sin + m_cos * m_cos);
+    stabilize(); // this is overkill but necessary
 }
 
 void Resonator::update(const float *frameData, size_t frameLength, size_t sampleStride) {
     for (int i=0; i<frameLength; i += sampleStride) {
         updateWithSample(frameData[i]);
     }
-    m_amplitude = sqrt(m_sin * m_sin + m_cos * m_cos);
+    stabilize(); // this is overkill but necessary
 }
 
 void Resonator::updateAndTrack(const float *frameData, size_t frameLength, size_t sampleStride) {
     for (int i=0; i<frameLength; i += sampleStride) {
         updateWithSample(frameData[i]);
     }
-    m_amplitude = sqrt(m_sin * m_sin + m_cos * m_cos);
-    if (m_amplitude > trackFrequencyThreshold) {
+    stabilize(); // this is overkill but necessary
+    if (amplitude() > trackFrequencyThreshold) {
         updateTrackedFrequency(frameLength);
     } else {
         m_trackedFrequency = m_frequency;
@@ -79,7 +89,7 @@ void Resonator::updateAndTrack(const float *frameData, size_t frameLength, size_
 }
 
 void Resonator::updateTrackedFrequency(size_t numSamples) {
-    const float newPhase = atan2(m_sin, m_cos); // returns value in [-pi,pi]
+    const float newPhase = atan2(m_ss, m_cc); // returns value in [-pi,pi]
     float phaseDrift = newPhase - m_phase;
     m_phase = newPhase;
     if (phaseDrift <= -PI) {

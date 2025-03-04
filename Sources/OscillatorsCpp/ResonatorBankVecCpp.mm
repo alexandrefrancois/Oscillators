@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2025 Alexandre R. J. Francois
+Copyright (c) 2024-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#import "ResonatorBankCpp.h"
+#import "ResonatorBankVecCpp.h"
 
 #import <Foundation/Foundation.h>
 
-#include "ResonatorBank.hpp"
+#include "ResonatorBankVec.hpp"
 
 using namespace oscillators_cpp;
 
-@interface ResonatorBankCpp()
-@property oscillators_cpp::ResonatorBank *resonatorBank;
+@interface ResonatorBankVecCpp()
+@property oscillators_cpp::ResonatorBankVec *resonatorBank;
 @end
 
-@implementation ResonatorBankCpp
+@implementation ResonatorBankVecCpp
 
-- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies alphas:(const float*)alphas betas: (const float*)betas sampleRate:(float)sampleRate {
+- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies alphas:(const float*)alphas betas:(const float*)betas sampleRate:(float)sampleRate {
     if (self = [super init]) {
-        self.resonatorBank = new ResonatorBank(numResonators, frequencies, alphas, betas, sampleRate);
+        self.resonatorBank = new ResonatorBankVec(numResonators, frequencies, alphas, betas, sampleRate);
     }
     return self;
 }
@@ -63,8 +63,8 @@ using namespace oscillators_cpp;
     return self.resonatorBank->alphaValue(index);
 }
 
-- (void)setAllAlphas:(float)alpha {
-    self.resonatorBank->setAllAlphas(alpha);
+- (float)betaValue:(int)index {
+    return self.resonatorBank->betaValue(index);
 }
 
 - (void)getPowers:(float*)dest size: (int)size {
@@ -91,8 +91,8 @@ using namespace oscillators_cpp;
     self.resonatorBank->update(frame, frameLength, sampleStride);
 }
 
-- (void)updateConcurrent:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
-    self.resonatorBank->updateConcurrent(frame, frameLength, sampleStride);
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride powers:(float*)powers amplitudes:(float*)amplitudes {
+    self.resonatorBank->update(frame, frameLength, sampleStride, powers, amplitudes);
 }
 
 @end

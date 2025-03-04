@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,18 @@ fileprivate let trackFrequencyThreshold = Float(0.001)
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
-public class Resonator : Oscillator, ResonatorProtocol {
+public class Resonator : Phasor, ResonatorProtocol {
+    public static func alphaHeuristic(frequency: Float, sampleRate: Float, k: Float = 1) -> Float {
+        1 - exp(-frequency / (sampleRate * k * log10(1+frequency)))
+    }
+
+    public var power: Float {
+        cc*cc + ss*ss
+    }
+    public var amplitude: Float {
+        sqrt(cc*cc + ss*ss)
+    }
+    
     public var alpha: Float {
         didSet {
             omAlpha = 1.0 - alpha
@@ -38,90 +49,96 @@ public class Resonator : Oscillator, ResonatorProtocol {
     }
     private(set) var omAlpha : Float = 0.0
     
-    public var timeConstant : Float {
-        1.0 / (sampleRate * alpha)
+    public var beta: Float {
+        didSet {
+            omBeta = 1.0 - beta
+        }
     }
+    private(set) var omBeta : Float = 0.0
     
-    private(set) var s: Float = 0.0
+    // complex: r = c + j s
     private(set) var c: Float = 0.0
+    private(set) var s: Float = 0.0
+
+    // Smoothed resonator output
+    private(set) var cc: Float = 0.0
+    private(set) var ss: Float = 0.0
 
     public var phase: Float = 0.0
     public var trackedFrequency: Float = 0.0
     
-    public init(frequency: Float, sampleRate: Float, alpha: Float) {
+    public init(frequency: Float, alpha: Float, beta: Float? = nil, sampleRate: Float) {
         self.alpha = alpha
         self.omAlpha = 1.0 - alpha
+        self.beta = beta ?? alpha
+        self.omBeta = 1.0 - self.beta
         super.init(frequency: frequency, sampleRate: sampleRate)
     }
     
     func updateWithSample(_ sample: Float) {
         let alphaSample : Float = alpha * sample
-        s = omAlpha * s + alphaSample * Zs
         c = omAlpha * c + alphaSample * Zc
+        s = omAlpha * s + alphaSample * Zs
+        cc = omBeta * cc + beta * c
+        ss = omBeta * ss + beta * s
         incrementPhase()
     }
     
     public func update(sample: Float) {
         updateWithSample(sample)
-        amplitude = sqrt(s*s + c*c)
-        stabilize() // this is overkill - could be done every few 100 samples...
-   }
+        stabilize() // this is overkill but necessary
+    }
     
     public func update(samples: [Float]) {
         for sample in samples {
             updateWithSample(sample)
         }
-        amplitude = sqrt(s*s + c*c)
-        stabilize()
+        stabilize() // this is overkill but necessary
     }
 
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }
-        amplitude = sqrt(s*s + c*c)
-        stabilize()
+        stabilize() // this is overkill but necessary
     }
     
     public func updateAndTrack(sample: Float) {
         updateWithSample(sample)
-        amplitude = sqrt(s*s + c*c)
+        stabilize() // this is overkill but necessary
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(numSamples: 1)
         } else {
             trackedFrequency = frequency
         }
-        stabilize() // this is overkill - could be done every few 100 samples...
     }
     
     public func updateAndTrack(samples: [Float]) {
         for sample in samples {
             updateWithSample(sample)
         }
-        amplitude = sqrt(s*s + c*c)
+        stabilize() // this is overkill but necessary
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(numSamples: samples.count)
         } else {
             trackedFrequency = frequency
         }
-        stabilize()
     }
 
     public func updateAndTrack(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }
-        amplitude = sqrt(s*s + c*c)
+        stabilize() // this is overkill but necessary
         if amplitude > trackFrequencyThreshold {
             updateTrackedFrequency(numSamples: frameLength)
         } else {
             trackedFrequency = frequency
         }
-        stabilize()
     }
     
     func updateTrackedFrequency(numSamples: Int) {
-        let newPhase = atan2(s,c) // returns value in [-pi,pi]
+        let newPhase = atan2(ss,cc) // returns value in [-pi,pi]
         var phaseDrift = newPhase - phase
         phase = newPhase
         if phaseDrift <= -Float.pi {
@@ -129,13 +146,13 @@ public class Resonator : Oscillator, ResonatorProtocol {
         } else if phaseDrift > Float.pi {
             phaseDrift -= twoPi
         }
-
-//        trackedFrequency = frequency - phaseDrift / (twoPi * Float(numSamples) * sampleDuration)
         
-        let localAlpha = alpha * Float(numSamples)
-        let localOmAlpha = 1.0 - localAlpha
-        let instantaneousFrequency = frequency - phaseDrift * sampleRate / (twoPi * Float(numSamples))
-        trackedFrequency = (localOmAlpha * trackedFrequency) + (localAlpha * instantaneousFrequency)
+//        let localAlpha = alpha * Float(numSamples)
+//        let localOmAlpha = 1.0 - localAlpha
+//        let instantaneousFrequency = frequency - phaseDrift * sampleRate / (twoPi * Float(numSamples))
+//        trackedFrequency = (localOmAlpha * trackedFrequency) + (localAlpha * instantaneousFrequency)
+        
+        trackedFrequency = frequency - phaseDrift * sampleRate / (twoPi * Float(numSamples))
     }
     
 }

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -46,24 +46,71 @@ final class FrequenciesTests: XCTestCase {
     }
     
     func testLogUniformFrequencies() throws {
-        let fStart = Float(10.0)
-        let fEnd = Float(100000.0)
-        let numF = Int(100)
+        let fMin = Float(32.70)
+        let fMax = Float(3950.68)
+        let numBins = Int(84)
+        let numBinsPerOctaves = Int(12)
         
-        let frequencies = Frequencies.logUniformFrequencies(fStart: fStart, fEnd: fEnd, numF: numF)
+        let frequencies = Frequencies.logUniformFrequencies(minFrequency: fMin, numBins: numBins, numBinsPerOctave: numBinsPerOctaves)
         
-        XCTAssertEqual(frequencies.count, numF)
-        XCTAssertEqual(frequencies[0], fStart)
-        XCTAssertEqual(frequencies[numF-1], fEnd)
+        XCTAssertEqual(frequencies.count, numBins)
+        XCTAssertEqual(frequencies.first!, fMin)
+        XCTAssertEqual(frequencies.last!, fMax, accuracy: 0.01)
         // ratios of consecutive frequencies is constant
         XCTAssertEqual(frequencies[2]/frequencies[1], frequencies[1]/frequencies[0], accuracy: 0.00001)
-        XCTAssertEqual(frequencies[numF-1]/frequencies[numF-2], frequencies[numF-2]/frequencies[numF-3], accuracy: 0.00001)
+        XCTAssertEqual(frequencies[numBins-1]/frequencies[numBins-2], frequencies[numBins-2]/frequencies[numBins-3], accuracy: 0.00001)
     }
+    
+    func testMelFrequencies() throws {
+        let numMels = Int(128)
+        let minFrequency: Float = 0.0
+        let maxFrequency: Float = 11025.0
+        
+        // Matlab Audio Toolkit
+        let frequencies = Frequencies.melFrequencies(numMels: numMels, minFrequency: minFrequency, maxFrequency: maxFrequency, htk: false)
+        let frequenciesHTK = Frequencies.melFrequencies(numMels: numMels, minFrequency: minFrequency, maxFrequency: maxFrequency, htk: true)
+        
+        XCTAssertEqual(frequencies.count, numMels)
+        XCTAssertEqual(frequenciesHTK.count, numMels)
+        XCTAssertEqual(frequencies.first!, minFrequency)
+        XCTAssertEqual(frequencies.last!, maxFrequency, accuracy: 0.001)
+        XCTAssertEqual(frequenciesHTK.first!, minFrequency)
+        XCTAssertEqual(frequenciesHTK.last!, maxFrequency, accuracy: 0.001)
+        
+        // Check against known values
+        for i in 0..<numMels {
+            XCTAssertEqual(FrequenciesFixtures.melFrequencies[i], frequencies[i], accuracy: 0.01)
+            XCTAssertEqual(FrequenciesFixtures.melFrequenciesHTK[i], frequenciesHTK[i], accuracy: 0.01)
+        }
+    }
+    
     
     func testDopplerVelocity() throws {
         let v440441 = Frequencies.dopplerVelocity(observedFrequency: 440, referenceFrequency: 441)
         XCTAssertEqual(v440441, -0.78458047, accuracy: epsilon)
         let v441440 = Frequencies.dopplerVelocity(observedFrequency: 441, referenceFrequency: 440)
         XCTAssertEqual(v441440, 0.78636366, accuracy: epsilon)
+    }
+    
+    func testFrequencySweep() throws {
+        let fMin = Float(32.70)
+        let numBins = Int(100)
+        let numBinsPerOctaves = Int(12)
+        
+        let frequencies = Frequencies.logUniformFrequencies(minFrequency: fMin, numBins: numBins, numBinsPerOctave: numBinsPerOctaves)
+        
+        let sampleRate = Float(44100.0)
+        let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate)
+        XCTAssertEqual(alphas.count, frequencies.count)
+        
+        let duration = Float(0.1)
+        let eq = Frequencies.frequencySweep(frequencies: frequencies, alphas: alphas, sampleRate: sampleRate)
+        
+        XCTAssertEqual(eq.count, frequencies.count)
+        XCTAssertEqual(eq[0], 0.357496858)
+        XCTAssertEqual(eq[8], 0.315346807)
+        XCTAssertEqual(eq[38], 0.374736041)
+        XCTAssertEqual(eq[97], 0.448924184)
+        XCTAssertEqual(eq[99], 0.474918872)
     }
 }

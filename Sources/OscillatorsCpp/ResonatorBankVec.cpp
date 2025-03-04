@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "ResonatorBankVecCpp.hpp"
+#include "ResonatorBankVec.hpp"
 
 #include <Accelerate/Accelerate.h>
 

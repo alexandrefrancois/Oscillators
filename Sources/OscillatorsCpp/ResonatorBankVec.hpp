@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef ResonatorBankVecCpp_hpp
-#define ResonatorBankVecCpp_hpp
+#ifndef ResonatorBankVec_hpp
+#define ResonatorBankVec_hpp
 
 #include <vector>
 
@@ -87,4 +87,4 @@ public:
 
 } // oscillators_cpp
 
-#endif /* ResonatorBankVecCpp_hpp */
+#endif /* ResonatorBankVec_hpp */

@@ -26,7 +26,7 @@ SOFTWARE.
 
 #import <Foundation/Foundation.h>
 
-#include "ResonatorBankVecCpp.hpp"
+#include "ResonatorBankVec.hpp"
 
 using namespace oscillators_cpp;
 

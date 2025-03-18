@@ -98,6 +98,9 @@ ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencie
 ResonatorBankVec::~ResonatorBankVec() {
     delete [] m_frequencies;
     delete [] m_alphas;
+    delete [] m_omAlphas;
+    delete [] m_betas;
+    delete [] m_omBetas;
     delete [] m_rPtr;
     delete [] m_rrPtr;
     delete [] m_zPtr;
@@ -159,7 +162,7 @@ void ResonatorBankVec::update(const float sample) {
               m_rPtr, 1,
               m_twoNumResonators);
 
-    // Smoothing with alphas
+    // Smoothing with betas
     vDSP_vmma(m_rrPtr, 1,
               m_omBetas, 1,
               m_rPtr, 1,

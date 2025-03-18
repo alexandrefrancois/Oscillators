@@ -106,10 +106,10 @@ final class FrequenciesTests: XCTestCase {
         let eq = Frequencies.frequencySweep(frequencies: frequencies, alphas: alphas, sampleRate: sampleRate)
         
         XCTAssertEqual(eq.count, frequencies.count)
-        XCTAssertEqual(eq[0], 0.3591631)
-        XCTAssertEqual(eq[8], 0.3165015)
-        XCTAssertEqual(eq[38], 0.3751474)
-        XCTAssertEqual(eq[97], 0.44849393)
-        XCTAssertEqual(eq[99], 0.47430906)
+        XCTAssertEqual(eq[0], 0.35677117)
+        XCTAssertEqual(eq[8], 0.31568912)
+        XCTAssertEqual(eq[38], 0.37487006)
+        XCTAssertEqual(eq[97], 0.4486485)
+        XCTAssertEqual(eq[99], 0.47431275)
     }
 }

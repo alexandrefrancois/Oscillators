@@ -158,7 +158,7 @@ extension Frequencies {
         let bank = ResonatorBankVec(frequencies: frequencies, alphas: alphas, betas: betas ?? nil, sampleRate: sampleRate)
         for (idx, frequency) in frequencies.enumerated() {
             let oscillator = Oscillator(frequency: frequency, sampleRate: sampleRate)
-            let duration = 10 * Dynamics.timeConstant(alpha: alphas[idx], sampleRate: sampleRate)
+            let duration = 100 * Dynamics.timeConstant(alpha: alphas[idx], sampleRate: sampleRate)
             let numSamples = Int(duration * sampleRate)
             let frame = oscillator.getNextSamples(numSamples: numSamples)
             bank.update(frame: frame)

@@ -103,14 +103,13 @@ final class FrequenciesTests: XCTestCase {
         let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate)
         XCTAssertEqual(alphas.count, frequencies.count)
         
-        let duration = Float(0.1)
         let eq = Frequencies.frequencySweep(frequencies: frequencies, alphas: alphas, sampleRate: sampleRate)
         
         XCTAssertEqual(eq.count, frequencies.count)
-        XCTAssertEqual(eq[0], 0.357496858)
-        XCTAssertEqual(eq[8], 0.315346807)
-        XCTAssertEqual(eq[38], 0.374736041)
-        XCTAssertEqual(eq[97], 0.448924184)
-        XCTAssertEqual(eq[99], 0.474918872)
+        XCTAssertEqual(eq[0], 0.3591631)
+        XCTAssertEqual(eq[8], 0.3165015)
+        XCTAssertEqual(eq[38], 0.3751474)
+        XCTAssertEqual(eq[97], 0.44849393)
+        XCTAssertEqual(eq[99], 0.47430906)
     }
 }

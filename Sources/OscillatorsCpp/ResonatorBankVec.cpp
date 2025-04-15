@@ -28,7 +28,7 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-constexpr float PI = 3.14159274101257324219; // PI
+constexpr float PI = 3.14159265358979323846; // PI
 constexpr float twoPi = 2.0 * PI;
 
 ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, float sampleRate)

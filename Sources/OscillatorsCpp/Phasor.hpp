@@ -29,7 +29,7 @@ SOFTWARE.
 
 namespace oscillators_cpp {
 
-constexpr float PI = 3.14159274101257324219; // PI
+constexpr float PI = 3.14159265358979323846; // PI
 constexpr float twoPi = 2.0 * PI;
 
 // Phasor class: base for individual oscillators

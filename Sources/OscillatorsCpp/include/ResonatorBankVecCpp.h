@@ -34,6 +34,7 @@ SOFTWARE.
 - (float)betaValue:(int)index;
 - (void)getPowers:(float*)dest size:(int)size;
 - (void)getAmplitudes:(float*)dest size:(int)size;
+- (void)getPhases:(float*)dest size:(int)size;
 - (void)update:(float)sample
 NS_SWIFT_NAME(update(sample:));
 - (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride

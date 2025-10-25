@@ -77,6 +77,7 @@ public:
 
     void getPowers(float *dest, size_t size);
     void getAmplitudes(float *dest, size_t size);
+    void getPhases(float *dest, size_t size);
 
     void update(const float sample);
     void update(const std::vector<float> &samples);

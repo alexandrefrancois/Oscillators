@@ -47,6 +47,11 @@ public class ResonatorBankVec {
     public var amplitudes : [Float] {
         vForce.sqrt(powers)
     }
+    public var phases : [Float] {
+        var phases = [Float](repeating: 0, count: numResonators)
+        vDSP.phase(R, result: &phases)
+        return phases
+    }
 
     public  let alphas : [Float] // can be tuned independently for each frequency
     private let omAlphas : [Float] // can be tuned independently for each frequency

@@ -41,7 +41,7 @@ final class ResonatorCppTests: XCTestCase {
     
     func testSetAlpha() throws {
         var alpha: Float = 0.99
-        var beta: Float = 0.88
+        let beta: Float = 0.88
         let resonator = ResonatorCpp(frequency: 440.0,
                                      alpha: alpha,
                                      beta: beta,
@@ -52,13 +52,12 @@ final class ResonatorCppTests: XCTestCase {
         XCTAssertEqual(resonator.beta(), beta)
 
         alpha = 0.11
-        beta = 0.33
         resonator.setAlpha(alpha)
         XCTAssertEqual(resonator.omAlpha(), 1.0-alpha)
     }
 
     func testSetBeta() throws {
-        var alpha: Float = 0.99
+        let alpha: Float = 0.99
         var beta: Float = 0.88
         let resonator = ResonatorCpp(frequency: 440.0,
                                      alpha: alpha,
@@ -71,6 +70,7 @@ final class ResonatorCppTests: XCTestCase {
 
         beta = 0.33
         resonator.setBeta(beta)
+        XCTAssertEqual(resonator.beta(), beta)
     }
     
     func testUpdateWithSample() throws {

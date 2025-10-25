@@ -29,8 +29,8 @@ final class ResonatorBankVecTests: XCTestCase {
     func testConstructor() throws {
         let frequencies = FrequenciesFixtures.frequencies
         let sampleRate = AudioFixtures.defaultSampleRate
-        var alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
-        var betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let resonatorBank = ResonatorBankVec(frequencies: frequencies,
                                              alphas: alphas,
                                              betas: betas,
@@ -45,8 +45,8 @@ final class ResonatorBankVecTests: XCTestCase {
     func testUpdate() throws {
         let frequencies = FrequenciesFixtures.frequencies
         let sampleRate = AudioFixtures.defaultSampleRate
-        var alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
-        var betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let resonatorBank = ResonatorBankVec(frequencies: frequencies,
                                              alphas: alphas,
                                              betas: betas,

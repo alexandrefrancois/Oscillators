@@ -83,6 +83,10 @@ using namespace oscillators_cpp;
 //    return self.resonatorBank->amplitudeValue(index);
 //}
 
+- (void)getPhases:(float*)dest size: (int)size {
+    self.resonatorBank->getPhases(dest, size);
+}
+
 - (void)update:(float)sample {
     self.resonatorBank->update(sample);
 }

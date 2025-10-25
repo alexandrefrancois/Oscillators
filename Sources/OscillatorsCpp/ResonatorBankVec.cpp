@@ -140,6 +140,15 @@ void ResonatorBankVec::getAmplitudes(float *dest, size_t size) {
     vvsqrtf(dest, dest, &count);
 }
 
+void ResonatorBankVec::getPhases(float *dest, size_t size) {
+    if (size < m_numResonators)
+    {
+        throw std::out_of_range("Buffer passed to getPhases() is not large enough");
+    }
+    DSPSplitComplex R = {m_rr.data(), m_rr.data() + m_numResonators};
+    vDSP_zvphas(&R, 1, dest, 1, m_numResonators);
+}
+
 void ResonatorBankVec::update(const float sample) {
     vDSP_vsmul(m_alphas.data(), 1, &sample, m_alphasSample.data(), 1, m_twoNumResonators);
         

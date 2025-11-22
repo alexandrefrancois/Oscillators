@@ -31,8 +31,8 @@ fileprivate let trackFrequencyThreshold = Float(0.001)
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
 public class Resonator : Phasor, ResonatorProtocol {
-    public static func alphaHeuristic(frequency: Float, sampleRate: Float, k: Float = 1) -> Float {
-        1 - exp(-frequency / (sampleRate * k * log10(1+frequency)))
+    public static func alphaHeuristic(frequency: Float, sampleRate: Float, k: Float = 1, n: Float = 1) -> Float {
+        1 - exp(-frequency / (sampleRate * k * pow(log10(1+frequency), n)))
     }
 
     public var power: Float {

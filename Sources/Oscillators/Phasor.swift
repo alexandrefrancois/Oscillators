@@ -67,7 +67,6 @@ public class Phasor : PhasorProtocol {
     /// Compute next value of the phasor
     /// Z <- Z * W
     internal func incrementPhase() {
-        // W <- W * O
         // complex multiplication with 3 real multiplications
         let ac = Wc*Zc
         let bd = Ws*Zs

@@ -41,6 +41,20 @@ public class Resonator : Phasor, ResonatorProtocol {
     public var amplitude: Float {
         sqrt(cc*cc + ss*ss)
     }
+    public var phase: Float {
+        atan2(ss, cc)
+    }
+    public var phaseComps: (cos: Float, sin: Float) {
+        let mag = sqrt(cc*cc + ss*ss)
+        return (cc/mag, ss/mag)
+    }
+    public var deltaPhase: Float {
+        atan2(dps, dpc)
+    }
+    public var deltaPhaseComps: (cos: Float, sin: Float) {
+        let mag = sqrt(dps*dps + dpc*dpc)
+        return (dpc/mag, dps/mag)
+    }
     
     public var alpha: Float {
         didSet {
@@ -61,12 +75,15 @@ public class Resonator : Phasor, ResonatorProtocol {
     private(set) var s: Float = 0.0
 
     // Smoothed resonator output
-    private(set) var cc: Float = 0.0
-    private(set) var ss: Float = 0.0
-
-    public var phase: Float = 0.0
-    public var trackedFrequency: Float = 0.0
+    public private(set) var cc: Float = 0.0
+    public private(set) var ss: Float = 0.0
     
+    // delta-phase components (not normalized)
+    public private(set) var dpc: Float = 0.0
+    public private(set) var dps: Float = 0.0
+    
+    public var trackedFrequency: Float = 0.0
+
     public init(frequency: Float, alpha: Float, beta: Float? = nil, sampleRate: Float) {
         self.alpha = alpha
         self.omAlpha = 1.0 - alpha
@@ -79,8 +96,18 @@ public class Resonator : Phasor, ResonatorProtocol {
         let alphaSample : Float = alpha * sample
         c = omAlpha * c + alphaSample * Zc
         s = omAlpha * s + alphaSample * Zs
+        // save current values
+        let lcc = cc
+        let lss = ss
+        // update
         cc = omBeta * cc + beta * c
         ss = omBeta * ss + beta * s
+        // compute current * conjugate(previous)
+        // the phase time derivative estimate is the arg of this complex number
+        // Smoothing (EWMA) with gamma = alpha
+        dpc = omAlpha * dpc + alpha * (cc * lcc + ss * lss)
+        dps = omAlpha * dps + alpha * (ss * lcc - cc * lss)
+
         incrementPhase()
     }
     
@@ -107,7 +134,7 @@ public class Resonator : Phasor, ResonatorProtocol {
         updateWithSample(sample)
         stabilize() // this is overkill but necessary
         if amplitude > trackFrequencyThreshold {
-            updateTrackedFrequency(numSamples: 1)
+            updateTrackedFrequency()
         } else {
             trackedFrequency = frequency
         }
@@ -119,7 +146,7 @@ public class Resonator : Phasor, ResonatorProtocol {
         }
         stabilize() // this is overkill but necessary
         if amplitude > trackFrequencyThreshold {
-            updateTrackedFrequency(numSamples: samples.count)
+            updateTrackedFrequency()
         } else {
             trackedFrequency = frequency
         }
@@ -131,28 +158,14 @@ public class Resonator : Phasor, ResonatorProtocol {
         }
         stabilize() // this is overkill but necessary
         if amplitude > trackFrequencyThreshold {
-            updateTrackedFrequency(numSamples: frameLength)
+            updateTrackedFrequency()
         } else {
             trackedFrequency = frequency
         }
     }
     
-    func updateTrackedFrequency(numSamples: Int) {
-        let newPhase = atan2(ss,cc) // returns value in [-pi,pi]
-        var phaseDrift = newPhase - phase
-        phase = newPhase
-        if phaseDrift <= -Float.pi {
-            phaseDrift += twoPi
-        } else if phaseDrift > Float.pi {
-            phaseDrift -= twoPi
-        }
-        
-//        let localAlpha = alpha * Float(numSamples)
-//        let localOmAlpha = 1.0 - localAlpha
-//        let instantaneousFrequency = frequency - phaseDrift * sampleRate / (twoPi * Float(numSamples))
-//        trackedFrequency = (localOmAlpha * trackedFrequency) + (localAlpha * instantaneousFrequency)
-        
-        trackedFrequency = frequency - phaseDrift * sampleRate / (twoPi * Float(numSamples))
+    func updateTrackedFrequency() {
+        trackedFrequency = frequency + atan2(dps,dpc) * sampleRate / twoPi
     }
     
 }

@@ -39,7 +39,14 @@ SOFTWARE.
 - (float)s;
 - (float)cc;
 - (float)ss;
+- (float)dpc;
+- (float)dps;
 - (float)phase;
+- (float)phaseX;
+- (float)phaseY;
+- (float)deltaPhase;
+- (float)deltaPhaseX;
+- (float)deltaPhaseY;
 - (float)trackedFrequency;
 - (void)updateWithSample:(float)sample
 NS_SWIFT_NAME(updateWithSample(value:));

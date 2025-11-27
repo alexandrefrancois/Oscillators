@@ -43,8 +43,9 @@ private:
     float m_cc;
     float m_ss;
     
+    float m_dpc;
+    float m_dps;
     float m_trackedFrequency;
-    float m_phase;
     
 public:
     Resonator(float frequency, float alpha, float beta, float sampleRate);
@@ -60,7 +61,14 @@ public:
     float s() const { return m_sin; }
     float cc() const { return m_cc; }
     float ss() const { return m_ss; }
-    float phase() const { return m_phase; }
+    float dpc() const { return m_dpc; }
+    float dps() const { return m_dps; }
+    float phase() const;
+    float phaseX() const { return m_cc; } // / sqrt(m_cc * m_cc + m_ss * m_ss); }
+    float phaseY() const { return m_ss; } // / sqrt(m_cc * m_cc + m_ss * m_ss); }
+    float deltaPhase() const;
+    float deltaPhaseX() const { return m_dpc; } // / sqrt(m_dpc * m_dpc + m_dps * m_dps); }
+    float deltaPhaseY() const { return m_dps; } // / sqrt(m_dpc * m_dpc + m_dps * m_dps); }
     float trackedFrequency() const { return m_trackedFrequency; }
 
     void updateWithSample(float sample);
@@ -70,7 +78,7 @@ public:
     void updateAndTrack(const float *frameData, size_t frameLength, size_t sampleStride);
 
 private:
-    void updateTrackedFrequency(size_t numSamples);
+    void updateTrackedFrequency();
 };
 
 } // oscillators_cpp

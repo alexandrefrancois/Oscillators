@@ -58,12 +58,18 @@ public class Phasor : PhasorProtocol {
     }
 
     func updateMultiplier() {
-        let omega = twoPi * frequency / sampleRate
+        let omega = -twoPi * frequency / sampleRate
         Wc = cos(omega)
         Ws = sin(omega)
         Wcps = Wc + Ws
     }
     
+    func updateMultiplier(c: Float, s: Float, alpha: Float) {
+        Wc = Wc * c - Ws * s
+        Ws = Wc * s + Ws * c
+        Wcps = Wc + Ws
+    }
+
     /// Compute next value of the phasor
     /// Z <- Z * W
     internal func incrementPhase() {

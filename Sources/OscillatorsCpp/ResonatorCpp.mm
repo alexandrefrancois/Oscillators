@@ -98,6 +98,18 @@ using namespace oscillators_cpp;
     return self.resonator->phase();
 }
 
+- (float)dpc {
+    return self.resonator->dpc();
+}
+
+- (float)dps {
+    return self.resonator->dps();
+}
+
+- (float)deltaPhase {
+    return self.resonator->deltaPhase();
+}
+
 - (void)updateWithSample:(float)sample {
     self.resonator->updateWithSample(sample);
 }

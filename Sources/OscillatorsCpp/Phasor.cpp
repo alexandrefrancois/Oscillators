@@ -38,7 +38,7 @@ m_Zc(1.0), m_Zs(0.0) {
 }
 
 void Phasor::updateMultiplier() {
-    const float omega = twoPi * m_frequency / m_sampleRate;
+    const float omega = -twoPi * m_frequency / m_sampleRate;
     m_Wc = cos(omega);
     m_Ws = sin(omega);
     m_Wcps = m_Wc + m_Ws;

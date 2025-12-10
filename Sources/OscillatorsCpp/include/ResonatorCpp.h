@@ -27,7 +27,7 @@ SOFTWARE.
 
 // Wrapper for the Resonator class
 @interface ResonatorCpp : PhasorCpp
-- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha beta:(float)beta sampleRate:(float)sampleRate;
+- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma sampleRate:(float)sampleRate;
 - (float)power;
 - (float)amplitude;
 - (float)alpha;
@@ -35,6 +35,10 @@ SOFTWARE.
 - (float)omAlpha; // used in test...
 - (float)beta;
 - (void)setBeta:(float)beta;
+- (float)omBeta; // used in test...
+- (float)gamma;
+- (void)setGamma:(float)gamma;
+- (float)omGamma; // used in test...
 - (float)c;
 - (float)s;
 - (float)cc;
@@ -47,13 +51,11 @@ SOFTWARE.
 - (float)deltaPhase;
 - (float)deltaPhaseX;
 - (float)deltaPhaseY;
-- (float)trackedFrequency;
+- (float)instantaneousFrequency;
 - (void)updateWithSample:(float)sample
 NS_SWIFT_NAME(updateWithSample(value:));
 - (void)update:(float)sample
 NS_SWIFT_NAME(update(sample:));
 - (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
 NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
-- (void)updateAndTrack:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(updateAndTrack(frameData:frameLength:sampleStride:));
 @end

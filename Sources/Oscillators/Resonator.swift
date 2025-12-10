@@ -26,7 +26,7 @@ import Foundation
 import Accelerate
 
 fileprivate let twoPi = Float.pi * 2.0
-fileprivate let trackFrequencyThreshold = Float(0.001)
+fileprivate let instantaneousFrequencyPowerThreshold = Float(0.000001)
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
@@ -56,6 +56,13 @@ public class Resonator : Phasor, ResonatorProtocol {
         return (dpc/mag, dps/mag)
     }
     
+    public var instantaneousFrequency: Float {
+        if power < instantaneousFrequencyPowerThreshold {
+            return frequency
+        }
+        return frequency + atan2(dps,dpc) * sampleRate / twoPi
+    }
+    
     public var alpha: Float {
         didSet {
             omAlpha = 1.0 - alpha
@@ -69,7 +76,14 @@ public class Resonator : Phasor, ResonatorProtocol {
         }
     }
     private(set) var omBeta : Float = 0.0
-    
+
+    public var gamma: Float {
+        didSet {
+            omGamma = 1.0 - gamma
+        }
+    }
+    private(set) var omGamma : Float = 0.0
+
     // complex: r = c + j s
     private(set) var c: Float = 0.0
     private(set) var s: Float = 0.0
@@ -82,13 +96,13 @@ public class Resonator : Phasor, ResonatorProtocol {
     public private(set) var dpc: Float = 0.0
     public private(set) var dps: Float = 0.0
     
-    public var trackedFrequency: Float = 0.0
-
-    public init(frequency: Float, alpha: Float, beta: Float? = nil, sampleRate: Float) {
+    public init(frequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, sampleRate: Float) {
         self.alpha = alpha
         self.omAlpha = 1.0 - alpha
         self.beta = beta ?? alpha
         self.omBeta = 1.0 - self.beta
+        self.gamma = gamma ?? alpha
+        self.omGamma = 1.0 - self.gamma
         super.init(frequency: frequency, sampleRate: sampleRate)
     }
     
@@ -105,8 +119,8 @@ public class Resonator : Phasor, ResonatorProtocol {
         // compute current * conjugate(previous)
         // the phase time derivative estimate is the arg of this complex number
         // Smoothing (EWMA) with gamma = alpha
-        dpc = omAlpha * dpc + alpha * (cc * lcc + ss * lss)
-        dps = omAlpha * dps + alpha * (ss * lcc - cc * lss)
+        dpc = omGamma * dpc + gamma * (cc * lcc + ss * lss)
+        dps = omGamma * dps + gamma * (ss * lcc - cc * lss)
 
         incrementPhase()
     }
@@ -129,43 +143,4 @@ public class Resonator : Phasor, ResonatorProtocol {
         }
         stabilize() // this is overkill but necessary
     }
-    
-    public func updateAndTrack(sample: Float) {
-        updateWithSample(sample)
-        stabilize() // this is overkill but necessary
-        if amplitude > trackFrequencyThreshold {
-            updateTrackedFrequency()
-        } else {
-            trackedFrequency = frequency
-        }
-    }
-    
-    public func updateAndTrack(samples: [Float]) {
-        for sample in samples {
-            updateWithSample(sample)
-        }
-        stabilize() // this is overkill but necessary
-        if amplitude > trackFrequencyThreshold {
-            updateTrackedFrequency()
-        } else {
-            trackedFrequency = frequency
-        }
-    }
-
-    public func updateAndTrack(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
-        for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
-            updateWithSample(frameData[sampleIndex])
-        }
-        stabilize() // this is overkill but necessary
-        if amplitude > trackFrequencyThreshold {
-            updateTrackedFrequency()
-        } else {
-            trackedFrequency = frequency
-        }
-    }
-    
-    func updateTrackedFrequency() {
-        trackedFrequency = frequency + atan2(dps,dpc) * sampleRate / twoPi
-    }
-    
 }

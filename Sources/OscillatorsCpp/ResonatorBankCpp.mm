@@ -36,9 +36,9 @@ using namespace oscillators_cpp;
 
 @implementation ResonatorBankCpp
 
-- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies alphas:(const float*)alphas betas: (const float*)betas sampleRate:(float)sampleRate {
+- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies alphas:(const float*)alphas betas: (const float*)betas gammas: (const float*)gammas sampleRate:(float)sampleRate {
     if (self = [super init]) {
-        self.resonatorBank = new ResonatorBank(numResonators, frequencies, alphas, betas, sampleRate);
+        self.resonatorBank = new ResonatorBank(numResonators, frequencies, alphas, betas, gammas, sampleRate);
     }
     return self;
 }
@@ -71,17 +71,21 @@ using namespace oscillators_cpp;
     self.resonatorBank->getPowers(dest, size);
 }
 
-//- (float)powerValue:(int)index {
-//    return self.resonatorBank->powerValue(index);
-//}
-
 - (void)getAmplitudes:(float*)dest size: (int)size {
     self.resonatorBank->getAmplitudes(dest, size);
 }
 
-//- (float)amplitudeValue:(int)index {
-//    return self.resonatorBank->amplitudeValue(index);
-//}
+- (void)getPhases:(float*)dest size: (int)size {
+    self.resonatorBank->getPhases(dest, size);
+}
+
+- (void)getDeltaPhases:(float*)dest size: (int)size {
+    self.resonatorBank->getDeltaPhases(dest, size);
+}
+
+- (void)getInstantaneousFrequencies:(float*)dest size: (int)size {
+    self.resonatorBank->getInstantaneousFrequencies(dest, size);
+}
 
 - (void)update:(float)sample {
     self.resonatorBank->update(sample);

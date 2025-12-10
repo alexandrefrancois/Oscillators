@@ -34,10 +34,10 @@ using namespace oscillators_cpp;
 
 constexpr size_t resonatorStride = 6;
 
-ResonatorBank::ResonatorBank(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, float sampleRate) : m_sampleRate(sampleRate) {
+ResonatorBank::ResonatorBank(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, const float* gammas, float sampleRate) : m_sampleRate(sampleRate) {
     m_resonators.reserve(numResonators);
     for (size_t i=0; i<numResonators; ++i) {
-        m_resonators.emplace_back(std::make_unique<Resonator>(frequencies[i], alphas[i], betas[i], sampleRate));
+        m_resonators.emplace_back(std::make_unique<Resonator>(frequencies[i], alphas[i], betas[i], gammas[i], sampleRate));
     }
 #ifndef STD_CONCURRENCY
     m_dispatchGroup = dispatch_group_create();
@@ -85,6 +85,24 @@ void ResonatorBank::getPowers(float *dest, size_t size) {
 void ResonatorBank::getAmplitudes(float *dest, size_t size) {
     for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
         dest[i]=m_resonators[i]->amplitude();
+    }
+}
+
+void ResonatorBank::getPhases(float *dest, size_t size) {
+    for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
+        dest[i]=m_resonators[i]->phase();
+    }
+}
+
+void ResonatorBank::getDeltaPhases(float *dest, size_t size) {
+    for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
+        dest[i]=m_resonators[i]->deltaPhase();
+    }
+}
+
+void ResonatorBank::getInstantaneousFrequencies(float *dest, size_t size) {
+    for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
+        dest[i]=m_resonators[i]->instantaneousFrequency();
     }
 }
 

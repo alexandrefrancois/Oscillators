@@ -53,7 +53,7 @@ public:
     ResonatorBank & operator=(const ResonatorBank&) = delete;
     ResonatorBank(const ResonatorBank&) = delete;
 
-    ResonatorBank(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, float sampleRate);
+    ResonatorBank(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, const float* gammas, float sampleRate);
 #ifndef STD_CONCURRENCY
     ~ResonatorBank();
 #endif
@@ -65,6 +65,9 @@ public:
     void setAllAlphas(float alpha);
     void getPowers(float *dest, size_t size);
     void getAmplitudes(float *dest, size_t size);
+    void getPhases(float *dest, size_t size);
+    void getDeltaPhases(float *dest, size_t size);
+    void getInstantaneousFrequencies(float *dest, size_t size);
     void update(const float sample);
     void update(const std::vector<float> &samples);
     void update(const float *frameData, size_t frameLength, size_t sampleStride);

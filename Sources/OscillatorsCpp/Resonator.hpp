@@ -29,7 +29,7 @@ SOFTWARE.
 
 namespace oscillators_cpp {
 
-constexpr float trackFrequencyThreshold = 0.001;
+constexpr float instantaneousFrequencyPowerThreshold = 0.000001;
 
 class Resonator : public Phasor {
 private:
@@ -42,13 +42,14 @@ private:
     float m_omBeta;
     float m_cc;
     float m_ss;
-    
+    // multipled by conjugate, smoothed (delta-phase)
     float m_dpc;
     float m_dps;
-    float m_trackedFrequency;
-    
+    float m_gamma;
+    float m_omGamma;
+
 public:
-    Resonator(float frequency, float alpha, float beta, float sampleRate);
+    Resonator(float frequency, float alpha, float beta, float gamma, float sampleRate);
     
     float power() const { return m_cc * m_cc + m_ss * m_ss; }
     float amplitude() const { return sqrt(m_cc * m_cc + m_ss * m_ss); }
@@ -57,6 +58,10 @@ public:
     float omAlpha() const { return m_omAlpha; }
     float beta() const { return m_beta; }
     void setBeta(float beta);
+    float omBeta() const { return m_omBeta; }
+    float gamma() const { return m_gamma; }
+    void setGamma(float gamma);
+    float omGamma() const { return m_omGamma; }
     float c() const { return m_cos; }
     float s() const { return m_sin; }
     float cc() const { return m_cc; }
@@ -64,21 +69,22 @@ public:
     float dpc() const { return m_dpc; }
     float dps() const { return m_dps; }
     float phase() const;
-    float phaseX() const { return m_cc; } // / sqrt(m_cc * m_cc + m_ss * m_ss); }
-    float phaseY() const { return m_ss; } // / sqrt(m_cc * m_cc + m_ss * m_ss); }
+    float phaseX() const { return m_cc / sqrt(m_cc * m_cc + m_ss * m_ss); }
+    float phaseY() const { return m_ss / sqrt(m_cc * m_cc + m_ss * m_ss); }
     float deltaPhase() const;
-    float deltaPhaseX() const { return m_dpc; } // / sqrt(m_dpc * m_dpc + m_dps * m_dps); }
-    float deltaPhaseY() const { return m_dps; } // / sqrt(m_dpc * m_dpc + m_dps * m_dps); }
-    float trackedFrequency() const { return m_trackedFrequency; }
+    float deltaPhaseX() const { return m_dpc / sqrt(m_dpc * m_dpc + m_dps * m_dps); }
+    float deltaPhaseY() const { return m_dps / sqrt(m_dpc * m_dpc + m_dps * m_dps); }
+    float instantaneousFrequency() const {
+        if (power() < instantaneousFrequencyPowerThreshold) {
+            return m_frequency;
+        }
+        return m_frequency + (atan2(m_dps, m_dpc) * m_sampleRate) / twoPi;
+    }
 
     void updateWithSample(float sample);
     void update(const float sample);
     void update(const std::vector<float> &samples);
     void update(const float *frameData, size_t frameLength, size_t sampleStride);
-    void updateAndTrack(const float *frameData, size_t frameLength, size_t sampleStride);
-
-private:
-    void updateTrackedFrequency();
 };
 
 } // oscillators_cpp

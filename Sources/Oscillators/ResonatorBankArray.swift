@@ -44,20 +44,35 @@ public class ResonatorBankArray {
     public var amplitudes: [Float] {
         resonators.map { $0.amplitude }
     }
-
-    public init(frequencies: [Float], alphas: [Float], betas: [Float], sampleRate: Float) {
+    public var phases: [Float] {
+        resonators.map { $0.phase }
+    }
+    public var phaseComps: [(cos: Float, sin: Float)] {
+        resonators.map { $0.phaseComps }
+    }
+    public var deltaPhases: [Float] {
+        resonators.map { $0.deltaPhase }
+    }
+    public var deltaPhaseComps: [(cos: Float, sin: Float)] {
+        resonators.map { $0.deltaPhaseComps }
+    }
+    public var instantaneousFrequencies: [Float] {
+        resonators.map { $0.instantaneousFrequency }
+    }
+    
+    public init(frequencies: [Float], alphas: [Float], betas: [Float], gammas: [Float], sampleRate: Float) {
         assert(frequencies.count == alphas.count)
         // setup an oscillator for each frequency
         for (idx, frequency) in frequencies.enumerated() {
-            resonators.append(Resonator(frequency: frequency, alpha: alphas[idx], beta: betas[idx], sampleRate: sampleRate))
+            resonators.append(Resonator(frequency: frequency, alpha: alphas[idx], beta: betas[idx], gamma: gammas[idx], sampleRate: sampleRate))
         }
     }
     
     /// A constructor that takes a function of frequency and sample rate to compute alphas
-    public init(frequencies: [Float], sampleRate: Float, k: Float = 1.0, alphaHeuristic: (Float, Float, Float) -> Float) {
+    public init(frequencies: [Float], sampleRate: Float, k: Float = 1.0, n: Float = 1.0, alphaHeuristic: (Float, Float, Float, Float) -> Float) {
         // setup an oscillator for each frequency
         for frequency in frequencies {
-            resonators.append(Resonator(frequency: frequency, alpha: alphaHeuristic(frequency, sampleRate, k), sampleRate: sampleRate))
+            resonators.append(Resonator(frequency: frequency, alpha: alphaHeuristic(frequency, sampleRate, k, n), sampleRate: sampleRate))
         }
     }
     

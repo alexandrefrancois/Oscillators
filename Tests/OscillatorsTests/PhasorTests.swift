@@ -48,21 +48,21 @@ final class PhasorTests: XCTestCase {
         let phasor = Phasor(frequency: frequency, sampleRate: sampleRate)
 
         // initial values
-        var omega = twoPi * frequency / sampleRate
+        var omega = -twoPi * frequency / sampleRate
         XCTAssertEqual(phasor.Wc, cos(omega))
         XCTAssertEqual(phasor.Ws, sin(omega))
         XCTAssertEqual(phasor.Wcps, cos(omega)+sin(omega))
         
         // change frequency
         phasor.frequency = Float(880.0)
-        omega = twoPi * phasor.frequency / phasor.sampleRate
+        omega = -twoPi * phasor.frequency / phasor.sampleRate
         XCTAssertEqual(phasor.Wc, cos(omega))
         XCTAssertEqual(phasor.Ws, sin(omega))
         XCTAssertEqual(phasor.Wcps, cos(omega)+sin(omega))
 
         // change sampleRate
         phasor.sampleRate = Float(48000.0)
-        omega = twoPi * phasor.frequency / phasor.sampleRate
+        omega = -twoPi * phasor.frequency / phasor.sampleRate
         XCTAssertEqual(phasor.Wc, cos(omega))
         XCTAssertEqual(phasor.Ws, sin(omega))
         XCTAssertEqual(phasor.Wcps, cos(omega)+sin(omega))

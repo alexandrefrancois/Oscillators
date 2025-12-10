@@ -33,9 +33,9 @@ using namespace oscillators_cpp;
 
 @implementation ResonatorCpp
 
-- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha beta:(float)beta sampleRate:(float)sampleRate {
+- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma sampleRate:(float)sampleRate {
     if (self = [super init]) {
-        self.oscillator = new Resonator(frequency, alpha, beta, sampleRate);
+        self.oscillator = new Resonator(frequency, alpha, beta, gamma, sampleRate);
     }
     return self;
 }
@@ -74,8 +74,24 @@ using namespace oscillators_cpp;
     self.resonator->setBeta(beta);
 }
 
-- (float)trackedFrequency {
-    return self.resonator->trackedFrequency();
+- (float)omBeta {
+    return self.resonator->omBeta();
+}
+
+- (float)gamma {
+    return self.resonator->gamma();
+}
+
+- (void)setGamma:(float)gamma {
+    self.resonator->setGamma(gamma);
+}
+
+- (float)omGamma {
+    return self.resonator->omGamma();
+}
+
+- (float)instantaneousFrequency {
+    return self.resonator->instantaneousFrequency();
 }
 
 - (float)c {
@@ -120,10 +136,6 @@ using namespace oscillators_cpp;
 
 - (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
     self.resonator->update(frame, frameLength, sampleStride);
-}
-
-- (void)updateAndTrack:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
-    self.resonator->updateAndTrack(frame, frameLength, sampleStride);
 }
 
 @end

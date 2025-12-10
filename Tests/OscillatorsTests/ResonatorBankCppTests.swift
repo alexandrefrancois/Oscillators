@@ -35,6 +35,7 @@ final class ResonatorBankCppTests: XCTestCase {
                                                 frequencies: &frequencies,
                                                 alphas: &alphas,
                                                 betas: &betas,
+                                                gammas: &alphas,
                                                 sampleRate: AudioFixtures.defaultSampleRate)
         guard let resonatorBankCpp = resonatorBankCpp else { return XCTAssert(false) }
 
@@ -52,6 +53,7 @@ final class ResonatorBankCppTests: XCTestCase {
                                                 frequencies: &freqs,
                                                 alphas: &alphas,
                                                 betas: &betas,
+                                                gammas: &alphas,
                                                 sampleRate: AudioFixtures.defaultSampleRate)
         guard let resonatorBankCpp = resonatorBankCpp else { return XCTAssert(false) }
 
@@ -82,6 +84,7 @@ final class ResonatorBankCppTests: XCTestCase {
                                                  frequencies: &freqs1,
                                                  alphas: &alphas1,
                                                  betas: &alphas1,
+                                                 gammas: &alphas1,
                                                  sampleRate: AudioFixtures.defaultSampleRate)
         guard let resonatorBankCpp1 = resonatorBankCpp1 else { return XCTAssert(false) }
 
@@ -102,6 +105,7 @@ final class ResonatorBankCppTests: XCTestCase {
                                                  frequencies: &freqs2,
                                                  alphas: &alphas2,
                                                  betas: &alphas2,
+                                                 gammas: &alphas2,
                                                  sampleRate: AudioFixtures.defaultSampleRate)
         guard let resonatorBankCpp2 = resonatorBankCpp2 else { return XCTAssert(false) }
 

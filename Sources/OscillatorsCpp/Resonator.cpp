@@ -28,8 +28,8 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-Resonator::Resonator(float frequency, float alpha, float beta, float sampleRate) : Phasor(frequency, sampleRate),
-m_alpha(alpha), m_omAlpha(1.0 - alpha), m_beta(beta), m_omBeta(1.0 - beta), m_trackedFrequency(m_frequency),
+Resonator::Resonator(float frequency, float alpha, float beta, float gamma, float sampleRate) : Phasor(frequency, sampleRate),
+m_alpha(alpha), m_omAlpha(1.0 - alpha), m_beta(beta), m_omBeta(1.0 - beta), m_gamma(gamma), m_omGamma(1.0 - gamma),
 m_dpc(1.0), m_dps(0.0) {
 }
 
@@ -47,6 +47,14 @@ void Resonator::setBeta(float beta) {
     }
     m_beta = beta;
     m_omBeta = 1.0 - m_beta;
+}
+
+void Resonator::setGamma(float gamma) {
+    if (gamma < 0.0 || gamma >1.0) {
+        throw std::out_of_range("Bad gamma passed to setGamma()");
+    }
+    m_gamma = gamma;
+    m_omGamma = 1.0 - m_gamma;
 }
 
 float Resonator::phase() const {
@@ -90,21 +98,4 @@ void Resonator::update(const float *frameData, size_t frameLength, size_t sample
         updateWithSample(frameData[i]);
     }
     stabilize(); // this is overkill but necessary
-}
-
-void Resonator::updateAndTrack(const float *frameData, size_t frameLength, size_t sampleStride) {
-    for (int i=0; i<frameLength; i += sampleStride) {
-        updateWithSample(frameData[i]);
-    }
-    stabilize(); // this is overkill but necessary
-    if (amplitude() > trackFrequencyThreshold) {
-        updateTrackedFrequency();
-    } else {
-        m_trackedFrequency = m_frequency;
-    }
-}
-
-void Resonator::updateTrackedFrequency() {
-    // phase difference estimate is atan2(m_dps, m_dpc)
-    m_trackedFrequency = m_frequency + (atan2(m_dps, m_dpc) * m_sampleRate) / twoPi;
 }

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2025 Alexandre R. J. Francois
+Copyright (c) 2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,14 +26,11 @@ import Foundation
 import Accelerate
 
 fileprivate let twoPi = Float.pi * 2.0
-fileprivate let trackFrequencyThreshold = Float(0.001)
+fileprivate let trackFrequencyPowerThreshold = Float(0.001)
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
-public class TrackingResonator : Phasor, ResonatorProtocol {
-    public static func alphaHeuristic(frequency: Float, sampleRate: Float, k: Float = 1, n: Float = 1) -> Float {
-        1 - exp(-frequency / (sampleRate * k * pow(log10(1+frequency), n)))
-    }
+public class TrackingResonator : Phasor, TrackingResonatorProtocol {
 
     public var power: Float {
         cc*cc + ss*ss
@@ -70,6 +67,13 @@ public class TrackingResonator : Phasor, ResonatorProtocol {
     }
     private(set) var omBeta : Float = 0.0
     
+    public var gamma: Float {
+        didSet {
+            omGamma = 1.0 - gamma
+        }
+    }
+    private(set) var omGamma : Float = 0.0
+
     // complex: r = c + j s
     private(set) var c: Float = 0.0
     private(set) var s: Float = 0.0
@@ -79,20 +83,30 @@ public class TrackingResonator : Phasor, ResonatorProtocol {
     public private(set) var ss: Float = 0.0
     
     // delta-phase components (not normalized)
-    public private(set) var dpc: Float = 0.0
+    public private(set) var dpc: Float = 1.0
     public private(set) var dps: Float = 0.0
     
-    public var trackedFrequency: Float = 0.0
+    public var resonantFrequency: Float {
+        frequency
+    }
+    public var naturalFrequency: Float {
+        didSet {
+            // update alpha, beta, gamma?
+            alpha = Resonator.alphaHeuristic(frequency: naturalFrequency, sampleRate: sampleRate)
+            beta = alpha
+            gamma = alpha
+        }
+    }
     
-    private let natFrequency: Float
-    
-    public init(frequency: Float, alpha: Float, beta: Float? = nil, sampleRate: Float) {
-        self.natFrequency = frequency
+    public init(naturalFrequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, sampleRate: Float) {
+        self.naturalFrequency = naturalFrequency
         self.alpha = alpha
         self.omAlpha = 1.0 - alpha
         self.beta = beta ?? alpha
         self.omBeta = 1.0 - self.beta
-        super.init(frequency: frequency, sampleRate: sampleRate)
+        self.gamma = gamma ?? alpha
+        self.omGamma = 1.0 - self.gamma
+        super.init(frequency: naturalFrequency, sampleRate: sampleRate)
     }
     
     func updateWithSample(_ sample: Float) {
@@ -107,15 +121,64 @@ public class TrackingResonator : Phasor, ResonatorProtocol {
         ss = omBeta * ss + beta * s
         // compute current * conjugate(previous)
         // the phase time derivative estimate is the arg of this complex number
-        dpc = cc * lcc + ss * lss
-        dps = ss * lcc - cc * lss
         
-//        let m = sqrt(dpc * dpc + dps * dps)
-//        if m > 0.00001 {
-//            updateMultiplier(c: dpc/m, s: dps/m, alpha: 0.001)
-//        }
-  
+        // no need to smoothe here?
+//        dpc = cc * lcc + ss * lss
+//        dps = ss * lcc - cc * lss
+
+        // Smoothing (EWMA) with gamma
+        dpc = omGamma * dpc + gamma * (cc * lcc + ss * lss)
+        dps = omGamma * dps + gamma * (ss * lcc - cc * lss)
+
+        // TODO: figure out what to do here... why this value, what is the impact on dynamics?
+        let gamma: Float = alpha / 2 // / 10
         
+        // Update tracking
+        if power > 0.00001 { // trackFrequencyPowerThreshold {
+            
+            // Explicit frequency computation and back
+//            let w = atan2(cc,ss) + 0.00001 * atan2(dps, dpc)
+//            updateMultiplier(omega: w)
+
+//            # Rotate W by - alpha * delta_phases
+//            # Complex multiplications
+//            # still requires abs and power...
+//            mSCP = np.abs(conjugate_product[i])
+//            nSCP = conjugate_product[i] / mSCP if mSCP > 0 else 1
+//            # scaling the angle requires taking power
+//            snSCP = np.power(nSCP, -gamma, dtype=complex)
+//            W = W * snSCP
+            
+//            
+//            
+//            let m = sqrt(dpc * dpc + dps * dps)
+//            if m > trackFrequencyPowerThreshold {
+//                
+//                // take gamma power of complex number dpc + i dps
+//                // then update multiplier with that
+//                
+//                updateMultiplier(c: dpc/m, s: dps/m)
+//            }
+//            
+//            
+//
+            
+            let instantaneousFrequency = self.frequency + gamma * atan2(dps, dpc) * sampleRate / twoPi
+            self.frequency = instantaneousFrequency
+            
+        } else {
+            // go back towards natural frequency
+//            let fr = resonantFrequency
+//            let df = 0.001 * (naturalFrequency - fr)
+//            
+//            // Explicit frequency computation and back
+//            let w = atan2(cc,ss) + df * twoPi / sampleRate
+//            updateMultiplier(omega: w)
+
+
+            self.frequency += gamma * (naturalFrequency - frequency)
+
+        }
         
         incrementPhase()
     }
@@ -138,46 +201,4 @@ public class TrackingResonator : Phasor, ResonatorProtocol {
         }
         stabilize() // this is overkill but necessary
     }
-    
-    public func updateAndTrack(sample: Float) {
-        updateWithSample(sample)
-        stabilize() // this is overkill but necessary
-        if amplitude > trackFrequencyThreshold {
-            updateTrackedFrequency()
-        } else {
-            trackedFrequency = frequency
-        }
-    }
-    
-    public func updateAndTrack(samples: [Float]) {
-        for sample in samples {
-            updateWithSample(sample)
-        }
-        stabilize() // this is overkill but necessary
-        if amplitude > trackFrequencyThreshold {
-            updateTrackedFrequency()
-        } else {
-            trackedFrequency = frequency
-        }
-    }
-
-    public func updateAndTrack(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
-        for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
-            updateWithSample(frameData[sampleIndex])
-        }
-        stabilize() // this is overkill but necessary
-        if amplitude > trackFrequencyThreshold {
-            updateTrackedFrequency()
-        } else {
-            trackedFrequency = natFrequency
-            frequency = omAlpha * frequency + alpha * trackedFrequency
-        }
-    }
-    
-    func updateTrackedFrequency() {
-        let deltaPhase = atan2(dps,dpc)
-        trackedFrequency = frequency - deltaPhase * sampleRate / twoPi
-        frequency = omAlpha * frequency + alpha * trackedFrequency
-    }
-    
 }

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2025 Alexandre R. J. Francois
+Copyright (c) 2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -44,12 +44,18 @@ public class TrackingResonatorBankArray {
     public var amplitudes: [Float] {
         resonators.map { $0.amplitude }
     }
-
-    public init(frequencies: [Float], alphas: [Float], betas: [Float], sampleRate: Float) {
+    public var naturalFrequencies: [Float] {
+        resonators.map { $0.naturalFrequency }
+    }
+    public var resonantFrequencies: [Float] {
+        resonators.map { $0.resonantFrequency }
+    }
+    
+    public init(frequencies: [Float], alphas: [Float], betas: [Float], gammas: [Float], sampleRate: Float) {
         assert(frequencies.count == alphas.count)
         // setup an oscillator for each frequency
         for (idx, frequency) in frequencies.enumerated() {
-            resonators.append(TrackingResonator(frequency: frequency, alpha: alphas[idx], beta: betas[idx], sampleRate: sampleRate))
+            resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alphas[idx], beta: betas[idx], gamma: gammas[idx], sampleRate: sampleRate))
         }
     }
     
@@ -57,14 +63,14 @@ public class TrackingResonatorBankArray {
     public init(frequencies: [Float], sampleRate: Float, k: Float = 1.0, alphaHeuristic: (Float, Float, Float) -> Float) {
         // setup an oscillator for each frequency
         for frequency in frequencies {
-            resonators.append(TrackingResonator(frequency: frequency, alpha: alphaHeuristic(frequency, sampleRate, k), sampleRate: sampleRate))
+            resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alphaHeuristic(frequency, sampleRate, k), sampleRate: sampleRate))
         }
     }
     
     public init(alphas: [Float], sampleRate: Float, frequency: Float) {
         // setup an oscillator for each alpha
         for alpha in alphas {
-            resonators.append(TrackingResonator(frequency: frequency, alpha: alpha, sampleRate: sampleRate))
+            resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alpha, sampleRate: sampleRate))
         }
     }
         
@@ -91,7 +97,7 @@ public class TrackingResonatorBankArray {
                     group.addTask(priority: .high) {
                         var index = offset
                         while index < self.resonators.count {
-                            self.resonators[index].updateAndTrack(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
+                            self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
                             index += resonatorStride
                         }
                         return 0

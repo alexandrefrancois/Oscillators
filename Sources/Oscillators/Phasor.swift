@@ -64,12 +64,18 @@ public class Phasor : PhasorProtocol {
         Wcps = Wc + Ws
     }
     
-    func updateMultiplier(c: Float, s: Float, alpha: Float) {
+    func updateMultiplier(c: Float, s: Float) {
         Wc = Wc * c - Ws * s
         Ws = Wc * s + Ws * c
         Wcps = Wc + Ws
     }
 
+    func updateMultiplier(omega: Float) {
+        Wc = cos(omega)
+        Ws = sin(omega)
+        Wcps = Wc + Ws
+    }
+    
     /// Compute next value of the phasor
     /// Z <- Z * W
     internal func incrementPhase() {

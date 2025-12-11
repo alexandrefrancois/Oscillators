@@ -118,7 +118,7 @@ public class Resonator : Phasor, ResonatorProtocol {
         ss = omBeta * ss + beta * s
         // compute current * conjugate(previous)
         // the phase time derivative estimate is the arg of this complex number
-        // Smoothing (EWMA) with gamma = alpha
+        // Smoothing (EWMA) with gamma
         dpc = omGamma * dpc + gamma * (cc * lcc + ss * lss)
         dps = omGamma * dps + gamma * (ss * lcc - cc * lss)
 

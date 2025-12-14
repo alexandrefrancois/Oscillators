@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2025 Alexandre R. J. Francois
+Copyright (c) 2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,18 +22,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "Resonator.hpp"
+#include "TrackingResonator.hpp"
 
 #include <Accelerate/Accelerate.h>
 
 using namespace oscillators_cpp;
 
-Resonator::Resonator(float frequency, float alpha, float beta, float gamma, float sampleRate) : Phasor(frequency, sampleRate),
-m_alpha(alpha), m_omAlpha(1.0 - alpha), m_beta(beta), m_omBeta(1.0 - beta), m_gamma(gamma), m_omGamma(1.0 - gamma),
+TrackingResonator::TrackingResonator(float naturalFrequency, float alpha, float beta, float gamma, float sampleRate) : Phasor(naturalFrequency, sampleRate),
+m_naturalFrequency(naturalFrequency), m_alpha(alpha), m_omAlpha(1.0 - alpha), m_beta(beta), m_omBeta(1.0 - beta), m_gamma(gamma), m_omGamma(1.0 - gamma),
 m_dpc(1.0), m_dps(0.0) {
 }
 
-void Resonator::setAlpha(float alpha) {
+void TrackingResonator::setNaturalFrequency(float frequency) {
+    m_naturalFrequency = frequency;
+    // update alpha, beta, gamma?
+    setAlpha(alphaHeuristic(frequency));
+    setBeta(m_alpha);
+    setGamma(m_alpha);
+}
+
+void TrackingResonator::setAlpha(float alpha) {
     if (alpha < 0.0 || alpha >1.0) {
         throw std::out_of_range("Bad alpha passed to setAlpha()");
     }
@@ -41,7 +49,7 @@ void Resonator::setAlpha(float alpha) {
     m_omAlpha = 1.0 - m_alpha;
 }
 
-void Resonator::setBeta(float beta) {
+void TrackingResonator::setBeta(float beta) {
     if (beta < 0.0 || beta >1.0) {
         throw std::out_of_range("Bad beta passed to setBeta()");
     }
@@ -49,7 +57,7 @@ void Resonator::setBeta(float beta) {
     m_omBeta = 1.0 - m_beta;
 }
 
-void Resonator::setGamma(float gamma) {
+void TrackingResonator::setGamma(float gamma) {
     if (gamma < 0.0 || gamma >1.0) {
         throw std::out_of_range("Bad gamma passed to setGamma()");
     }
@@ -57,15 +65,15 @@ void Resonator::setGamma(float gamma) {
     m_omGamma = 1.0 - m_gamma;
 }
 
-float Resonator::phase() const {
+float TrackingResonator::phase() const {
     return atan2(m_ss, m_cc); // returns value in [-pi,pi]
 }
 
-float Resonator::deltaPhase() const {
+float TrackingResonator::deltaPhase() const {
     return atan2(m_dps, m_dpc); // returns value in [-pi,pi]
 }
 
-void Resonator::updateWithSample(float sample) {
+void TrackingResonator::updateWithSample(float sample) {
     const float alphaSample = m_alpha * sample;
     m_cos = m_omAlpha * m_cos + alphaSample * m_Zc;
     m_sin = m_omAlpha * m_sin + alphaSample * m_Zs;
@@ -76,26 +84,47 @@ void Resonator::updateWithSample(float sample) {
     // compute current * conjugate(previous)
     // the phase time derivative estimate is the arg of this complex number
     // Smoothing (EWMA) with gamma = alpha
-    m_dpc = m_omAlpha * m_dpc + m_alpha * (m_cc * lcc + m_ss * lss);
-    m_dps = m_omAlpha * m_dps + m_alpha * (m_ss * lcc - m_cc * lss);
+    m_dpc = m_omGamma * m_dpc + m_gamma * (m_cc * lcc + m_ss * lss);
+    m_dps = m_omGamma * m_dps + m_gamma * (m_ss * lcc - m_cc * lss);
+    
+    // TODO: Answer questions and update code across implementations!
+    // TODO: Question2: figure out what to do here... why this value, what is the impact on dynamics?
+    float sigma = m_alpha / 2.0f; // / 10
+    
+    // Update tracking
+    if(power() > m_trackFrequencyPowerThreshold) {
+        // go towards instantaneous frequency
+        setFrequency(m_frequency + sigma * atan2(m_dps, m_dpc) * m_sampleRate / twoPi);
+    } else {
+        // go back towards natural frequency
+        setFrequency(m_frequency + sigma * (m_naturalFrequency - m_frequency));
+    }
+    
     incrementPhase();
 }
 
-void Resonator::update(float sample) {
+void TrackingResonator::update(float sample, float maxPower) {
+    m_trackFrequencyPowerThreshold = maxPower / 1000.0;
     updateWithSample(sample);
     stabilize(); // this is overkill but necessary
 }
 
-void Resonator::update(const std::vector<float> &samples) {
+void TrackingResonator::update(const std::vector<float> &samples, float maxPower) {
+    m_trackFrequencyPowerThreshold = maxPower / 1000.0;
     for (float sample : samples) {
         updateWithSample(sample);
     }
     stabilize(); // this is overkill but necessary
 }
 
-void Resonator::update(const float *frameData, size_t frameLength, size_t sampleStride) {
+void TrackingResonator::update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower) {
+    m_trackFrequencyPowerThreshold = maxPower / 1000.0;
     for (int i=0; i<frameLength; i += sampleStride) {
         updateWithSample(frameData[i]);
     }
     stabilize(); // this is overkill but necessary
+}
+
+float TrackingResonator::alphaHeuristic(float frequency) {
+    return 1.0f - exp(-frequency / (m_sampleRate * log10(1+frequency)));
 }

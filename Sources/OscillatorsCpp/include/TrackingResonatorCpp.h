@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2025 Alexandre R. J. Francois
+Copyright (c) 2025 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +25,12 @@ SOFTWARE.
 #import <Foundation/Foundation.h>
 #import "PhasorCpp.h"
 
-// Wrapper for the Resonator class
-@interface ResonatorCpp : PhasorCpp
-- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma sampleRate:(float)sampleRate;
+// Wrapper for the TrackingResonator class
+@interface TrackingResonatorCpp : PhasorCpp
+- (instancetype)initWithNaturalFrequency:(float)naturalFrequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma sampleRate:(float)sampleRate;
+- (float)naturalFrequency;
+- (void)setNaturalFrequency:(float)frequency;
+- (float)resonantFrequency;
 - (float)power;
 - (float)amplitude;
 - (float)alpha;
@@ -46,12 +49,15 @@ SOFTWARE.
 - (float)dpc;
 - (float)dps;
 - (float)phase;
+- (float)phaseX;
+- (float)phaseY;
 - (float)deltaPhase;
-- (float)instantaneousFrequency;
+- (float)deltaPhaseX;
+- (float)deltaPhaseY;
 - (void)updateWithSample:(float)sample
 NS_SWIFT_NAME(updateWithSample(value:));
-- (void)update:(float)sample
-NS_SWIFT_NAME(update(sample:));
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
+- (void)update:(float)sample maxPower:(float)maxPower
+NS_SWIFT_NAME(update(sample:maxPower:));
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride maxPower:(float)maxPower
+NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:maxPower:));
 @end

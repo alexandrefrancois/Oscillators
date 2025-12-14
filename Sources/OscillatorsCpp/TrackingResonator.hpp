@@ -22,16 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef Resonator_hpp
-#define Resonator_hpp
+#ifndef TrackingResonator_hpp
+#define TrackingResonator_hpp
 
 #include "Phasor.hpp"
 
 namespace oscillators_cpp {
 
-constexpr float instantaneousFrequencyPowerThreshold = 0.000001;
-
-class Resonator : public Phasor {
+class TrackingResonator : public Phasor {
 private:
     float m_alpha;
     float m_omAlpha;
@@ -48,9 +46,14 @@ private:
     float m_gamma;
     float m_omGamma;
 
+    float m_naturalFrequency;
+    float m_trackFrequencyPowerThreshold;
+
 public:
-    Resonator(float frequency, float alpha, float beta, float gamma, float sampleRate);
-    
+    TrackingResonator(float naturalFrequency, float alpha, float beta, float gamma, float sampleRate);    
+    float naturalFrequency() const { return m_naturalFrequency; }
+    void setNaturalFrequency(float frequency);
+    float resonantFrequency() const { return m_frequency; }
     float power() const { return m_cc * m_cc + m_ss * m_ss; }
     float amplitude() const { return sqrt(m_cc * m_cc + m_ss * m_ss); }
     float alpha() const { return m_alpha; }
@@ -74,19 +77,14 @@ public:
     float deltaPhase() const;
     float deltaPhaseX() const { return m_dpc / sqrt(m_dpc * m_dpc + m_dps * m_dps); }
     float deltaPhaseY() const { return m_dps / sqrt(m_dpc * m_dpc + m_dps * m_dps); }
-    float instantaneousFrequency() const {
-        if (power() < instantaneousFrequencyPowerThreshold) {
-            return m_frequency;
-        }
-        return m_frequency + (atan2(m_dps, m_dpc) * m_sampleRate) / twoPi;
-    }
-
     void updateWithSample(float sample);
-    void update(float sample);
-    void update(const std::vector<float> &samples);
-    void update(const float *frameData, size_t frameLength, size_t sampleStride);
+    void update(float sample, float maxPower);
+    void update(const std::vector<float> &samples, float maxPower);
+    void update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower);
+    
+    float alphaHeuristic(float frequency);
 };
 
 } // oscillators_cpp
 
-#endif /* Resonator_hpp */
+#endif /* TrackingResonator_hpp */

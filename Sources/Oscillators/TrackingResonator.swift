@@ -123,16 +123,19 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
         // compute current * conjugate(previous)
         // the phase time derivative estimate is the arg of this complex number
         
+        
+        // TODO: Question 1 - smoothing or no smoothing? seems nicer with the smoothing
+        
         // no need to smoothe here?
 //        dpc = cc * lcc + ss * lss
 //        dps = ss * lcc - cc * lss
 
-        // Smoothing (EWMA) with gamma
+//        // Smoothing (EWMA) with gamma
         dpc = omGamma * dpc + gamma * (cc * lcc + ss * lss)
         dps = omGamma * dps + gamma * (ss * lcc - cc * lss)
 
-        // TODO: figure out what to do here... why this value, what is the impact on dynamics?
-        let gamma: Float = alpha / 2 // / 10
+        // TODO: Question2: figure out what to do here... why this value, what is the impact on dynamics?
+        let sigma: Float = alpha / 2
         
         // Update tracking
         if power > trackFrequencyPowerThreshold {
@@ -163,9 +166,9 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
 //            
 //            
 //
-            
-            let instantaneousFrequency = self.frequency + gamma * atan2(dps, dpc) * sampleRate / twoPi
-            self.frequency = instantaneousFrequency
+            // TODO: Other implementations - more efficient?
+
+            self.frequency += sigma * atan2(dps, dpc) * sampleRate / twoPi
             
         } else {
             // go back towards natural frequency
@@ -177,7 +180,7 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
 //            updateMultiplier(omega: w)
 
 
-            self.frequency += gamma * (naturalFrequency - frequency)
+            self.frequency += sigma * (naturalFrequency - frequency)
 
         }
         
@@ -185,13 +188,13 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
     }
     
     public func update(sample: Float, maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = maxPower / 100.0
+        trackFrequencyPowerThreshold = maxPower / 1000.0
         updateWithSample(sample)
         stabilize() // this is overkill but necessary
     }
     
     public func update(samples: [Float], maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = maxPower / 100.0
+        trackFrequencyPowerThreshold = maxPower / 1000.0
         for sample in samples {
             updateWithSample(sample)
         }
@@ -199,7 +202,7 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
     }
 
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = maxPower / 100.0
+        trackFrequencyPowerThreshold = maxPower / 1000.0
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }

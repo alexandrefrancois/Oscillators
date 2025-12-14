@@ -26,7 +26,6 @@ import Foundation
 import Accelerate
 
 fileprivate let twoPi = Float.pi * 2.0
-fileprivate let trackFrequencyPowerThreshold = Float(0.001)
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
@@ -74,6 +73,8 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
     }
     private(set) var omGamma : Float = 0.0
 
+    private(set) var trackFrequencyPowerThreshold = Float(0.001)
+    
     // complex: r = c + j s
     private(set) var c: Float = 0.0
     private(set) var s: Float = 0.0
@@ -134,7 +135,7 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
         let gamma: Float = alpha / 2 // / 10
         
         // Update tracking
-        if power > 0.00001 { // trackFrequencyPowerThreshold {
+        if power > trackFrequencyPowerThreshold {
             
             // Explicit frequency computation and back
 //            let w = atan2(cc,ss) + 0.00001 * atan2(dps, dpc)
@@ -183,19 +184,22 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
         incrementPhase()
     }
     
-    public func update(sample: Float) {
+    public func update(sample: Float, maxPower: Float = 0.25) {
+        trackFrequencyPowerThreshold = maxPower / 100.0
         updateWithSample(sample)
         stabilize() // this is overkill but necessary
     }
     
-    public func update(samples: [Float]) {
+    public func update(samples: [Float], maxPower: Float = 0.25) {
+        trackFrequencyPowerThreshold = maxPower / 100.0
         for sample in samples {
             updateWithSample(sample)
         }
         stabilize() // this is overkill but necessary
     }
 
-    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
+    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float = 0.25) {
+        trackFrequencyPowerThreshold = maxPower / 100.0
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }

@@ -51,6 +51,15 @@ public class TrackingResonatorBankArray {
         resonators.map { $0.resonantFrequency }
     }
     
+    // max power accumulation
+    private(set) var sigma: Float = 1.0 {
+        didSet {
+            omSigma = 1.0 - sigma
+        }
+    }
+    private(set) var omSigma : Float = 0.0
+    public private(set) var accPower: Float = 0.000000001
+    
     public init(frequencies: [Float], alphas: [Float], betas: [Float], gammas: [Float], sampleRate: Float) {
         assert(frequencies.count == alphas.count)
         // setup an oscillator for each frequency
@@ -67,7 +76,7 @@ public class TrackingResonatorBankArray {
         }
     }
     
-    public init(alphas: [Float], sampleRate: Float, frequency: Float) {
+    public init(alphas: [Float], sigma: Float, sampleRate: Float, frequency: Float) {
         // setup an oscillator for each alpha
         for alpha in alphas {
             resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alpha, sampleRate: sampleRate))
@@ -75,37 +84,65 @@ public class TrackingResonatorBankArray {
     }
         
     public func update(sample: Float) {
+        var maxPower = Float(0.0)
         for resonator in resonators {
-            resonator.update(sample: sample)
+            resonator.update(sample: sample, maxPower: self.accPower)
+            if resonator.power > maxPower {
+                maxPower = resonator.power
+            }
         }
+        // update accPower
+        accPower = omSigma * accPower + sigma * maxPower
     }
     
     /// Sequentially update all resonators
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
+        var maxPower = Float(0.0)
         for resonator in resonators {
-            resonator.update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
+            resonator.update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride, maxPower: self.accPower)
+            if resonator.power > maxPower {
+                maxPower = resonator.power
+            }
         }
+        // update accPower
+        accPower = omSigma * accPower + sigma * maxPower
     }
     
     /// Concurrently update all resonators
     public func updateConcurrent(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         let semaphore = DispatchSemaphore(value: 0)
         Task {
-            await withTaskGroup(of: Int.self) { group in
+            let maxPower = await withTaskGroup(of: Float.self) { group in
                 let resonatorStride = numTasks;
                 for offset in 0..<resonatorStride {
                     group.addTask(priority: .high) {
+                        var maxPower = Float(0.0)
                         var index = offset
                         while index < self.resonators.count {
-                            self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
+                            self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride, maxPower: self.accPower)
+                            let power = self.resonators[index].power
+                            if power > maxPower {
+                                maxPower = power
+                            }
                             index += resonatorStride
                         }
-                        return 0
+                        return maxPower
                     }
                 }
+                return await group
+                    .compactMap { $0 }
+                    .max() ?? 0.0
             }
+            // update accPower
+            accPower = omSigma * accPower + sigma * maxPower
             semaphore.signal()
         }
         semaphore.wait()
+        
+    }
+    
+    public func setTimeConstant(_ tau: Float = 1.0, frameLength: Int, sampleStride: Int, sampleRate: Float) {
+        let frameDuration =  Float(frameLength / sampleStride) / sampleRate
+        sigma = Float(1.0) - exp(-frameDuration / tau)
     }
 }

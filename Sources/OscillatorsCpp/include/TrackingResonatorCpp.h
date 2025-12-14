@@ -29,7 +29,7 @@ SOFTWARE.
 @interface TrackingResonatorCpp : PhasorCpp
 - (instancetype)initWithNaturalFrequency:(float)naturalFrequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma sampleRate:(float)sampleRate;
 - (float)naturalFrequency;
-- (void)setNaturalFrequency:(float)frequency;
+- (void)setNaturalFrequency:(float)frequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma;
 - (float)resonantFrequency;
 - (float)power;
 - (float)amplitude;

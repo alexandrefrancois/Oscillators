@@ -29,6 +29,8 @@ SOFTWARE.
 
 namespace oscillators_cpp {
 
+constexpr float minMaxPower = 0.00001;
+
 class TrackingResonator : public Phasor {
 private:
     float m_alpha;
@@ -52,7 +54,7 @@ private:
 public:
     TrackingResonator(float naturalFrequency, float alpha, float beta, float gamma, float sampleRate);    
     float naturalFrequency() const { return m_naturalFrequency; }
-    void setNaturalFrequency(float frequency);
+    void setNaturalFrequency(float frequency, float alpha, float beta, float gamma);
     float resonantFrequency() const { return m_frequency; }
     float power() const { return m_cc * m_cc + m_ss * m_ss; }
     float amplitude() const { return sqrt(m_cc * m_cc + m_ss * m_ss); }
@@ -81,8 +83,6 @@ public:
     void update(float sample, float maxPower);
     void update(const std::vector<float> &samples, float maxPower);
     void update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower);
-    
-    float alphaHeuristic(float frequency);
 };
 
 } // oscillators_cpp

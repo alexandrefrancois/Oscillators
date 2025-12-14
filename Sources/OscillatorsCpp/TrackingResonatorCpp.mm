@@ -48,8 +48,8 @@ using namespace oscillators_cpp;
     return self.resonator->naturalFrequency();
 }
 
-- (void)setNaturalFrequency:(float)frequency {
-    return self.resonator->setNaturalFrequency(frequency);
+- (void)setNaturalFrequency:(float)frequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma {
+    return self.resonator->setNaturalFrequency(frequency, alpha, beta, gamma);
 }
 
 - (float)resonantFrequency {

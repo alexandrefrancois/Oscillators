@@ -26,6 +26,7 @@ import Foundation
 import Accelerate
 
 fileprivate let twoPi = Float.pi * 2.0
+fileprivate let minMaxPower = Float(0.00001)
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
@@ -90,13 +91,13 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
     public var resonantFrequency: Float {
         frequency
     }
-    public var naturalFrequency: Float {
-        didSet {
-            // update alpha, beta, gamma?
-            alpha = Resonator.alphaHeuristic(frequency: naturalFrequency, sampleRate: sampleRate)
-            beta = alpha
-            gamma = alpha
-        }
+    
+    public private(set) var naturalFrequency: Float
+    public func setNaturalFrequency(_ naturalFrequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil){
+        self.naturalFrequency = naturalFrequency
+        self.alpha = alpha
+        self.beta = beta ?? alpha
+        self.gamma = gamma ?? alpha
     }
     
     public init(naturalFrequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, sampleRate: Float) {
@@ -124,15 +125,15 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
         // the phase time derivative estimate is the arg of this complex number
         
         
-        // TODO: Question 1 - smoothing or no smoothing? seems nicer with the smoothing
+        // TODO: Question 1 - confirm no smoothing here
         
         // no need to smoothe here?
-//        dpc = cc * lcc + ss * lss
-//        dps = ss * lcc - cc * lss
+        dpc = cc * lcc + ss * lss
+        dps = ss * lcc - cc * lss
 
 //        // Smoothing (EWMA) with gamma
-        dpc = omGamma * dpc + gamma * (cc * lcc + ss * lss)
-        dps = omGamma * dps + gamma * (ss * lcc - cc * lss)
+//        dpc = omGamma * dpc + gamma * (cc * lcc + ss * lss)
+//        dps = omGamma * dps + gamma * (ss * lcc - cc * lss)
 
         // TODO: Question2: figure out what to do here... why this value, what is the impact on dynamics?
         let sigma: Float = alpha / 2
@@ -167,7 +168,8 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
 //            
 //
             // TODO: Other implementations - more efficient?
-
+            
+            // This is an EWMA with parameter sigma
             self.frequency += sigma * atan2(dps, dpc) * sampleRate / twoPi
             
         } else {
@@ -180,21 +182,21 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
 //            updateMultiplier(omega: w)
 
 
-            self.frequency += sigma * (naturalFrequency - frequency)
-
+//            self.frequency += sigma * (naturalFrequency - frequency)
+            self.frequency = naturalFrequency
         }
         
         incrementPhase()
     }
     
     public func update(sample: Float, maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = maxPower / 1000.0
+        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / 1000.0
         updateWithSample(sample)
         stabilize() // this is overkill but necessary
     }
     
     public func update(samples: [Float], maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = maxPower / 1000.0
+        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / 1000.0
         for sample in samples {
             updateWithSample(sample)
         }
@@ -202,7 +204,7 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
     }
 
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = maxPower / 1000.0
+        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / 1000.0
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }

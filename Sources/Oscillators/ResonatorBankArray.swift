@@ -24,8 +24,6 @@ SOFTWARE.
 
 import Foundation
 
-fileprivate let numTasks = 6
-
 /// An array of independent resonator instances
 public class ResonatorBankArray {
     public static func alphasHeuristic(frequencies: [Float], sampleRate: Float, k: Float = 1, n: Float = 1) -> [Float] {
@@ -33,7 +31,7 @@ public class ResonatorBankArray {
             Resonator.alphaHeuristic(frequency: frequency, sampleRate: sampleRate, k: k, n: n)
         }
     }
-
+    
     public private(set) var resonators = [Resonator]()
     public var numResonators: Int {
         resonators.count
@@ -82,7 +80,7 @@ public class ResonatorBankArray {
             resonators.append(Resonator(frequency: frequency, alpha: alpha, sampleRate: sampleRate))
         }
     }
-        
+    
     public func update(sample: Float) {
         for resonator in resonators {
             resonator.update(sample: sample)
@@ -97,24 +95,28 @@ public class ResonatorBankArray {
     }
     
     /// Concurrently update all resonators
+    /// Concurrently update all resonators using a high-performance parallel loop
     public func updateConcurrent(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
-        let semaphore = DispatchSemaphore(value: 0)
-        Task {
-            await withTaskGroup(of: Int.self) { group in
-                let resonatorStride = numTasks;
-                for offset in 0..<resonatorStride {
-                    group.addTask(priority: .high) {
-                        var index = offset
-                        while index < self.resonators.count {
-                            self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride)
-                            index += resonatorStride
-                        }
-                        return 0
-                    }
-                }
+        let numResonators = resonators.count
+        guard numResonators > 0 else { return }
+        
+        // Use a fixed number of chunks to minimize overhead
+        let numChunks = 4
+        
+        // DispatchQueue.concurrentPerform is synchronous: it will block the current thread and use others
+        // from the system pool, returning only when all work is done.
+        DispatchQueue.concurrentPerform(iterations: numChunks) { chunkIdx in
+            // Calculate contiguous range for better cache locality
+            let start = (chunkIdx * numResonators) / numChunks
+            let end = (chunkIdx == numChunks - 1) ? numResonators : ((chunkIdx + 1) * numResonators) / numChunks
+            
+            for i in start..<end {
+                self.resonators[i].update(
+                    frameData: frameData,
+                    frameLength: frameLength,
+                    sampleStride: sampleStride
+                )
             }
-            semaphore.signal()
         }
-        semaphore.wait()
     }
 }

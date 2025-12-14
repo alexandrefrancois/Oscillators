@@ -23,8 +23,7 @@ SOFTWARE.
 */
 
 import Foundation
-
-fileprivate let numTasks = 6
+import Atomics
 
 /// An array of independent resonator instances
 public class TrackingResonatorBankArray {
@@ -58,13 +57,20 @@ public class TrackingResonatorBankArray {
         }
     }
     private(set) var omSigma : Float = 0.0
-    public private(set) var accPower: Float = 0.000000001
     
-    public init(frequencies: [Float], alphas: [Float], betas: [Float], gammas: [Float], sampleRate: Float) {
-        assert(frequencies.count == alphas.count)
+    // 1. Use UInt32 to store the bits of the Float
+    private let _accPowerBits = ManagedAtomic<UInt32>(0)
+
+    public var accPower: Float {
+        // 2. Load as UInt32 and bit-cast back to Float
+        Float(bitPattern: _accPowerBits.load(ordering: .relaxed))
+    }
+    
+    public init(naturalFrequencies: [Float], alphas: [Float], betas: [Float], gammas: [Float], sampleRate: Float) {
+        assert(naturalFrequencies.count == alphas.count)
         // setup an oscillator for each frequency
-        for (idx, frequency) in frequencies.enumerated() {
-            resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alphas[idx], beta: betas[idx], gamma: gammas[idx], sampleRate: sampleRate))
+        for (idx, naturalFrequency) in naturalFrequencies.enumerated() {
+            resonators.append(TrackingResonator(naturalFrequency: naturalFrequency, alpha: alphas[idx], beta: betas[idx], gamma: gammas[idx], sampleRate: sampleRate))
         }
     }
     
@@ -84,61 +90,93 @@ public class TrackingResonatorBankArray {
     }
         
     public func update(sample: Float) {
+        // 1. Snapshot the current atomic power (Load bits -> Float)
+        let currentAccPower = Float(bitPattern: _accPowerBits.load(ordering: .relaxed))
+        
         var maxPower = Float(0.0)
+        
+        // 2. Sequential update of all resonators for a single sample
         for resonator in resonators {
-            resonator.update(sample: sample, maxPower: self.accPower)
-            if resonator.power > maxPower {
-                maxPower = resonator.power
+            // Pass the snapshotted value to the update method
+            resonator.update(sample: sample, maxPower: currentAccPower)
+            
+            let power = resonator.power
+            if power > maxPower {
+                maxPower = power
             }
         }
-        // update accPower
-        accPower = omSigma * accPower + sigma * maxPower
+        
+        // 3. Compute the exponential moving average update
+        let nextAccPower = (omSigma * currentAccPower) + (sigma * maxPower)
+        
+        // 4. Update the atomic storage (Float -> Store bits)
+        _accPowerBits.store(nextAccPower.bitPattern, ordering: .relaxed)
     }
     
     /// Sequentially update all resonators
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
+        // 1. Snapshot the current atomic power (Load bits -> Float)
+        let currentAccPower = Float(bitPattern: _accPowerBits.load(ordering: .relaxed))
+        
         var maxPower = Float(0.0)
+        
+        // 2. Process resonators sequentially
         for resonator in resonators {
-            resonator.update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride, maxPower: self.accPower)
-            if resonator.power > maxPower {
-                maxPower = resonator.power
+            // Use the snapshotted value for the update
+            resonator.update(
+                frameData: frameData,
+                frameLength: frameLength,
+                sampleStride: sampleStride,
+                maxPower: currentAccPower
+            )
+            
+            let power = resonator.power
+            if power > maxPower {
+                maxPower = power
             }
         }
-        // update accPower
-        accPower = omSigma * accPower + sigma * maxPower
+        
+        // 3. Calculate the new accumulated power
+        let nextAccPower = (omSigma * currentAccPower) + (sigma * maxPower)
+        
+        // 4. Update the atomic storage (Float -> Store bits)
+        _accPowerBits.store(nextAccPower.bitPattern, ordering: .relaxed)
     }
     
     /// Concurrently update all resonators
     public func updateConcurrent(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
-        let semaphore = DispatchSemaphore(value: 0)
-        Task {
-            let maxPower = await withTaskGroup(of: Float.self) { group in
-                let resonatorStride = numTasks;
-                for offset in 0..<resonatorStride {
-                    group.addTask(priority: .high) {
-                        var maxPower = Float(0.0)
-                        var index = offset
-                        while index < self.resonators.count {
-                            self.resonators[index].update(frameData: frameData, frameLength: frameLength, sampleStride: sampleStride, maxPower: self.accPower)
-                            let power = self.resonators[index].power
-                            if power > maxPower {
-                                maxPower = power
-                            }
-                            index += resonatorStride
-                        }
-                        return maxPower
-                    }
-                }
-                return await group
-                    .compactMap { $0 }
-                    .max() ?? 0.0
-            }
-            // update accPower
-            accPower = omSigma * accPower + sigma * maxPower
-            semaphore.signal()
-        }
-        semaphore.wait()
+        let numResonators = resonators.count
+        guard numResonators > 0 else { return }
+
+        // 3. Load bits and convert to Float for calculation
+        let currentAccPower = Float(bitPattern: _accPowerBits.load(ordering: .relaxed))
         
+        let numChunks = 4
+        var localMaxes = [Float](repeating: 0.0, count: numChunks)
+
+        DispatchQueue.concurrentPerform(iterations: numChunks) { chunkIdx in
+            var chunkMax: Float = 0.0
+            
+            let start = (chunkIdx * numResonators) / numChunks
+            let end = (chunkIdx == numChunks - 1) ? numResonators : ((chunkIdx + 1) * numResonators) / numChunks
+            
+            for i in start..<end {
+                resonators[i].update(
+                    frameData: frameData,
+                    frameLength: frameLength,
+                    sampleStride: sampleStride,
+                    maxPower: currentAccPower
+                )
+                chunkMax = max(chunkMax, resonators[i].power)
+            }
+            localMaxes[chunkIdx] = chunkMax
+        }
+
+        let globalMaxPower = localMaxes.max() ?? 0.0
+        let nextAccPower = omSigma * currentAccPower + sigma * globalMaxPower
+        
+        // 4. Convert Float back to bits and store
+        _accPowerBits.store(nextAccPower.bitPattern, ordering: .relaxed)
     }
     
     public func setTimeConstant(_ tau: Float = 1.0, frameLength: Int, sampleStride: Int, sampleRate: Float) {

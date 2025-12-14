@@ -33,12 +33,11 @@ m_naturalFrequency(naturalFrequency), m_alpha(alpha), m_omAlpha(1.0 - alpha), m_
 m_dpc(1.0), m_dps(0.0) {
 }
 
-void TrackingResonator::setNaturalFrequency(float frequency) {
+void TrackingResonator::setNaturalFrequency(float frequency, float alpha, float beta, float gamma) {
     m_naturalFrequency = frequency;
-    // update alpha, beta, gamma?
-    setAlpha(alphaHeuristic(frequency));
-    setBeta(m_alpha);
-    setGamma(m_alpha);
+    setAlpha(alpha);
+    setBeta(beta);
+    setGamma(gamma);
 }
 
 void TrackingResonator::setAlpha(float alpha) {
@@ -83,34 +82,49 @@ void TrackingResonator::updateWithSample(float sample) {
     m_ss = m_omBeta * m_ss + m_beta * m_sin;
     // compute current * conjugate(previous)
     // the phase time derivative estimate is the arg of this complex number
+    
+    
+    // TODO: Confirm whether this step of EWMA is useful or not - seems redundant with the next step...
     // Smoothing (EWMA) with gamma = alpha
-    m_dpc = m_omGamma * m_dpc + m_gamma * (m_cc * lcc + m_ss * lss);
-    m_dps = m_omGamma * m_dps + m_gamma * (m_ss * lcc - m_cc * lss);
+//    m_dpc = m_omGamma * m_dpc + m_gamma * (m_cc * lcc + m_ss * lss);
+//    m_dps = m_omGamma * m_dps + m_gamma * (m_ss * lcc - m_cc * lss);
+  
+    m_dpc = m_cc * lcc + m_ss * lss;
+    m_dps = m_ss * lcc - m_cc * lss;
     
     // TODO: Answer questions and update code across implementations!
     // TODO: Question2: figure out what to do here... why this value, what is the impact on dynamics?
-    float sigma = m_alpha / 2.0f; // / 10
+    
+//    float ratio = m_frequency / m_naturalFrequency;
+//    if(ratio<1.0f) {
+//        ratio = 1.0f/ratio;
+//    }
+    
+    float sigma = m_gamma / 2.0f; // m_alpha / 2; // m_alpha / 2; //  / (5.0f * ratio); // / 10
     
     // Update tracking
+//    if(ratio < 1.5 && ratio > 0.75 && power() > m_trackFrequencyPowerThreshold) {
     if(power() > m_trackFrequencyPowerThreshold) {
         // go towards instantaneous frequency
+        // this is EWMA with parameter sigma: f <- (1-sigma) f + sigma (f + deltaF)
         setFrequency(m_frequency + sigma * atan2(m_dps, m_dpc) * m_sampleRate / twoPi);
     } else {
         // go back towards natural frequency
-        setFrequency(m_frequency + sigma * (m_naturalFrequency - m_frequency));
+//        setFrequency(m_frequency + sigma * (m_naturalFrequency - m_frequency));
+        setFrequency(m_naturalFrequency);
     }
     
     incrementPhase();
 }
 
 void TrackingResonator::update(float sample, float maxPower) {
-    m_trackFrequencyPowerThreshold = maxPower / 1000.0;
+    m_trackFrequencyPowerThreshold = fmax(minMaxPower, maxPower) / 1000.0;
     updateWithSample(sample);
     stabilize(); // this is overkill but necessary
 }
 
 void TrackingResonator::update(const std::vector<float> &samples, float maxPower) {
-    m_trackFrequencyPowerThreshold = maxPower / 1000.0;
+    m_trackFrequencyPowerThreshold = fmax(minMaxPower, maxPower) / 1000.0;
     for (float sample : samples) {
         updateWithSample(sample);
     }
@@ -118,13 +132,9 @@ void TrackingResonator::update(const std::vector<float> &samples, float maxPower
 }
 
 void TrackingResonator::update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower) {
-    m_trackFrequencyPowerThreshold = maxPower / 1000.0;
+    m_trackFrequencyPowerThreshold = fmax(minMaxPower, maxPower) / 1000.0;
     for (int i=0; i<frameLength; i += sampleStride) {
         updateWithSample(frameData[i]);
     }
     stabilize(); // this is overkill but necessary
-}
-
-float TrackingResonator::alphaHeuristic(float frequency) {
-    return 1.0f - exp(-frequency / (m_sampleRate * log10(1+frequency)));
 }

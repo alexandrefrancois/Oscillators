@@ -83,34 +83,16 @@ void TrackingResonator::updateWithSample(float sample) {
     // compute current * conjugate(previous)
     // the phase time derivative estimate is the arg of this complex number
     
-    
-    // TODO: Confirm whether this step of EWMA is useful or not - seems redundant with the next step...
-    // Smoothing (EWMA) with gamma = alpha
-//    m_dpc = m_omGamma * m_dpc + m_gamma * (m_cc * lcc + m_ss * lss);
-//    m_dps = m_omGamma * m_dps + m_gamma * (m_ss * lcc - m_cc * lss);
-  
     m_dpc = m_cc * lcc + m_ss * lss;
     m_dps = m_ss * lcc - m_cc * lss;
-    
-    // TODO: Answer questions and update code across implementations!
-    // TODO: Question2: figure out what to do here... why this value, what is the impact on dynamics?
-    
-//    float ratio = m_frequency / m_naturalFrequency;
-//    if(ratio<1.0f) {
-//        ratio = 1.0f/ratio;
-//    }
-    
-    float sigma = m_gamma / 2.0f; // m_alpha / 2; // m_alpha / 2; //  / (5.0f * ratio); // / 10
-    
+        
     // Update tracking
-//    if(ratio < 1.5 && ratio > 0.75 && power() > m_trackFrequencyPowerThreshold) {
     if(power() > m_trackFrequencyPowerThreshold) {
         // go towards instantaneous frequency
-        // this is EWMA with parameter sigma: f <- (1-sigma) f + sigma (f + deltaF)
-        setFrequency(m_frequency + sigma * atan2(m_dps, m_dpc) * m_sampleRate / twoPi);
+        // this is EWMA with parameter gamma:
+        setOmega(m_omega - m_gamma * atan2(m_dps, m_dpc));
     } else {
-        // go back towards natural frequency
-//        setFrequency(m_frequency + sigma * (m_naturalFrequency - m_frequency));
+        // go back to natural frequency
         setFrequency(m_naturalFrequency);
     }
     

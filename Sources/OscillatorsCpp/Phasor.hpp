@@ -35,7 +35,7 @@ constexpr float twoPi = 2.0 * PI;
 // Phasor class: base for individual oscillators
 class Phasor {
 protected:
-    float m_frequency;
+    float m_omega;
     float m_sampleRate;
     
     // Phasor
@@ -54,9 +54,12 @@ public:
     
     Phasor(float frequency, float sampleRate);
 
-    float frequency() const { return m_frequency; }
+    float omega() const { return m_omega; }
+    void setOmega(float omega);
+    float frequency() const { return -m_sampleRate * m_omega / twoPi; }
     void setFrequency(float frequency);
     float sampleRate() const { return m_sampleRate; }
+    void setSampleRate(float sampleRate);
 
     void incrementPhase();
     void stabilize();

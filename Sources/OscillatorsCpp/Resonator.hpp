@@ -76,9 +76,9 @@ public:
     float deltaPhaseY() const { return m_dps / sqrt(m_dpc * m_dpc + m_dps * m_dps); }
     float instantaneousFrequency() const {
         if (power() < instantaneousFrequencyPowerThreshold) {
-            return m_frequency;
+            return frequency();
         }
-        return m_frequency + (atan2(m_dps, m_dpc) * m_sampleRate) / twoPi;
+        return frequency() + (atan2(m_dps, m_dpc) * m_sampleRate) / twoPi;
     }
 
     void updateWithSample(float sample);

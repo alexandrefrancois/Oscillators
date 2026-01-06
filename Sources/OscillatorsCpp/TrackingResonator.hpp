@@ -29,7 +29,7 @@ SOFTWARE.
 
 namespace oscillators_cpp {
 
-constexpr float minMaxPower = 0.00001;
+constexpr float minMaxPower = 0.001;
 
 class TrackingResonator : public Phasor {
 private:
@@ -55,7 +55,7 @@ public:
     TrackingResonator(float naturalFrequency, float alpha, float beta, float gamma, float sampleRate);    
     float naturalFrequency() const { return m_naturalFrequency; }
     void setNaturalFrequency(float frequency, float alpha, float beta, float gamma);
-    float resonantFrequency() const { return m_frequency; }
+    float resonantFrequency() const { return frequency(); }
     float power() const { return m_cc * m_cc + m_ss * m_ss; }
     float amplitude() const { return sqrt(m_cc * m_cc + m_ss * m_ss); }
     float alpha() const { return m_alpha; }

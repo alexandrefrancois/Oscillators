@@ -30,15 +30,14 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-constexpr size_t resonatorStride = 6;
-
 TrackingResonatorBank::TrackingResonatorBank(size_t numResonators, const float* naturalFrequencies, const float* alphas, const float* betas, const float* gammas, float sampleRate)
-: m_sampleRate(sampleRate), m_sigma(1.0), m_omSigma(0.0), m_accPower(0.000000001)  {
+: m_sampleRate(sampleRate), m_sigma(1.0), m_omSigma(0.0)  {
     m_resonators.reserve(numResonators);
     for (size_t i=0; i<numResonators; ++i) {
         m_resonators.emplace_back(std::make_unique<TrackingResonator>(naturalFrequencies[i], alphas[i], betas[i], gammas[i], sampleRate));
     }
     m_dispatchQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
+    m_accPower.store(0.0001, std::memory_order_relaxed);
 }
 
 void TrackingResonatorBank::getNaturalFrequencies(float *dest, size_t size) {
@@ -102,7 +101,13 @@ void TrackingResonatorBank::getDeltaPhases(float *dest, size_t size) {
 }
 
 void TrackingResonatorBank::update(const float sample) {
+    // 1. Snapshot the current atomic value
+    // Using relaxed memory order is most efficient for audio parameters
+    const float lastAccPower = m_accPower.load(std::memory_order_relaxed);
+    
     float maxPower = 0.0f;
+
+    // 2. Sequential processing loop
     for (auto &resonatorPtr : m_resonators) {
         resonatorPtr->update(sample, m_accPower);
         const float power = resonatorPtr->power();
@@ -110,12 +115,22 @@ void TrackingResonatorBank::update(const float sample) {
             maxPower = power;
         }
     }
-    // update accPower
-    m_accPower = m_omSigma * m_accPower + m_sigma * maxPower;
+    
+    // 3. Calculate the new moving average
+    float nextAccPower = m_omSigma * lastAccPower + m_sigma * maxPower;
+    
+    // 4. Store the result back to the atomic variable
+    m_accPower.store(nextAccPower, std::memory_order_relaxed);
 }
 
 void TrackingResonatorBank::update(const std::vector<float> &samples) {
+    // 1. Snapshot the current atomic value
+    // Using relaxed memory order is most efficient for audio parameters
+    const float lastAccPower = m_accPower.load(std::memory_order_relaxed);
+    
     float maxPower = 0.0f;
+    
+    // 2. Sequential processing loop
     for (auto &resonatorPtr : m_resonators) {
         resonatorPtr->update(samples, m_accPower);
         const float power = resonatorPtr->power();
@@ -123,19 +138,37 @@ void TrackingResonatorBank::update(const std::vector<float> &samples) {
             maxPower = power;
         }
     }
-    m_accPower = m_omSigma * m_accPower + m_sigma * maxPower;
+    
+    // 3. Calculate the new moving average
+    float nextAccPower = m_omSigma * lastAccPower + m_sigma * maxPower;
+    
+    // 4. Store the result back to the atomic variable
+    m_accPower.store(nextAccPower, std::memory_order_relaxed);
 }
 
 void TrackingResonatorBank::update(const float *frameData, size_t frameLength, size_t sampleStride) {
+    // 1. Snapshot the current atomic value
+    // Using relaxed memory order is most efficient for audio parameters
+    const float lastAccPower = m_accPower.load(std::memory_order_relaxed);
+    
     float maxPower = 0.0f;
+    
+    // 2. Sequential processing loop
     for (auto &resonatorPtr : m_resonators) {
-        resonatorPtr->update(frameData, frameLength, sampleStride, m_accPower);
+        // Pass the snapshotted float value, not the atomic itself
+        resonatorPtr->update(frameData, frameLength, sampleStride, lastAccPower);
+        
         const float power = resonatorPtr->power();
-        if(power > maxPower) {
+        if (power > maxPower) {
             maxPower = power;
         }
     }
-    m_accPower = m_omSigma * m_accPower + m_sigma * maxPower;
+    
+    // 3. Calculate the new moving average
+    float nextAccPower = m_omSigma * lastAccPower + m_sigma * maxPower;
+    
+    // 4. Store the result back to the atomic variable
+    m_accPower.store(nextAccPower, std::memory_order_relaxed);
 }
 
 // concurrency with Apple GCD

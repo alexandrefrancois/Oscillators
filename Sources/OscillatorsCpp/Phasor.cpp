@@ -32,20 +32,29 @@ SOFTWARE.
 using namespace oscillators_cpp;
 
 Phasor::Phasor(float frequency, float sampleRate)
-: m_frequency(frequency), m_sampleRate(sampleRate),
+: m_omega(-twoPi*frequency/sampleRate), m_sampleRate(sampleRate),
 m_Zc(1.0), m_Zs(0.0) {
     updateMultiplier();
 }
 
 void Phasor::updateMultiplier() {
-    const float omega = -twoPi * m_frequency / m_sampleRate;
-    m_Wc = cos(omega);
-    m_Ws = sin(omega);
+    m_Wc = cos(m_omega);
+    m_Ws = sin(m_omega);
     m_Wcps = m_Wc + m_Ws;
 }
 
+void Phasor::setOmega(float omega) {
+    m_omega = omega;
+    updateMultiplier();
+}
+
 void Phasor::setFrequency(float frequency) {
-    m_frequency = frequency;
+    m_omega = -twoPi*frequency/m_sampleRate;
+    updateMultiplier();
+}
+
+void Phasor::setSampleRate(float sampleRate) {
+    m_sampleRate = sampleRate;
     updateMultiplier();
 }
 

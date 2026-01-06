@@ -27,9 +27,9 @@ import Atomics
 
 /// An array of independent resonator instances
 public class TrackingResonatorBankArray {
-    public static func alphasHeuristic(frequencies: [Float], sampleRate: Float, k: Float = 1, n: Float = 1) -> [Float] {
+    public static func gammasHeuristic(frequencies: [Float], sampleRate: Float, k: Float = 1, n: Float = 1) -> [Float] {
         frequencies.map { frequency in
-            Resonator.alphaHeuristic(frequency: frequency, sampleRate: sampleRate, k: k, n: n)
+            TrackingResonator.gammaHeuristic(frequency: frequency, sampleRate: sampleRate, k: k, n: n)
         }
     }
 
@@ -59,7 +59,7 @@ public class TrackingResonatorBankArray {
     private(set) var omSigma : Float = 0.0
     
     // 1. Use UInt32 to store the bits of the Float
-    private let _accPowerBits = ManagedAtomic<UInt32>(0)
+    private let _accPowerBits = ManagedAtomic<UInt32>(Float(0.0001).bitPattern)
 
     public var accPower: Float {
         // 2. Load as UInt32 and bit-cast back to Float

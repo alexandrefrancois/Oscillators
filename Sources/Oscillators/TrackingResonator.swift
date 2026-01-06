@@ -26,11 +26,14 @@ import Foundation
 import Accelerate
 
 fileprivate let twoPi = Float.pi * 2.0
-fileprivate let minMaxPower = Float(0.00001)
+fileprivate let minMaxPower = Float(0.001)
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
 public class TrackingResonator : Phasor, TrackingResonatorProtocol {
+    public static func gammaHeuristic(frequency: Float, sampleRate: Float, k: Float = 1, n: Float = 1) -> Float {
+        Resonator.alphaHeuristic(frequency: frequency, sampleRate: sampleRate, k: k, n: n) / 2.0
+    }
 
     public var power: Float {
         cc*cc + ss*ss
@@ -124,65 +127,16 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
         // compute current * conjugate(previous)
         // the phase time derivative estimate is the arg of this complex number
         
-        
-        // TODO: Question 1 - confirm no smoothing here
-        
-        // no need to smoothe here?
+        // no need to smoothe here
         dpc = cc * lcc + ss * lss
         dps = ss * lcc - cc * lss
-
-//        // Smoothing (EWMA) with gamma
-//        dpc = omGamma * dpc + gamma * (cc * lcc + ss * lss)
-//        dps = omGamma * dps + gamma * (ss * lcc - cc * lss)
-
-        // TODO: Question2: figure out what to do here... why this value, what is the impact on dynamics?
-        let sigma: Float = alpha / 2
         
         // Update tracking
         if power > trackFrequencyPowerThreshold {
-            
-            // Explicit frequency computation and back
-//            let w = atan2(cc,ss) + 0.00001 * atan2(dps, dpc)
-//            updateMultiplier(omega: w)
-
-//            # Rotate W by - alpha * delta_phases
-//            # Complex multiplications
-//            # still requires abs and power...
-//            mSCP = np.abs(conjugate_product[i])
-//            nSCP = conjugate_product[i] / mSCP if mSCP > 0 else 1
-//            # scaling the angle requires taking power
-//            snSCP = np.power(nSCP, -gamma, dtype=complex)
-//            W = W * snSCP
-            
-//            
-//            
-//            let m = sqrt(dpc * dpc + dps * dps)
-//            if m > trackFrequencyPowerThreshold {
-//                
-//                // take gamma power of complex number dpc + i dps
-//                // then update multiplier with that
-//                
-//                updateMultiplier(c: dpc/m, s: dps/m)
-//            }
-//            
-//            
-//
-            // TODO: Other implementations - more efficient?
-            
             // This is an EWMA with parameter sigma
-            self.frequency += sigma * atan2(dps, dpc) * sampleRate / twoPi
-            
+            omega -= gamma * atan2(dps, dpc)
         } else {
-            // go back towards natural frequency
-//            let fr = resonantFrequency
-//            let df = 0.001 * (naturalFrequency - fr)
-//            
-//            // Explicit frequency computation and back
-//            let w = atan2(cc,ss) + df * twoPi / sampleRate
-//            updateMultiplier(omega: w)
-
-
-//            self.frequency += sigma * (naturalFrequency - frequency)
+            // go back to natural frequency
             self.frequency = naturalFrequency
         }
         

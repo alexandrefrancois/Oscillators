@@ -32,16 +32,31 @@ fileprivate let twoPi = Float.pi * 2.0
 ///  This is the base class for individual oscillators and resonators.
 public class Phasor : PhasorProtocol {
     public var frequency: Float {
-        didSet {
-            updateMultiplier()
+        get {
+            -omega * sampleRateOverTwoPi
         }
-    }
-    public var sampleRate: Float {
-        didSet {
+        set {
+            omega = -newValue / sampleRateOverTwoPi
             updateMultiplier()
         }
     }
     
+    public var sampleRate: Float {
+        didSet {
+            sampleRateOverTwoPi = sampleRate / twoPi
+            updateMultiplier()
+        }
+    }
+    
+    /// Angular velocity
+    /// omega = -2 pi frequency / sample rate
+    public var omega: Float { // this is the angular velocity,
+        didSet {
+            updateMultiplier()
+        }
+    }
+    internal var sampleRateOverTwoPi: Float // this is the angular velocity,
+
     // Phasor variables
     // Phasor: Z = Zc + i Zs
     // Multiplier: W = Wc + i Ws
@@ -53,26 +68,22 @@ public class Phasor : PhasorProtocol {
     
     init(frequency: Float, sampleRate: Float) {
         self.sampleRate = sampleRate
-        self.frequency = frequency
+        self.sampleRateOverTwoPi = sampleRate / twoPi
+        self.omega = -frequency / self.sampleRateOverTwoPi
         updateMultiplier()
     }
 
     func updateMultiplier() {
-        let omega = -twoPi * frequency / sampleRate
+//        let omega = -twoPi * frequency / sampleRate
         Wc = cos(omega)
         Ws = sin(omega)
         Wcps = Wc + Ws
     }
     
+    // TODO: is this really useful?
     func updateMultiplier(c: Float, s: Float) {
         Wc = Wc * c - Ws * s
         Ws = Wc * s + Ws * c
-        Wcps = Wc + Ws
-    }
-
-    func updateMultiplier(omega: Float) {
-        Wc = cos(omega)
-        Ws = sin(omega)
         Wcps = Wc + Ws
     }
     

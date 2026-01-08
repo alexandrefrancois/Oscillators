@@ -119,13 +119,13 @@ public class ResonatorBankVec {
         var one = Float(1.0)
         vDSP_vfill(&one, Z.realp, 1, vDSP_Length(numResonators))
 
-        let twoPiOverSampleRate = twoPi / sampleRate
+        let minusTwoPiOverSampleRate = -twoPi / sampleRate
         wPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: twoNumResonators)
-        wPtr.initialize(repeating: twoPiOverSampleRate)
+        wPtr.initialize(repeating: minusTwoPiOverSampleRate)
         W = DSPSplitComplex(realp: wPtr.baseAddress!,
                             imagp: wPtr.baseAddress! + numResonators)
         
-        // multiply 2 * PI / sampleRate by frequency for each resonator
+        // multiply -2 * PI / sampleRate by frequency for each resonator
         vDSP_vmul(W.realp, 1,
                   frequencies, 1,
                   W.realp, 1,

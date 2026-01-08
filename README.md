@@ -1,6 +1,6 @@
 # Oscillators
 
-Copyright (c) 2022-2025 Alexandre R. J. François  
+Copyright (c) 2022-2026 Alexandre R. J. François  
 Released under MIT License.
 
 This package implements digital sinusoidal oscillator models for signal synthesis and analysis, suitable for real-time audio processing,

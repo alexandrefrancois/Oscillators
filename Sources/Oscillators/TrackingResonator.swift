@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2025 Alexandre R. J. Francois
+Copyright (c) 2025-2026 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -124,9 +124,9 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
         // update
         cc = omBeta * cc + beta * c
         ss = omBeta * ss + beta * s
+        
         // compute current * conjugate(previous)
         // the phase time derivative estimate is the arg of this complex number
-        
         // no need to smoothe here
         dpc = cc * lcc + ss * lss
         dps = ss * lcc - cc * lss

@@ -55,8 +55,6 @@ public:
     void getNaturalFrequencies(float *dest, size_t size);
     void getResonantFrequencies(float *dest, size_t size);
     float resonantFrequencyValue(size_t index);
-    float alphaValue(size_t index);
-    void setAllAlphas(float alpha);
     void getPowers(float *dest, size_t size);
     void getAmplitudes(float *dest, size_t size);
     void getPhases(float *dest, size_t size);

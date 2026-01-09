@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2025-2026 Alexandre R. J. Francois
+Copyright (c) 2026 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#import "TrackingResonatorBankCpp.h"
+#import "TrackingResonatorBankVecCpp.h"
 
 #import <Foundation/Foundation.h>
 
-#include "TrackingResonatorBank.hpp"
+#include "TrackingResonatorBankVec.hpp"
 
 using namespace oscillators_cpp;
 
-@interface TrackingResonatorBankCpp()
-@property oscillators_cpp::TrackingResonatorBank *resonatorBank;
+@interface TrackingResonatorBankVecCpp()
+@property oscillators_cpp::TrackingResonatorBankVec *resonatorBank;
 @end
 
-@implementation TrackingResonatorBankCpp
+@implementation TrackingResonatorBankVecCpp
 
-- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)naturalFrequencies alphas:(const float*)alphas betas: (const float*)betas gammas: (const float*)gammas sampleRate:(float)sampleRate {
+- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)naturalFrequencies alphas:(const float*)alphas betas:(const float*)betas gammas:(const float*)gammas sampleRate:(float)sampleRate {
     if (self = [super init]) {
-        self.resonatorBank = new TrackingResonatorBank(numResonators, naturalFrequencies, alphas, betas, gammas, sampleRate);
+        self.resonatorBank = new TrackingResonatorBankVec(numResonators, naturalFrequencies, alphas, betas, gammas, sampleRate);
     }
     return self;
 }
@@ -61,10 +61,6 @@ using namespace oscillators_cpp;
 
 - (void)getResonantFrequencies:(float*)dest size: (int)size {
     self.resonatorBank->getResonantFrequencies(dest, size);
-}
-
-- (float)resonantFrequencyValue:(int)index {
-    return self.resonatorBank->resonantFrequencyValue(index);
 }
 
 - (void)getPowers:(float*)dest size: (int)size {
@@ -95,12 +91,12 @@ using namespace oscillators_cpp;
     self.resonatorBank->update(frame, frameLength, sampleStride);
 }
 
-- (void)updateConcurrent:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
-    self.resonatorBank->updateConcurrent(frame, frameLength, sampleStride);
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride powers:(float*)powers amplitudes:(float*)amplitudes {
+    self.resonatorBank->update(frame, frameLength, sampleStride, powers, amplitudes);
 }
 
-- (void)setTimeConstant:(float)tau frameLength:(int)frameLength sampleStride:(int)sampleStride sampleRate:(float)sampleRate {
-    self.resonatorBank->setTimeConstant(tau, frameLength, sampleStride, sampleRate);
+- (void)setTimeConstant:(float)tau sampleRate:(float)sampleRate {
+    self.resonatorBank->setTimeConstant(tau, sampleRate);
 }
 
 @end

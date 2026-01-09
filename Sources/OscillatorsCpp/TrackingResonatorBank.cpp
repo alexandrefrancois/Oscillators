@@ -60,22 +60,6 @@ float TrackingResonatorBank::resonantFrequencyValue(size_t index) {
     return m_resonators[index]->frequency();
 }
 
-float TrackingResonatorBank::alphaValue(size_t index) {
-    if (index >= m_resonators.size()) {
-        throw std::out_of_range("Bad index passed to alphaValue()");
-    }
-    return m_resonators[index]->alpha();
-}
-
-void TrackingResonatorBank::setAllAlphas(float alpha) {
-    if (alpha < 0.0 || alpha >1.0) {
-        throw std::out_of_range("Bad alpha passed to setAllAlphas()");
-    }
-    for (auto &resonatorPtr : m_resonators) {
-        resonatorPtr->setAlpha(alpha);
-    }
-}
-
 void TrackingResonatorBank::getPowers(float *dest, size_t size) {
     for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
         dest[i]=m_resonators[i]->power();

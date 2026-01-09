@@ -74,9 +74,9 @@ ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencie
     vDSP_vfill(&one, m_z.data(), 1, m_numResonators);
     vDSP_vfill(&zero, m_z.data()+ m_numResonators, 1, m_numResonators);
     
-    float twoPiOverSampleRate = twoPi / m_sampleRate;
+    float minusTwoPiOverSampleRate = -twoPi / m_sampleRate;
     m_w.resize(m_twoNumResonators);
-    vDSP_vfill(&twoPiOverSampleRate, m_w.data(), 1, m_twoNumResonators);
+    vDSP_vfill(&minusTwoPiOverSampleRate, m_w.data(), 1, m_twoNumResonators);
 
     DSPSplitComplex W = {m_w.data(), m_w.data() + m_numResonators};
     // multiply 2 * PI / sampleRate by frequency for each resonator

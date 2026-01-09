@@ -43,14 +43,10 @@ public class TrackingResonatorBankVec {
     public private(set) var naturalFrequencies : [Float]
     
     public var powers : [Float] {
-        // just copy values from UnsafeMutableBufferPointer
-        //        var powers = [Float](repeating: 0, count: numResonators)
-        //        vDSP.squareMagnitudes(R, result: &powers)
         return [Float](powersPtr)
     }
-    
     public var amplitudes : [Float] {
-        vForce.sqrt(powers)
+        vForce.sqrt(powersPtr)
     }
     public var phases : [Float] {
         var phases = [Float](repeating: 0, count: numResonators)
@@ -260,14 +256,13 @@ public class TrackingResonatorBankVec {
                     powersPtr.baseAddress!, 1,
                     vDSP_Length(numResonators))
         
-        // accPower update
+        // Update accPower
         var maxPower = Float(0.25)
         vDSP_maxv(powersPtr.baseAddress!, 1,
                   &maxPower,
                   vDSP_Length(numResonators))
         accPower = (omSigma * accPower) + (sigma * maxPower)
 
-        
         // Update phase derivatives
         // actually compute the opposite so that we can justs add later
         vDSP_zvmul(&R, 1,
@@ -291,7 +286,7 @@ public class TrackingResonatorBankVec {
                     dPtr.baseAddress!, 1,
                     vDSP_Length(numResonators))
         
-        // add dw
+        // Add dw
         // store in first half of dPtr
         vDSP_vma(dPtr.baseAddress! + numResonators, 1,
                  gammas, 1,
@@ -300,48 +295,19 @@ public class TrackingResonatorBankVec {
                  vDSP_Length(numResonators))
         
         let trackFrequencyPowerThreshold = max(minMaxPower, accPower) / 1000.0
-        
 
-        // calculate threshold mask
-//        vDSP_vthres(powersPtr.baseAddress!, 1,
-//                    [trackFrequencyPowerThreshold],
-//                    maskPtr.baseAddress!, 1,
-//                    vDSP_Length(numResonators))
-//        
-//        vDSP_vclip(maskPtr.baseAddress!, 1,
-//                   [0.0], [trackFrequencyPowerThreshold],
-//                   maskPtr.baseAddress!, 1,
-//                   vDSP_Length(numResonators));
-//        
-//        vDSP_vsdiv(maskPtr.baseAddress!, 1,
-//                   [trackFrequencyPowerThreshold],
-//                   maskPtr.baseAddress!, 1,
-//                   vDSP_Length(numResonators))
-//        
-//        // inverse mask
-//        vDSP_vsmsa (maskPtr.baseAddress!, 1,
-//                    [-1.0],
-//                    [1.0],
-//                    inverseMaskPtr.baseAddress!, 1,
-//                    vDSP_Length(numResonators))
+        // Single pass threshold and merge
+        Self.fuseThresholdAndMerge(powersPtr: powersPtr,
+                              dPtr: dPtr,
+                              naturalOmegasPtr: naturalOmegasPtr,
+                              threshold: trackFrequencyPowerThreshold)
         
-        // not necessarily very significant (e.g. about 540-550ns -> 520-530ns)
-        computeMasks(powersPtr: powersPtr, maskPtr: maskPtr, inverseMaskPtr: inverseMaskPtr, threshold: trackFrequencyPowerThreshold)
-    
-        // merge angular frequencies according to masks
-        vDSP_vmma (maskPtr.baseAddress!, 1,
-                   dPtr.baseAddress!, 1,
-                   inverseMaskPtr.baseAddress!, 1,
-                   naturalOmegasPtr.baseAddress!, 1,
-                   dPtr.baseAddress!, 1,
-                   vDSP_Length(numResonators))
-
         // Update W
         var count : Int32 = Int32(numResonators)
         vvcosf(W.realp, dPtr.baseAddress!, &count)
         vvsinf(W.imagp, dPtr.baseAddress!, &count)
                 
-        // phasor
+        // Phasor
         vDSP_zvmul(&Z, 1,
                    &W, 1,
                    &Z, 1,
@@ -393,43 +359,43 @@ public class TrackingResonatorBankVec {
         sigma = Float(1.0) - exp(-sampleDuration / tau)
     }
     
-    
-    func computeMasks(powersPtr: UnsafeMutableBufferPointer<Float>, maskPtr: UnsafeMutableBufferPointer<Float>, inverseMaskPtr: UnsafeMutableBufferPointer<Float>, threshold: Float) {
+    // Single pass all in one
+    static func fuseThresholdAndMerge(powersPtr: UnsafeMutableBufferPointer<Float>,
+                                      dPtr: UnsafeMutableBufferPointer<Float>,
+                                      naturalOmegasPtr: UnsafeMutableBufferPointer<Float>,
+                                      threshold: Float) {
         guard let pBase = powersPtr.baseAddress,
-              let mBase = maskPtr.baseAddress,
-              let imBase = inverseMaskPtr.baseAddress else { return }
+              let dBase = dPtr.baseAddress,
+              let nBase = naturalOmegasPtr.baseAddress else { return }
         
         let count = powersPtr.count
-        
         let thresholdVec = SIMD8<Float>(repeating: threshold)
-        let ones = SIMD8<Float>(repeating: 1.0)
-        let zeros = SIMD8<Float>(repeating: 0.0)
         
         var i = 0
-        // 1. Process in blocks of 8
         while i <= count - 8 {
-            // Load 8 floats as a single SIMD8 register
-            let v = UnsafeRawPointer(pBase.advanced(by: i))
-                .load(as: SIMD8<Float>.self)
+            // 1. Load the three necessary pieces of data
+            let p = UnsafeRawPointer(pBase.advanced(by: i)).load(as: SIMD8<Float>.self)
+            let d = UnsafeRawPointer(dBase.advanced(by: i)).load(as: SIMD8<Float>.self)
+            let n = UnsafeRawPointer(nBase.advanced(by: i)).load(as: SIMD8<Float>.self)
             
-            // Create mask and select
-            let mask = v .>= thresholdVec
-            let result = SIMD8<Float>(repeating: 0.0).replacing(with: ones, where: mask)
-            let iresult = SIMD8<Float>(repeating: 1.0).replacing(with: zeros, where: mask)
-
-            // Store 8 floats in a single instruction
-            UnsafeMutableRawPointer(mBase.advanced(by: i))
+            // 2. The Predicate: Which values are above threshold?
+            let mask = p .>= thresholdVec
+            
+            // 3. The Ternary Select:
+            // If power >= threshold, keep d.
+            // Else, take naturalOmega.
+            let result = n.replacing(with: d, where: mask)
+            
+            // 4. Store the result back into dPtr
+            UnsafeMutableRawPointer(dBase.advanced(by: i))
                 .storeBytes(of: result, as: SIMD8<Float>.self)
-            UnsafeMutableRawPointer(imBase.advanced(by: i))
-                .storeBytes(of: iresult, as: SIMD8<Float>.self)
             
             i += 8
         }
         
-        // 2. Clean up the "tail" (remaining elements < 8)
+        // Scalar Tail
         while i < count {
-            mBase[i] = pBase[i] >= threshold ? 1.0 : 0.0
-            imBase[i] = pBase[i] >= threshold ? 0.0 : 1.0
+            dBase[i] = (pBase[i] >= threshold) ? dBase[i] : nBase[i]
             i += 1
         }
     }

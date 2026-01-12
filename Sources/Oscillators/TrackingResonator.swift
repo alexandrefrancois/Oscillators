@@ -29,7 +29,7 @@ fileprivate let twoPi = Float.pi * 2.0
 fileprivate let minMaxPower = Float(0.001)
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
-/// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
+/// and adjust its resonant frequency to track the actual frequency of the signal component
 public class TrackingResonator : Phasor, TrackingResonatorProtocol {
     public static func gammaHeuristic(frequency: Float, sampleRate: Float, k: Float = 1, n: Float = 1) -> Float {
         Resonator.alphaHeuristic(frequency: frequency, sampleRate: sampleRate, k: k, n: n) / 2.0

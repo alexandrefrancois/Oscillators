@@ -280,9 +280,11 @@ void TrackingResonatorBankVec::update(const float sample) {
 //               m_d.data(), 1,
 //               m_numResonators);
 
+    // store the mask values in the second half of m_d
     fuseThresholdAndMerge(m_powers.data(),
                           m_d.data(),
                           m_naturalOmegas.data(),
+                          m_d.data() + m_numResonators,
                           m_numResonators,
                           trackFrequencyPowerThreshold);
     
@@ -347,36 +349,46 @@ void TrackingResonatorBankVec::setTimeConstant(float tau, float sampleRate) {
 
 // This optimization saves a few 10s of ns per sample...
 void TrackingResonatorBankVec::fuseThresholdAndMerge(const float* powers,
-                                                     float* d,
+                                                     float* trackedOmegas,
                                                      const float* naturalOmegas,
-                                                     int count,
+                                                     float* mask,
+                                                     size_t count,
                                                      float threshold) {
     // Create a vector where all 4 lanes contain the threshold
     float32x4_t thresholdVec = vdupq_n_f32(threshold);
+    float32x4_t vOne = vdupq_n_f32(1.0f);
+    float32x4_t vZero = vdupq_n_f32(0.0f);
     
     int i = 0;
     // Process 4 floats at a time (128-bit NEON registers)
     for (; i <= count - 4; i += 4) {
         // 1. Load data into registers
         float32x4_t p = vld1q_f32(powers + i);
-        float32x4_t d_vec = vld1q_f32(d + i);
+        float32x4_t t_vec = vld1q_f32(trackedOmegas + i);
         float32x4_t n = vld1q_f32(naturalOmegas + i);
         
         // 2. Compare: returns a bitmask (all 1s if true, all 0s if false)
         // vcgeq = Vector Compare Greater than or Equal
-        uint32x4_t mask = vcgeq_f32(p, thresholdVec);
+        uint32x4_t cmpMask = vcgeq_f32(p, thresholdVec);
         
         // 3. Bitwise Select: choose from d_vec if mask is 1, else choose from n
         // vbslq_f32(mask, if_true, if_false)
-        float32x4_t result = vbslq_f32(mask, d_vec, n);
+        float32x4_t mergedResult = vbslq_f32(cmpMask, t_vec, n);
         
-        // 4. Store result back into d
-        vst1q_f32(d + i, result);
+        // 4. Store result back into trackedOmegas
+        vst1q_f32(trackedOmegas + i, mergedResult);
+        
+        // 5. Convert mask to float (1.0 for true, 0.0 for false)
+        // vbslq selects bits from vOne where cmpMask bits are 1, and vZero where 0
+        float32x4_t floatMask = vbslq_f32(cmpMask, vOne, vZero);
+        vst1q_f32(mask + i, floatMask);
     }
     
     // Scalar tail for remaining elements
     for (; i < count; ++i) {
-        d[i] = (powers[i] >= threshold) ? d[i] : naturalOmegas[i];
+        bool isAbove = (powers[i] >= threshold);
+        trackedOmegas[i] = isAbove ? trackedOmegas[i] : naturalOmegas[i];
+        mask[i] = isAbove ? 1.0f : 0.0f;
     }
 }
 

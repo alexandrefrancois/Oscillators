@@ -111,9 +111,10 @@ public:
     void setTimeConstant(float tau, float sampleRate);
     
     static void fuseThresholdAndMerge(const float* powers,
-                                      float* d,
+                                      float* trackedOmegas,
                                       const float* naturalOmegas,
-                                      int count,
+                                      float* mask,
+                                      size_t count,
                                       float threshold);
 };
 

@@ -34,8 +34,11 @@ constexpr float twoPi = 2.0 * PI;
 
 // Phasor class: base for individual oscillators
 class Phasor {
+    
+private:
+    float m_omega; // must be set trhough accessor
+
 protected:
-    float m_omega;
     float m_sampleRate;
     
     // Phasor
@@ -48,11 +51,11 @@ protected:
     void updateMultiplier();
 
 public:
-    Phasor & operator=(const Phasor&) = delete;
-    Phasor(const Phasor&) = delete;
-    virtual ~Phasor() = default;
+//    Phasor & operator=(const Phasor&) = delete;
+//    Phasor(const Phasor&) = delete;
+//    virtual ~Phasor() = default;
     
-    Phasor(float frequency, float sampleRate);
+    Phasor(float frequency, float sampleRate, bool angular = false);
 
     float omega() const { return m_omega; }
     void setOmega(float omega);

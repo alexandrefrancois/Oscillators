@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2025 Alexandre R. J. Francois
+Copyright (c) 2026 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +22,35 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#import <Foundation/Foundation.h>
+#ifndef Oscillator_hpp
+#define Oscillator_hpp
 
-// Wrapper for the base Oscillator class
-@interface PhasorCpp : NSObject
-- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate angular:(bool)angular;
-- (float)frequency;
-- (void)setFrequency:(float)frequency;
-- (float)sampleRate;
+#include "Phasor.hpp"
 
-@end
+#include <vector>
+
+namespace oscillators_cpp {
+
+// Phasor class: base for individual oscillators
+class Oscillator : public Phasor {
+protected:
+    float m_amplitude;
+    
+public:
+//    Oscillator & operator=(const Oscillator&) = delete;
+//    Oscillator(const Oscillator&) = delete;
+//    virtual ~Oscillator() = default;
+    
+    Oscillator(float frequency, float sampleRate, float amplitude = 1.0f, bool angular = false);
+    
+    float amplitude() const { return m_amplitude; }
+    void setAmplitude(float amplitude) { m_amplitude = amplitude; }
+    float power() const { return m_amplitude * m_amplitude; }
+    
+    float sample() const { return m_amplitude * m_Zc; }
+};
+
+} // oscillators_cpp
+
+#endif /* Oscillator_hpp */
+

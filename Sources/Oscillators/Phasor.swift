@@ -30,7 +30,7 @@ fileprivate let twoPi = Float.pi * 2.0
 /// A complex phasor allows to compute sinusoid values recursively.
 /// Incremental calculations depend on frequency and sampling rate.
 ///  This is the base class for individual oscillators and resonators.
-public class Phasor : PhasorProtocol {
+open class Phasor : PhasorProtocol {
     public var frequency: Float {
         get {
             -omega * sampleRateOverTwoPi
@@ -65,7 +65,14 @@ public class Phasor : PhasorProtocol {
     internal var Wc : Float = 0.0
     internal var Ws : Float = 0.0
     internal var Wcps : Float = 0.0 // pre-computed Oc + Os
-    
+
+    init(omega: Float, sampleRate: Float) {
+        self.sampleRate = sampleRate
+        self.sampleRateOverTwoPi = sampleRate / twoPi
+        self.omega = omega
+        updateMultiplier()
+    }
+
     init(frequency: Float, sampleRate: Float) {
         self.sampleRate = sampleRate
         self.sampleRateOverTwoPi = sampleRate / twoPi
@@ -80,12 +87,12 @@ public class Phasor : PhasorProtocol {
         Wcps = Wc + Ws
     }
     
-    // TODO: is this really useful?
-    func updateMultiplier(c: Float, s: Float) {
-        Wc = Wc * c - Ws * s
-        Ws = Wc * s + Ws * c
-        Wcps = Wc + Ws
-    }
+//    // TODO: is this really useful?
+//    func updateMultiplier(c: Float, s: Float) {
+//        Wc = Wc * c - Ws * s
+//        Ws = Wc * s + Ws * c
+//        Wcps = Wc + Ws
+//    }
     
     /// Compute next value of the phasor
     /// Z <- Z * W

@@ -35,6 +35,7 @@ constexpr float zero = 0.0f;
 constexpr float one = 1.0f;
 constexpr float minusOne = -1.0f;
 
+constexpr float minMaxPower = 0.001;
 
 TrackingResonatorBankVec::TrackingResonatorBankVec(size_t numResonators, const std::vector<float> &frequencies, const std::vector<float> &alphas, const std::vector<float> &betas, const std::vector<float> &gammas, float sampleRate)
 : TrackingResonatorBankVec(numResonators, frequencies.data(), alphas.data(), betas.data(), gammas.data(), sampleRate) {

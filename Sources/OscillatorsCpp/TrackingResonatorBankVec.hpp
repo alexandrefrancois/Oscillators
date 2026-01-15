@@ -29,8 +29,6 @@ SOFTWARE.
 
 namespace oscillators_cpp {
 
-constexpr float minMaxPower = 0.001;
-
 class TrackingResonatorBankVec {
 private:
     float m_sampleRate;

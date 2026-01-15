@@ -30,12 +30,21 @@ fileprivate let twoPi = Float.pi * 2.0
 /// an oscillator is characterized by its frequency and amplitude.
 /// Waveform values are computed recursively with a complex phasor.
 /// Incremental calculations depend on frequency and sampling rate.
-public class Oscillator : Phasor, OscillatorProtocol {
+open class Oscillator : Phasor, OscillatorProtocol {
     public var amplitude: Float = 1.0
     public var sample : Float {
         amplitude * Zc
     }
     
+    public var power: Float {
+        amplitude * amplitude
+    }
+
+    public init(omega: Float, sampleRate: Float, amplitude: Float = 1.0) {
+        super.init(omega: omega, sampleRate: sampleRate)
+        self.amplitude = amplitude
+    }
+
     public init(frequency: Float, sampleRate: Float, amplitude: Float = 1.0) {
         super.init(frequency: frequency, sampleRate: sampleRate)
         self.amplitude = amplitude

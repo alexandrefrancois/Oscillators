@@ -31,9 +31,9 @@ using namespace oscillators_cpp;
 
 @implementation PhasorCpp
 
-- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate {
+- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate angular:(bool)angular {
     if (self = [super init]) {
-        self.oscillator = new Phasor(frequency, sampleRate);
+        self.oscillator = new Phasor(frequency, sampleRate, angular);
     }
     return self;
 }

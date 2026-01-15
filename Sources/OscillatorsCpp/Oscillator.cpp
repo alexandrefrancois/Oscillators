@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2025 Alexandre R. J. Francois
+Copyright (c) 2026 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#import <Foundation/Foundation.h>
+#include "Oscillator.hpp"
 
-// Wrapper for the base Oscillator class
-@interface PhasorCpp : NSObject
-- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate angular:(bool)angular;
-- (float)frequency;
-- (void)setFrequency:(float)frequency;
-- (float)sampleRate;
+using namespace oscillators_cpp;
 
-@end
+Oscillator::Oscillator(float frequency, float sampleRate, float amplitude, bool angular)
+: Phasor(frequency, sampleRate, angular), m_amplitude(amplitude) {
+}

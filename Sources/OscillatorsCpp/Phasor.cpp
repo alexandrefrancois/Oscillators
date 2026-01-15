@@ -31,8 +31,8 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-Phasor::Phasor(float frequency, float sampleRate)
-: m_omega(-twoPi*frequency/sampleRate), m_sampleRate(sampleRate),
+Phasor::Phasor(float frequency, float sampleRate, bool angular)
+: m_omega(angular ? frequency : -twoPi*frequency/sampleRate), m_sampleRate(sampleRate),
 m_Zc(1.0), m_Zs(0.0) {
     updateMultiplier();
 }

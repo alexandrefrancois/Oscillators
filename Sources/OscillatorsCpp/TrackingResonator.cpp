@@ -28,6 +28,8 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
+constexpr float minMaxPower = 0.001;
+
 TrackingResonator::TrackingResonator(float naturalFrequency, float alpha, float beta, float gamma, float sampleRate) : Phasor(naturalFrequency, sampleRate),
 m_naturalFrequency(naturalFrequency), m_alpha(alpha), m_omAlpha(1.0 - alpha), m_beta(beta), m_omBeta(1.0 - beta), m_gamma(gamma), m_omGamma(1.0 - gamma),
 m_dpc(1.0), m_dps(0.0) {
@@ -90,7 +92,7 @@ void TrackingResonator::updateWithSample(float sample) {
     if(power() > m_trackFrequencyPowerThreshold) {
         // go towards instantaneous frequency
         // this is EWMA with parameter gamma:
-        setOmega(m_omega - m_gamma * atan2(m_dps, m_dpc));
+        setOmega(omega() - m_gamma * atan2(m_dps, m_dpc));
     } else {
         // go back to natural frequency
         setFrequency(m_naturalFrequency);

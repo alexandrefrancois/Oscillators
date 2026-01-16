@@ -64,6 +64,9 @@ public:
     float sampleRate() const { return m_sampleRate; }
     void setSampleRate(float sampleRate);
 
+    float Zc() const { return m_Zc; }
+    float Zs() const { return m_Zs; }
+    
     void incrementPhase();
     void stabilize();
 };

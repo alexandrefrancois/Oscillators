@@ -272,7 +272,7 @@ public class TrackingResonatorBankVec {
                    -1)
         
         // Save previous smoothed value
-        rrmPtr.initialize(from: rrPtr)
+        _ = rrmPtr.initialize(from: rrPtr)
         
         // Compute angle from D
         // store in second half of dPtr
@@ -400,3 +400,4 @@ public class TrackingResonatorBankVec {
         }
     }
 }
+

@@ -31,7 +31,7 @@ SOFTWARE.
 - (int)numResonators;
 - (void)getNaturalFrequencies:(float*)dest size:(int)size;
 - (void)getResonantFrequencies:(float*)dest size:(int)size;
-- (float)frequencyValue:(int)index;
+- (float)resonantFrequencyValue:(int)index;
 - (void)getPowers:(float*)dest size:(int)size;
 - (void)getAmplitudes:(float*)dest size:(int)size;
 - (void)getPhases:(float*)dest size:(int)size;

@@ -80,8 +80,8 @@ final class ResonatorBankArrayTests: XCTestCase {
         let sampleRate = AudioFixtures.defaultSampleRate
         let kAlpha = Float(1.0)
         let kBeta = Float(1.0)
-        let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
-        let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: kAlpha)
+        let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: kBeta)
         let resonatorBankArray = ResonatorBankArray(frequencies: frequencies,
                                                     alphas: alphas,
                                                     betas: betas,
@@ -101,10 +101,11 @@ final class ResonatorBankArrayTests: XCTestCase {
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)
         let sampleRate = AudioFixtures.defaultSampleRate
+        let kAlpha = Float(1.0)
 
         // even number of oscillators
         let frequenciesEven: [Float] = [5512.5, 6300.0005, 7350.0005, 8820.0]
-        var alphasEven = ResonatorBankArray.alphasHeuristic(frequencies: frequenciesEven, sampleRate: sampleRate, k: 1.0)
+        let alphasEven = ResonatorBankArray.alphasHeuristic(frequencies: frequenciesEven, sampleRate: sampleRate, k: kAlpha)
         let resonatorBankArray1 = ResonatorBankArray(frequencies: frequenciesEven,
                                                      alphas: alphasEven,
                                                      betas: alphasEven,
@@ -118,7 +119,7 @@ final class ResonatorBankArrayTests: XCTestCase {
         
         // odd number of oscillators
         let frequenciesOdd: [Float] = [5512.5, 6300.0005, 7350.0005, 8820.0]
-        var alphasOdd = ResonatorBankArray.alphasHeuristic(frequencies: frequenciesOdd, sampleRate: sampleRate, k: 1.0)
+        let alphasOdd = ResonatorBankArray.alphasHeuristic(frequencies: frequenciesOdd, sampleRate: sampleRate, k: kAlpha)
         let resonatorBankArray2 = ResonatorBankArray(frequencies: frequenciesOdd,
                                                      alphas: alphasOdd,
                                                      betas: alphasOdd,

@@ -31,7 +31,7 @@ fileprivate let twoPi = Float.pi * 2.0
 final class PhasorCppTests: XCTestCase {
     
     func testConstructor() throws {
-        let phasor = PhasorCpp(frequency: 440.5, sampleRate: AudioFixtures.defaultSampleRate)
+        let phasor = PhasorCpp(frequency: 440.5, sampleRate: AudioFixtures.defaultSampleRate, angular: false)
         guard let oscillator = phasor else { return XCTAssert(false, "PhasorCpp could not be instantiated") }
         
         XCTAssertEqual(oscillator.frequency(), 440.5, accuracy: epsilon)

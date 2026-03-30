@@ -116,16 +116,16 @@ using namespace oscillators_cpp;
     return self.resonator->ss();
 }
 
-- (float)phase {
-    return self.resonator->phase();
-}
-
 - (float)dpc {
     return self.resonator->dpc();
 }
 
 - (float)dps {
     return self.resonator->dps();
+}
+
+- (float)phase {
+    return self.resonator->phase();
 }
 
 - (float)deltaPhase {

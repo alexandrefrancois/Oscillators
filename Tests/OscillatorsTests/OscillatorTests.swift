@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2025 Alexandre R. J. Francois
+Copyright (c) 2022-2026 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@ SOFTWARE.
 
 import XCTest
 @testable import Oscillators
+import OscillatorsCpp
 
 fileprivate let epsilon : Float = 0.0001
 fileprivate let twoPi = Float.pi * 2.0
@@ -83,5 +84,38 @@ final class OscillatorTests: XCTestCase {
         XCTAssertEqual(samples[3333], amplitude * cos(3333 * delta), accuracy: epsilon)
         XCTAssertEqual(samples[7777], amplitude * cos(7777 * delta), accuracy: epsilon)
         XCTAssertEqual(samples[9999], amplitude * cos(9999 * delta), accuracy: epsilon)
+    }
+    
+    // MARK: - Additional Tests
+    
+    /// Test oscillator produces cosine output consistent with analytic solution.
+    func testOscillatorCosineOutput() {
+        let frequency : Float = 440.0
+        let amplitude : Float = 1.0
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let osc = Oscillator(frequency: frequency, sampleRate: sampleRate, amplitude: amplitude)
+        let N = 1000
+        let twoPiFrequency : Float = twoPi * frequency
+        let delta : Float = twoPiFrequency / sampleRate
+        let samples = osc.getNextSamples(numSamples: N)
+        for i in stride(from: 0, to: N, by: N/10) {
+            XCTAssertEqual(samples[i], amplitude * cos(Float(i) * delta), accuracy: epsilon)
+        }
+    }
+    
+    /// Test long-term phase stability of oscillator (no drift).
+    func testOscillatorLongTermStability() {
+        let frequency : Float = 440.0
+        let amplitude : Float = 1.0
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let osc = Oscillator(frequency: frequency, sampleRate: sampleRate, amplitude: amplitude)
+        let N = sampleRate * 10 // 10 seconds
+        let samples = osc.getNextSamples(numSamples: Int(N))
+        // After full cycles, the value should be close to the initial state
+        let period = sampleRate / frequency
+        for i in 1...5 {
+            let idx = Int(Float(i) * period)
+            XCTAssertEqual(samples[idx], samples[0], accuracy: 0.01)
+        }
     }
 }

@@ -71,12 +71,12 @@ public class TrackingResonatorBankVec {
     private(set) var omSigma : Float = 0.0
     public private(set) var accPower: Float = 0.0001
     
-    private var alphas : [Float] // can be tuned independently for each frequency
-    private var omAlphas : [Float] // can be tuned independently for each frequency
-    private var betas : [Float]
-    private var omBetas : [Float]
-    private var gammas : [Float]
-    private var omGammas : [Float]
+    private(set) var alphas : [Float] // can be tuned independently for each frequency
+    private(set) var omAlphas : [Float] // can be tuned independently for each frequency
+    private(set) var betas : [Float]
+    private(set) var omBetas : [Float]
+    private(set) var gammas : [Float]
+    private(set) var omGammas : [Float]
     
     private var twoNumResonators : Int
     
@@ -297,10 +297,11 @@ public class TrackingResonatorBankVec {
         let trackFrequencyPowerThreshold = max(minMaxPower, accPower) / 1000.0
 
         // Single pass threshold and merge
-        Self.fuseThresholdAndMerge(powersPtr: powersPtr,
-                              dPtr: dPtr,
-                              naturalOmegasPtr: naturalOmegasPtr,
-                              threshold: trackFrequencyPowerThreshold)
+        Self.fuseThresholdAndMerge(
+            powersPtr: powersPtr,
+            dPtr: dPtr,
+            naturalOmegasPtr: naturalOmegasPtr,
+            threshold: trackFrequencyPowerThreshold)
         
         // Update W
         var count : Int32 = Int32(numResonators)
@@ -349,9 +350,13 @@ public class TrackingResonatorBankVec {
         vDSP_vfill(&one, Z.realp, 1, vDSP_Length(numResonators))
         var zero = Float(0.0)
         vDSP_vfill(&zero, Z.imagp, 1, vDSP_Length(numResonators))
-        
-        // TODO: reset tracking frequencies to natural frequencies!
-        
+        powersPtr.initialize(repeating: 0.0)
+        _ = wPtr[0..<numResonators].initialize(from: naturalOmegasPtr)
+        _ = wPtr[numResonators..<2*numResonators].initialize(from: naturalOmegasPtr)
+        // then calculate cos and sin
+        var count : Int32 = Int32(numResonators)
+        vvcosf(W.realp, W.realp, &count)
+        vvsinf(W.imagp, W.imagp, &count)
     }
     
     public func setTimeConstant(_ tau: Float = 1.0, sampleRate: Float) {

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2024 Alexandre R. J. Francois
+Copyright (c) 2022-2026 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,8 @@ import Oscillators
 
 class DynamicsFixtures {
     static let defaultAlpha : Float = 1.0 / (AudioFixtures.defaultSampleRate * 0.1)
+    static let defaultBeta : Float = 1.0 / (AudioFixtures.defaultSampleRate * 0.1)
+    static let defaultGamma : Float = 1.0 / (AudioFixtures.defaultSampleRate * 0.1)
     static let defaultTimeConstant : Float = 0.1
     
     static var timeConstants : [Float] = [0.01, 0.02, 0.05, 0.10, 0.20, 0.50, 0.80, 1.0, 1.5, 2.0]

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2025 Alexandre R. J. Francois
+Copyright (c) 2022-2026 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -54,9 +54,9 @@ public class ResonatorBankVec {
     }
 
     public  let alphas : [Float] // can be tuned independently for each frequency
-    private let omAlphas : [Float] // can be tuned independently for each frequency
-    private var betas : [Float]
-    private var omBetas : [Float]
+    public let omAlphas : [Float] // can be tuned independently for each frequency
+    public var betas : [Float]
+    public let omBetas : [Float]
     
     private var twoNumResonators : Int
 

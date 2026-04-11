@@ -133,7 +133,7 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
         
         // Update tracking
         if power > trackFrequencyPowerThreshold {
-            // This is an EWMA with parameter sigma
+            // This is an EWMA with parameter gamma
             omega -= gamma * atan2(dps, dpc)
         } else {
             // go back to natural frequency
@@ -144,13 +144,13 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
     }
     
     public func update(sample: Float, maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / 1000.0
+        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / Float(1000.0)
         updateWithSample(sample)
         stabilize() // this is overkill but necessary
     }
     
     public func update(samples: [Float], maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / 1000.0
+        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / Float(1000.0)
         for sample in samples {
             updateWithSample(sample)
         }
@@ -158,7 +158,7 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
     }
 
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / 1000.0
+        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / Float(1000.0)
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }

@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2022-2026 Alexandre R. J. Francois
+Copyright (c) 2026 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-class AudioFixtures {
-    static let defaultSampleRate : Float = 44100.0
-    static let sampleDuration44100 : Float = 1.0 / 44100.0
-    static let sampleDuration48000 : Float = 1.0 / 48000.0
+import Foundation
+
+class SignalFixtures {
+    // MARK: - Helper Functions for Test Inputs
+
+    static func makeImpulse(count: Int) -> [Float] {
+        var arr = [Float](repeating: 0, count: count)
+        arr[0] = 1.0
+        return arr
+    }
+
+    static func makeStep(count: Int, value: Float = 1.0) -> [Float] {
+        return [Float](repeating: value, count: count)
+    }
+
+    static func makeSine(count: Int, freq: Float, sampleRate: Float, amplitude: Float = 1.0) -> [Float] {
+        let twoPi = Float.pi * 2.0
+        return (0..<count).map { i in amplitude * sin(twoPi * freq * Float(i) / (sampleRate * Float(count))) }
+    }
 }

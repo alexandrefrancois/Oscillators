@@ -81,19 +81,11 @@ open class Phasor : PhasorProtocol {
     }
 
     func updateMultiplier() {
-//        let omega = -twoPi * frequency / sampleRate
         Wc = cos(omega)
         Ws = sin(omega)
         Wcps = Wc + Ws
     }
-    
-//    // TODO: is this really useful?
-//    func updateMultiplier(c: Float, s: Float) {
-//        Wc = Wc * c - Ws * s
-//        Ws = Wc * s + Ws * c
-//        Wcps = Wc + Ws
-//    }
-    
+        
     /// Compute next value of the phasor
     /// Z <- Z * W
     internal func incrementPhase() {
@@ -110,7 +102,7 @@ open class Phasor : PhasorProtocol {
     /// 1/sqrt(x) to reduce computational cost.
     /// This can be applied every few hundred (?) samples
     internal func stabilize() {
-        let k = (3.0 - Zc*Zc - Zs*Zs) / 2.0
+        let k = (Float(3.0) - Zc*Zc - Zs*Zs) / Float(2.0)
         Zc *= k
         Zs *= k
     }

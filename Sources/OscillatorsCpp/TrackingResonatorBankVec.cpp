@@ -29,13 +29,13 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-constexpr float PI = 3.14159265358979323846; // PI
-constexpr float twoPi = 2.0 * PI;
+constexpr float PI = 3.14159265358979323846f; // PI
+constexpr float twoPi = 2.0f * PI;
 constexpr float zero = 0.0f;
 constexpr float one = 1.0f;
 constexpr float minusOne = -1.0f;
 
-constexpr float minMaxPower = 0.001;
+constexpr float minMaxPower = 0.001f;
 
 TrackingResonatorBankVec::TrackingResonatorBankVec(size_t numResonators, const std::vector<float> &frequencies, const std::vector<float> &alphas, const std::vector<float> &betas, const std::vector<float> &gammas, float sampleRate)
 : TrackingResonatorBankVec(numResonators, frequencies.data(), alphas.data(), betas.data(), gammas.data(), sampleRate) {
@@ -247,39 +247,7 @@ void TrackingResonatorBankVec::update(const float sample) {
              m_d.data(), 1,
              m_numResonators);
     
-    float trackFrequencyPowerThreshold = fmax(minMaxPower, m_accPower) / 1000.0;
-
-    
-//    // Calculate threshold mask
-//    vDSP_vthres(m_powers.data(), 1,
-//                &trackFrequencyPowerThreshold,
-//                m_mask.data(), 1,
-//                m_numResonators);
-//    
-//    vDSP_vclip(m_mask.data(), 1,
-//               &zero, &trackFrequencyPowerThreshold,
-//               m_mask.data(), 1,
-//               m_numResonators);
-//    
-//    vDSP_vsdiv(m_mask.data(), 1,
-//               &trackFrequencyPowerThreshold,
-//               m_mask.data(), 1,
-//               m_numResonators);
-//    
-//    // inverse mask
-//    vDSP_vsmsa (m_mask.data(), 1,
-//                &minusOne,
-//                &one,
-//                m_inverseMask.data(), 1,
-//                m_numResonators);
-//    
-//    // merge angular frequencies according to masks
-//    vDSP_vmma (m_mask.data(), 1,
-//               m_d.data(), 1,
-//               m_inverseMask.data(), 1,
-//               m_naturalOmegas.data(), 1,
-//               m_d.data(), 1,
-//               m_numResonators);
+    float trackFrequencyPowerThreshold = fmax(minMaxPower, m_accPower) / 1000.0f;
 
     // store the mask values in the second half of m_d
     fuseThresholdAndMerge(m_powers.data(),

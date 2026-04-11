@@ -70,7 +70,7 @@ void Phasor::incrementPhase() {
 void Phasor::stabilize(){
     // approximation for 1 / sqrt(x) around 1 (Taylor expansion)
     // sqrt(m_Zc*m_Zc + m_Zs*m_Zs) should be 1
-    const float k = (3.0 - m_Zc*m_Zc - m_Zs*m_Zs) / 2.0;
+    const float k = (3.0f - m_Zc*m_Zc - m_Zs*m_Zs) / 2.0f;
     m_Zc *= k;
     m_Zs *= k;
 }

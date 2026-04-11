@@ -31,16 +31,12 @@ SOFTWARE.
 
 namespace oscillators_cpp {
 
-// Phasor class: base for individual oscillators
+// Oscillator class: simple signal generator
 class Oscillator : public Phasor {
 protected:
     float m_amplitude;
     
 public:
-//    Oscillator & operator=(const Oscillator&) = delete;
-//    Oscillator(const Oscillator&) = delete;
-//    virtual ~Oscillator() = default;
-    
     Oscillator(float frequency, float sampleRate, float amplitude = 1.0f, bool angular = false);
     
     float amplitude() const { return m_amplitude; }

@@ -5,9 +5,12 @@ Released under MIT License.
 
 This package implements digital sinusoidal oscillator models for signal synthesis and analysis, suitable for real-time audio processing,
 
-The main motivation behind the development of this package is to provide reference Swift and C++ implementations of the _Resonate_ algorithm, a  low latency, low memory footprint, and low computational cost algorithm for evaluating perceptually relevant spectral information from audio signals, at the same time resolution as that of the input signal.
+The main motivation behind the development of this package is to provide reference Swift and C++ implementations of the [_Resonate_](http://alexandrefrancois.org/Resonate) algorithm, a  low latency, low memory footprint, and low computational cost algorithm for evaluating perceptually relevant spectral information from audio signals, at the same time resolution as that of the input signal.
 
-The package offers various implementations of resonator banks independently tuned at arbitrary frequencies. The best candidates on hardware that supports SIMD acceleration are `ResonatorBankVec` (Swift) or its C++ counterpart, which offer a vectorized implementation that uses the Accelerate framework.
+The package offers various implementations of resonator banks independently tuned at arbitrary frequencies, as well as tracking resonator banks that continuously self-tune to the frequency components in the input signal.
+The best candidates on hardware that supports SIMD acceleration are the vectorized implementation that uses the Accelerate framework, namely:
+- `ResonatorBankVec` (Swift) or its C++ counterpart for fixed resonant frequency resonator banks, and
+- `TrackingResonatorBankVec` (Swift) or its C++ counterpart for tracking resonator banks.
 
 
 ## Phasor
@@ -46,7 +49,7 @@ At each tick of the clock (driven by the sampling rate of the output signal),
 
 ### Classes
 
-- `Oscillator`: a simple generator class, adopts `OscillatorProtocol`
+- `Oscillator`: a simple sinusoidal signal generator class, adopts `OscillatorProtocol`
 
 ## Resonators
 
@@ -58,7 +61,7 @@ The resonator accumulates the signal's contribution over time using the Exponent
 
 The resonator's amplitude is updated at each tick of the clock, i.e. for each input sample, from the resonator's current amplitude value _a_ (in [0,1]), its current waveform value _w_ (in [-1,1]), and the input sample value _s_ (in [-1,1]):  
 
-    _a <- (1-k) * a + k * s * w,  where k in [0,1]_
+_a <- (1-k) * a + k * s * w,  where k in [0,1]_
 
 The pattern _v <- (1-k) * v + k * s_, where k is a constant in [0,1] is the iterative implementation of the EWMA. The single parameter _k_, which can be related to a time constant, controls the dynamics of the system, i.e. how quickly it adapts to variations in the input signal, as well as the frequency resolution.
 
@@ -74,44 +77,58 @@ This is followed by another EWMA to dampen amplitude and phase oscillations.
 
 At any tick, the resonator's amplitude is the norm of P, i.e. _sqrt(pc*pc + ps*ps)_, and the phase offset is _arctan(ps/pc)_.
 
+In the presence of significant response to an input signal, the instantaneous frequency can be estimated from the phase change of the complex state after processing each input sample. The tracking resonator adjusts its resonant frequency to track that instantaneous frequency.
 
 ### Classes
 
-- `Resonator`: computes contributions at 0 and PI/2 (sine and cosine), adopts `ResonatorProtocol`
+- `Resonator`: computes contributions at 0 and PI/2 (sine and cosine); adopts `ResonatorProtocol`
+- `TrackingResonator`: computes contributions at 0 and PI/2 (sine and cosine), estimates phase differential and tracks estimated frequency; adopts `TrackingResonatorProtocol`
+
 
 ## Resonator Banks
 
 ### Overview
 
-Resonator banks implement independents resonators typically tuned to various frequencies within a range.
+Resonator banks implement independents resonators initially tuned to various frequencies within a range.
+Plain resonators have fixed resonant frequencies, while tracking resonator banks continuously self-tune to the frequency components in the input signal.
 
 ### Classes
 
 - `ResonatorBankVec`: a bank of independent resonators implemented as a single array (i.e. vectorized), to allow single calls to Accelerate functions across the resonators. The use of unsafe pointers and of SIMD parallelism makes this implementation extremely efficient on most hardware.
 - `ResonatorBankArray`: a bank of independent resonators implemented as instances of the Swift resonator class. The update function for live processing triggers resonator updates in concurrent task groups.
+- `TrackingResonatorBankVec`: a bank of independent resonators implemented as a single array (i.e. vectorized), to allow single calls to Accelerate functions across the resonators. The use of unsafe pointers and of SIMD parallelism makes this implementation extremely efficient on most hardware.
+- `TrackingResonatorBankArray`: a bank of independent resonators implemented as instances of the Swift resonator class. The update function for live processing triggers resonator updates in concurrent task groups.
+
 
 ### Concurrency
 
-The Swift `ResonatorBankArray` class implements 2 update functions:
+The Swift `ResonatorBankArray` and `TrackingResonatorBankArray` classes implements 2 update functions each:
 - `update` calls the update function for each resonator sequentially
 - `updateConcurrent` calls update for each resonator concurrently, with update calls grouped in a fixed number of concurrent tasks
 
+
 ## C++ Implementation
 
-The package features C++ version of the Oscillator, Resonator and ResonatorBank (as a vector of Resonator instances), in an Objective-C++ wrapper to bridge with Swift. The wrapper provides similar interfaces to the Swift implementations to facilitate comparative performance evaluation.
+The package features C++ version of the Phasor, Oscillator, Resonator, ResonatorBank (as a vector of Resonator instances), ResonatorBankVec (vectorized implementation), TrackingResonator and TrackingResonatorBankVec, in an Objective-C++ wrapper to bridge with Swift. The wrapper provides similar interfaces to the Swift implementations to facilitate comparative performance evaluation.
 
 ### C++ classes
 
 - `oscillator_cpp::Phasor`: the base class for independent oscillators
+- `oscillator_cpp::Oscillator`: a simple sinusoidal generator class
 - `oscillator_cpp::Resonator`: resonator (same computations as the Swift `Resonator` implementation)
 - `oscillator_cpp::ResonatorBank`: resonator bank as vector of Resonator instances. The update function for live processing triggers resonator updates in sequential or concurrent task groups (using Apple's Grand Central Dispatch).
 - `oscillator_cpp::ResonatorBankVec`: a bank of independent resonators implemented as a single vector, to allow single calls to Accelerate functions across the resonators. SIMD parallelism makes this implementation extremely efficient on most hardware.
+- `oscillator_cpp::TrackingResonator`: tracking resonator (same computations as the Swift `TrackingResonator` implementation)
+- `oscillator_cpp::TrackingResonatorBank`: tracking resonator bank as vector of TrackingResonator instances. The update function for live processing triggers resonator updates in sequential or concurrent task groups (using Apple's Grand Central Dispatch).
+- `oscillator_cpp::TrackingResonatorBankVec`: a bank of independent tracking resonators implemented as a single vector, to allow single calls to Accelerate functions across the resonators. SIMD parallelism makes this implementation extremely efficient on most hardware.
 
 ### Concurrency
 
 The C++ `oscillator_cpp::ResonatorBank` class by defaults utilizes Apple's Grand Central Dispatch to implement the concurrent update function `updateConcurrent`.
 
 The code also provides a sample implementation of the `updateConcurrent` function utilizing `std::async`, which is not used by default.
+
+These methods are not thoroughly tested.
 
 ### Objective-C++ wrappers
 
@@ -122,3 +139,6 @@ These classes provide an Objective-C++ interface for the C++ classes so they can
 - `ResonatorCpp`
 - `ResonatorBankCpp`
 - `ResonatorBankVecCpp`
+- `TrackingResonatorCpp`
+- `TrackingResonatorBankCpp`
+- `TrackingResonatorBankVecCpp`

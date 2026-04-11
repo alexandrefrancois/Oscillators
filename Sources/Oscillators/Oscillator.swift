@@ -26,7 +26,7 @@ import Foundation
 
 fileprivate let twoPi = Float.pi * 2.0
 
-/// Oscillator base class:
+/// Oscillator class:
 /// an oscillator is characterized by its frequency and amplitude.
 /// Waveform values are computed recursively with a complex phasor.
 /// Incremental calculations depend on frequency and sampling rate.

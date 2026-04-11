@@ -50,11 +50,7 @@ protected:
 
     void updateMultiplier();
 
-public:
-//    Phasor & operator=(const Phasor&) = delete;
-//    Phasor(const Phasor&) = delete;
-//    virtual ~Phasor() = default;
-    
+public:    
     Phasor(float frequency, float sampleRate, bool angular = false);
 
     float omega() const { return m_omega; }

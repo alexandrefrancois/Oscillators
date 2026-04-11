@@ -29,7 +29,7 @@ fileprivate let twoPi = Float.pi * 2.0
 /// Phasor class:
 /// A complex phasor allows to compute sinusoid values recursively.
 /// Incremental calculations depend on frequency and sampling rate.
-///  This is the base class for individual oscillators and resonators.
+/// This is the base class for individual oscillators and resonators.
 open class Phasor : PhasorProtocol {
     public var frequency: Float {
         get {

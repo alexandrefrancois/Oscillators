@@ -53,6 +53,12 @@ public class TrackingResonatorBankVec {
         vDSP.phase(R, result: &phases)
         return phases
     }
+    public var omegas : [Float] {
+        var omegas = [Float](repeating: 0, count: numResonators)
+        // Compute the angular velocities from W
+        vDSP.phase(W, result: &omegas)
+        return omegas
+    }
     public var resonantFrequencies: [Float] {
         var frequencies = [Float](repeating: 0, count: numResonators)
         // Compute the resonant frequencies from W
@@ -71,7 +77,7 @@ public class TrackingResonatorBankVec {
     private(set) var omSigma : Float = 0.0
     public private(set) var accPower: Float = 0.0001
     
-    private(set) var alphas : [Float] // can be tuned independently for each frequency
+    public private(set) var alphas : [Float] // can be tuned independently for each frequency
     private(set) var omAlphas : [Float] // can be tuned independently for each frequency
     private(set) var betas : [Float]
     private(set) var omBetas : [Float]
@@ -316,15 +322,6 @@ public class TrackingResonatorBankVec {
                    1)
     }
     
-    /// Apply norm correction to phasor.
-    /// This can be done every few hundreds (?) of iterations
-    func stabilize() {
-        vDSP.squareMagnitudes(Z, result: &smPtr)
-        // use reciprocal square root
-        vForce.rsqrt(smPtr, result: &rsqrtPtr)
-        vDSP.multiply(Z, by: rsqrtPtr, result: &Z)
-    }
-    
     /// Process a frame of samples.
     /// Apply stabilization (norm correction) at the end
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
@@ -341,6 +338,15 @@ public class TrackingResonatorBankVec {
             update(sample: sample)
         }
         stabilize() // this is overkill but necessary
+    }
+    
+    /// Apply norm correction to phasor.
+    /// This can be done every few hundreds (?) of iterations
+    func stabilize() {
+        vDSP.squareMagnitudes(Z, result: &smPtr)
+        // use reciprocal square root
+        vForce.rsqrt(smPtr, result: &rsqrtPtr)
+        vDSP.multiply(Z, by: rsqrtPtr, result: &Z)
     }
     
     public func reset() {

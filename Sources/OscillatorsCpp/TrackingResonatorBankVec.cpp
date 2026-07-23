@@ -43,7 +43,7 @@ TrackingResonatorBankVec::TrackingResonatorBankVec(size_t numResonators, const s
 
 TrackingResonatorBankVec::TrackingResonatorBankVec(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, const float* gammas, float sampleRate)
 : m_sampleRate(sampleRate), m_numResonators(numResonators), m_twoNumResonators(2*numResonators) {
-    
+        
     // initialize from passed frequencies
     m_naturalFrequencies.resize(m_numResonators);
     memcpy(m_naturalFrequencies.data(), frequencies, m_numResonators * sizeof(float));
@@ -117,6 +117,16 @@ TrackingResonatorBankVec::TrackingResonatorBankVec(size_t numResonators, const f
     m_alphasSample.resize(m_twoNumResonators);
     m_sm.resize(m_numResonators);
     m_rsqrt.resize(m_numResonators);
+    
+    m_accPower.store(0.0001, std::memory_order_relaxed);
+}
+
+void TrackingResonatorBankVec::getAlphas(float *dest, size_t size){
+    if (size < m_numResonators)
+    {
+        throw std::out_of_range("Buffer passed to getAlphas() is not large enough");
+    }
+    memcpy(dest, m_alphas.data(), m_numResonators * sizeof(float));
 }
 
 void TrackingResonatorBankVec::getNaturalFrequencies(float *dest, size_t size){
@@ -125,6 +135,15 @@ void TrackingResonatorBankVec::getNaturalFrequencies(float *dest, size_t size){
         throw std::out_of_range("Buffer passed to getNaturalFrequencies() is not large enough");
     }
     memcpy(dest, m_naturalFrequencies.data(), m_numResonators * sizeof(float));
+}
+
+void TrackingResonatorBankVec::getOmegas(float *dest, size_t size){
+    if (size < m_numResonators)
+    {
+        throw std::out_of_range("Buffer passed to getOmegas() is not large enough");
+    }
+    DSPSplitComplex W = {m_w.data(), m_w.data() + m_numResonators};
+    vDSP_zvphas(&W, 1, dest, 1, m_numResonators);
 }
 
 void TrackingResonatorBankVec::getResonantFrequencies(float *dest, size_t size) {

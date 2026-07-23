@@ -52,7 +52,9 @@ public:
 
     float sampleRate() { return m_sampleRate; }
     size_t numResonators() { return m_resonators.size(); }
+    void getAlphas(float *dest, size_t size);
     void getNaturalFrequencies(float *dest, size_t size);
+    void getOmegas(float *dest, size_t size);
     void getResonantFrequencies(float *dest, size_t size);
     float resonantFrequencyValue(size_t index);
     void getPowers(float *dest, size_t size);

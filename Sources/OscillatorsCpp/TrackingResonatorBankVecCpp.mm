@@ -55,8 +55,16 @@ using namespace oscillators_cpp;
     return static_cast<int>(self.resonatorBank->numResonators());
 }
 
+- (void)getAlphas:(float*)dest size: (int)size {
+    self.resonatorBank->getAlphas(dest, size);
+}
+
 - (void)getNaturalFrequencies:(float*)dest size: (int)size {
     self.resonatorBank->getNaturalFrequencies(dest, size);
+}
+
+- (void)getOmegas:(float*)dest size: (int)size {
+    self.resonatorBank->getOmegas(dest, size);
 }
 
 - (void)getResonantFrequencies:(float*)dest size: (int)size {

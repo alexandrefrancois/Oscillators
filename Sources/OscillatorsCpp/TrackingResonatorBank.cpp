@@ -40,9 +40,21 @@ TrackingResonatorBank::TrackingResonatorBank(size_t numResonators, const float* 
     m_accPower.store(0.0001, std::memory_order_relaxed);
 }
 
+void TrackingResonatorBank::getAlphas(float *dest, size_t size) {
+    for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
+        dest[i]=m_resonators[i]->alpha();
+    }
+}
+
 void TrackingResonatorBank::getNaturalFrequencies(float *dest, size_t size) {
     for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
         dest[i]=m_resonators[i]->naturalFrequency();
+    }
+}
+
+void TrackingResonatorBank::getOmegas(float *dest, size_t size) {
+    for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
+        dest[i]=m_resonators[i]->omega();
     }
 }
 

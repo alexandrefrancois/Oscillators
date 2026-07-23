@@ -117,7 +117,7 @@ float ResonatorBankVec::betaValue(size_t index) {
     if (index >= m_numResonators) {
         throw std::out_of_range("Bad index passed to alphaValue()");
     }
-    return m_alphas[index];
+    return m_betas[index];
 }
 
 void ResonatorBankVec::getPowers(float *dest, size_t size) {

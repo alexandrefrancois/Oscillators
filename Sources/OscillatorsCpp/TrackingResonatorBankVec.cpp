@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 #include "TrackingResonatorBankVec.hpp"
+#include "FrameStride.hpp"
 
 #include <Accelerate/Accelerate.h>
 #include <arm_neon.h>
@@ -301,8 +302,9 @@ void TrackingResonatorBankVec::update(const std::vector<float> &samples) {
 /// Apply stabilization (norm correction) at the end
 /// Compute amplitudes (phasor magnitudes) at the end
 void TrackingResonatorBankVec::update(const float *frameData, size_t frameLength, size_t sampleStride) {
-    for (int i=0; i<frameLength; i += sampleStride) {
-        update(frameData[i]);
+    const size_t sampleSpan = frameSampleSpan(frameLength, sampleStride);
+    for (size_t sampleIndex = 0; sampleIndex < sampleSpan; sampleIndex += sampleStride) {
+        update(frameData[sampleIndex]);
     }
     stabilize(); // this is overkill but necessary
 }
@@ -311,8 +313,9 @@ void TrackingResonatorBankVec::update(const float *frameData, size_t frameLength
 /// Apply stabilization (norm correction) at the end
 /// Compute amplitudes (phasor magnitudes) at the end
 void TrackingResonatorBankVec::update(const float *frameData, size_t frameLength, size_t sampleStride, float* powers, float* amplitudes) {
-    for (int i=0; i<frameLength; i += sampleStride) {
-        update(frameData[i]);
+    const size_t sampleSpan = frameSampleSpan(frameLength, sampleStride);
+    for (size_t sampleIndex = 0; sampleIndex < sampleSpan; sampleIndex += sampleStride) {
+        update(frameData[sampleIndex]);
     }
     stabilize(); // this is overkill but necessary
 }
@@ -379,4 +382,3 @@ void TrackingResonatorBankVec::fuseThresholdAndMerge(const float* powers,
         mask[i] = isAbove ? 1.0f : 0.0f;
     }
 }
-

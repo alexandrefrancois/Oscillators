@@ -184,5 +184,71 @@ final class TrackingResonatorTests: XCTestCase {
             XCTAssertEqual(swiftRes.s, cppRes.s(), accuracy: epsilon)
         }
     }
-}
 
+    func testRawBufferStrideTreatsFrameLengthAsFrameCount() {
+        let frameLength = 96
+        let f0: Float = 440.0
+        let alpha: Float = 0.9, beta: Float = 0.9, gamma: Float = 0.9
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let channelSamples = SignalFixtures.makeSine(count: frameLength, freq: f0, sampleRate: sampleRate)
+        var interleaved = channelSamples.flatMap { [$0, Float(-0.25)] }
+
+        let swiftReference = TrackingResonator(
+            naturalFrequency: f0,
+            alpha: alpha,
+            beta: beta,
+            gamma: gamma,
+            sampleRate: sampleRate
+        )
+        let swiftStrided = TrackingResonator(
+            naturalFrequency: f0,
+            alpha: alpha,
+            beta: beta,
+            gamma: gamma,
+            sampleRate: sampleRate
+        )
+
+        swiftReference.update(samples: channelSamples, maxPower: 1.0)
+        interleaved.withUnsafeMutableBufferPointer { buffer in
+            swiftStrided.update(
+                frameData: buffer.baseAddress!,
+                frameLength: frameLength,
+                sampleStride: 2,
+                maxPower: 1.0
+            )
+        }
+
+        XCTAssertEqual(swiftStrided.amplitude, swiftReference.amplitude, accuracy: 1e-5)
+        XCTAssertEqual(swiftStrided.phase, swiftReference.phase, accuracy: 1e-5)
+
+        guard let cppReference = TrackingResonatorCpp(
+            naturalFrequency: f0,
+            alpha: alpha,
+            beta: beta,
+            gamma: gamma,
+            sampleRate: sampleRate
+        ), let cppStrided = TrackingResonatorCpp(
+            naturalFrequency: f0,
+            alpha: alpha,
+            beta: beta,
+            gamma: gamma,
+            sampleRate: sampleRate
+        ) else {
+            XCTFail("Cpp TrackingResonator could not be instantiated")
+            return
+        }
+
+        channelSamples.forEach { cppReference.updateWithSample(value: $0) }
+        interleaved.withUnsafeMutableBufferPointer { buffer in
+            cppStrided.update(
+                frameData: buffer.baseAddress!,
+                frameLength: Int32(frameLength),
+                sampleStride: 2,
+                maxPower: 1.0
+            )
+        }
+
+        XCTAssertEqual(cppStrided.amplitude(), cppReference.amplitude(), accuracy: 1e-5)
+        XCTAssertEqual(cppStrided.phase(), cppReference.phase(), accuracy: 1e-5)
+    }
+}

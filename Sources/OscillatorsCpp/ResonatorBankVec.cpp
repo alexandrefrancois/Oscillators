@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 #include "ResonatorBankVec.hpp"
+#include "FrameStride.hpp"
 
 #include <Accelerate/Accelerate.h>
 
@@ -189,8 +190,9 @@ void ResonatorBankVec::update(const std::vector<float> &samples) {
 /// Apply stabilization (norm correction) at the end
 /// Compute amplitudes (phasor magnitudes) at the end
 void ResonatorBankVec::update(const float *frameData, size_t frameLength, size_t sampleStride) {
-    for (int i=0; i<frameLength; i += sampleStride) {
-        update(frameData[i]);
+    const size_t sampleSpan = frameSampleSpan(frameLength, sampleStride);
+    for (size_t sampleIndex = 0; sampleIndex < sampleSpan; sampleIndex += sampleStride) {
+        update(frameData[sampleIndex]);
     }
     stabilize(); // this is overkill but necessary
 }
@@ -199,8 +201,9 @@ void ResonatorBankVec::update(const float *frameData, size_t frameLength, size_t
 /// Apply stabilization (norm correction) at the end
 /// Compute amplitudes (phasor magnitudes) at the end
 void ResonatorBankVec::update(const float *frameData, size_t frameLength, size_t sampleStride, float* powers, float* amplitudes) {
-    for (int i=0; i<frameLength; i += sampleStride) {
-        update(frameData[i]);
+    const size_t sampleSpan = frameSampleSpan(frameLength, sampleStride);
+    for (size_t sampleIndex = 0; sampleIndex < sampleSpan; sampleIndex += sampleStride) {
+        update(frameData[sampleIndex]);
     }
     stabilize(); // this is overkill but necessary
 }

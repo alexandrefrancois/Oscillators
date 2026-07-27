@@ -158,4 +158,86 @@ final class TrackingResonatorBankVecTests: XCTestCase {
             XCTAssertEqual(swiftBank.phases[i], cppPhases[i], accuracy: 1e-4, "Phase mismatch at index \(i)")
         }
     }
+
+    func testRawBufferStrideTreatsFrameLengthAsFrameCount() {
+        let frequencies = FrequenciesFixtures.frequencies
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let gammas = TrackingResonatorBankArray.gammasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let frameLength = 96
+        let channelSamples = SignalFixtures.makeSine(count: frameLength, freq: 440.0, sampleRate: sampleRate)
+        var interleaved = channelSamples.flatMap { [$0, Float(-0.25)] }
+
+        let swiftReference = TrackingResonatorBankVec(
+            naturalFrequencies: frequencies,
+            alphas: alphas,
+            betas: betas,
+            gammas: gammas,
+            sampleRate: sampleRate
+        )
+        let swiftStrided = TrackingResonatorBankVec(
+            naturalFrequencies: frequencies,
+            alphas: alphas,
+            betas: betas,
+            gammas: gammas,
+            sampleRate: sampleRate
+        )
+
+        channelSamples.forEach { swiftReference.update(sample: $0) }
+        interleaved.withUnsafeMutableBufferPointer { buffer in
+            swiftStrided.update(
+                frameData: buffer.baseAddress!,
+                frameLength: frameLength,
+                sampleStride: 2
+            )
+        }
+
+        for index in 0..<frequencies.count {
+            XCTAssertEqual(swiftStrided.amplitudes[index], swiftReference.amplitudes[index], accuracy: 1e-5)
+            XCTAssertEqual(swiftStrided.phases[index], swiftReference.phases[index], accuracy: 1e-5)
+        }
+
+        guard let cppReference = TrackingResonatorBankVecCpp(
+            numResonators: Int32(frequencies.count),
+            naturalFrequencies: frequencies,
+            alphas: alphas,
+            betas: betas,
+            gammas: gammas,
+            sampleRate: sampleRate
+        ), let cppStrided = TrackingResonatorBankVecCpp(
+            numResonators: Int32(frequencies.count),
+            naturalFrequencies: frequencies,
+            alphas: alphas,
+            betas: betas,
+            gammas: gammas,
+            sampleRate: sampleRate
+        ) else {
+            XCTFail("Cpp TrackingResonatorBankVec could not be instantiated")
+            return
+        }
+
+        channelSamples.forEach { cppReference.update(sample: $0) }
+        interleaved.withUnsafeMutableBufferPointer { buffer in
+            cppStrided.update(
+                frameData: buffer.baseAddress!,
+                frameLength: Int32(frameLength),
+                sampleStride: 2
+            )
+        }
+
+        var cppReferenceAmplitudes = [Float](repeating: 0.0, count: frequencies.count)
+        var cppStridedAmplitudes = [Float](repeating: 0.0, count: frequencies.count)
+        var cppReferencePhases = [Float](repeating: 0.0, count: frequencies.count)
+        var cppStridedPhases = [Float](repeating: 0.0, count: frequencies.count)
+        cppReference.getAmplitudes(&cppReferenceAmplitudes, size: Int32(cppReferenceAmplitudes.count))
+        cppStrided.getAmplitudes(&cppStridedAmplitudes, size: Int32(cppStridedAmplitudes.count))
+        cppReference.getPhases(&cppReferencePhases, size: Int32(cppReferencePhases.count))
+        cppStrided.getPhases(&cppStridedPhases, size: Int32(cppStridedPhases.count))
+
+        for index in 0..<frequencies.count {
+            XCTAssertEqual(cppStridedAmplitudes[index], cppReferenceAmplitudes[index], accuracy: 1e-5)
+            XCTAssertEqual(cppStridedPhases[index], cppReferencePhases[index], accuracy: 1e-5)
+        }
+    }
 }

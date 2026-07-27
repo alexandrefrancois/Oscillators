@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 #include "Resonator.hpp"
+#include "FrameStride.hpp"
 
 #include <Accelerate/Accelerate.h>
 
@@ -94,8 +95,9 @@ void Resonator::update(const std::vector<float> &samples) {
 }
 
 void Resonator::update(const float *frameData, size_t frameLength, size_t sampleStride) {
-    for (int i=0; i<frameLength; i += sampleStride) {
-        updateWithSample(frameData[i]);
+    const size_t sampleSpan = frameSampleSpan(frameLength, sampleStride);
+    for (size_t sampleIndex = 0; sampleIndex < sampleSpan; sampleIndex += sampleStride) {
+        updateWithSample(frameData[sampleIndex]);
     }
     stabilize(); // this is overkill but necessary
 }

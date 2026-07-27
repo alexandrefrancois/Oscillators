@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 #include "TrackingResonator.hpp"
+#include "FrameStride.hpp"
 
 #include <Accelerate/Accelerate.h>
 
@@ -116,8 +117,9 @@ void TrackingResonator::update(const std::vector<float> &samples, float maxPower
 
 void TrackingResonator::update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower) {
     m_trackFrequencyPowerThreshold = fmax(minMaxPower, maxPower) / 1000.0f;
-    for (int i=0; i<frameLength; i += sampleStride) {
-        updateWithSample(frameData[i]);
+    const size_t sampleSpan = frameSampleSpan(frameLength, sampleStride);
+    for (size_t sampleIndex = 0; sampleIndex < sampleSpan; sampleIndex += sampleStride) {
+        updateWithSample(frameData[sampleIndex]);
     }
     stabilize(); // this is overkill but necessary
 }

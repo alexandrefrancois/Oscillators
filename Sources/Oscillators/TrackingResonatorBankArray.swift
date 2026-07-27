@@ -25,7 +25,7 @@ SOFTWARE.
 import Foundation
 import Atomics
 
-/// An array of independent resonator instances
+/// An array of independent tracking resonator instances
 public class TrackingResonatorBankArray {
     public static func gammasHeuristic(frequencies: [Float], sampleRate: Float, k: Float = 1, n: Float = 1) -> [Float] {
         frequencies.map { frequency in

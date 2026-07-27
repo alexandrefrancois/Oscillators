@@ -29,7 +29,7 @@ import simd
 fileprivate let twoPi = Float.pi * 2.0
 fileprivate let minMaxPower = Float(0.001)
 
-/// A bank of independent resonators implemented as a single array, computations use the Accelerate framework with manual memory management (unsafe pointers)
+/// A bank of independent tracking resonators implemented as a single array, computations use the Accelerate framework with manual memory management (unsafe pointers)
 public class TrackingResonatorBankVec {
     public static func alphasHeuristic(frequencies: [Float], sampleRate: Float, k: Float = 1) -> [Float] {
         frequencies.map { frequency in

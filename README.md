@@ -1,144 +1,288 @@
 # Oscillators
 
-Copyright (c) 2022-2026 Alexandre R. J. François  
-Released under MIT License.
+`Oscillators` is a Swift package for sinusoidal synthesis and low-latency
+frequency analysis on Apple platforms. It contains:
 
-This package implements digital sinusoidal oscillator models for signal synthesis and analysis, suitable for real-time audio processing,
+- Recursive sinusoidal oscillators.
+- Fixed-frequency resonators and resonator banks.
+- Tracking resonators that adapt their resonant frequency to an input component.
+- Scalar reference implementations and Accelerate-backed vector implementations.
+- C++ implementations exposed to Swift through Objective-C++ wrappers.
+- Frequency-scale and dynamics utilities.
 
-The main motivation behind the development of this package is to provide reference Swift and C++ implementations of the [_Resonate_](http://alexandrefrancois.org/Resonate) algorithm, a  low latency, low memory footprint, and low computational cost algorithm for evaluating perceptually relevant spectral information from audio signals, at the same time resolution as that of the input signal.
+The resonators implement the ideas behind
+[Resonate](http://alexandrefrancois.org/Resonate): estimating perceptually
+relevant spectral information at the input signal's sample resolution without
+an FFT frame.
 
-The package offers various implementations of resonator banks independently tuned at arbitrary frequencies, as well as tracking resonator banks that continuously self-tune to the frequency components in the input signal.
-The best candidates on hardware that supports SIMD acceleration are the vectorized implementation that uses the Accelerate framework, namely:
-- `ResonatorBankVec` (Swift) or its C++ counterpart for fixed resonant frequency resonator banks, and
-- `TrackingResonatorBankVec` (Swift) or its C++ counterpart for tracking resonator banks.
+## Requirements
 
+The package manifest declares:
 
-## Phasor
+- Swift tools 5.6 or later.
+- macOS 10.15 or later.
+- iOS 15 or later.
+- C++17 for the C++ target.
 
-### Overview
+Both products are Apple-platform implementations. The Swift vectorized code
+uses Accelerate, and the C++ product uses Objective-C++ wrappers with Apple
+frameworks. The Swift product depends on
+[swift-atomics](https://github.com/apple/swift-atomics).
 
-An oscillator is defined by its frequency and amplitude.
-The sinusoidal waveform values are computed recursively using a complex phasor.
+## Installation
 
-A complex phasor _Z = Zc + i Zs_ allows to recursively compute sinusoidals at a specified frequency and sampling rate.
-At each step, of duration 1 / sampleRate:
+Add the package in Xcode, or add it to `Package.swift`:
 
-_Z <- Z * W_
+```swift
+dependencies: [
+    .package(
+        url: "https://github.com/alexandrefrancois/Oscillators.git",
+        from: "5.0.0"
+    )
+]
+```
 
-where:
-  - _W = Wc + i Ws_
-  - _w = 2 * PI * frequency / sampleRate_
-  - _Wc = cos(w), Ws = sin(w)_
-  
-_Zc_ and _Zs_ are cosine and sine (resp.) waveforms of same frequency; Z has magnitude 1, which can be used to regularly correct for accumulation of numerical approximations.
-  
-### Classes
+Then add the product needed by your target:
 
-- `Phasor`: the base class for individual oscillators, adopts `PhasorProtocol`
+```swift
+.target(
+    name: "YourTarget",
+    dependencies: [
+        .product(name: "Oscillators", package: "Oscillators")
+    ]
+)
+```
 
-## Oscillator
+Add the `OscillatorsCpp` product when importing the Objective-C++ bridge types.
 
-### Overview
+## Quick Start
 
-The phasor readily provides a sinusoidal signal to generate a signal at the chosen sampling rate and frequency.
+### Generate a sinusoid
 
-At each tick of the clock (driven by the sampling rate of the output signal),
-- iterate the phasor value calculation
-- take the current value of either Zc (cosine) or Zs (sine)
-- output the value scaled by the amplitude
+`Oscillator` emits cosine samples and preserves phase between calls:
 
-### Classes
+```swift
+import Oscillators
 
-- `Oscillator`: a simple sinusoidal signal generator class, adopts `OscillatorProtocol`
+let oscillator = Oscillator(
+    frequency: 440,
+    sampleRate: 48_000,
+    amplitude: 0.5
+)
 
-## Resonators
+let frame = oscillator.getNextSamples(numSamples: 512)
+```
 
-### Overview
+Changing `frequency` or `amplitude` affects subsequent samples.
 
-A resonator is an oscillator which, when submitted to an input signal, oscillates with a larger amplitude when its resnonant frequency is present in the input signal. A resonator is characterized by its (resonant) frequency. The sinusoidal waveform is provided by the phasor.
+### Analyze fixed frequencies
 
-The resonator accumulates the signal's contribution over time using the Exponentially Weighted Moving Average (EWMA), also known as a low-pass filter in signal processing.
+Use `ResonatorBankVec` for a bank stored and updated as contiguous vectors:
 
-The resonator's amplitude is updated at each tick of the clock, i.e. for each input sample, from the resonator's current amplitude value _a_ (in [0,1]), its current waveform value _w_ (in [-1,1]), and the input sample value _s_ (in [-1,1]):  
+```swift
+import Oscillators
 
-_a <- (1-k) * a + k * s * w,  where k in [0,1]_
+let sampleRate: Float = 48_000
+let frequencies = Frequencies.logUniformFrequencies(
+    minFrequency: 55,
+    numBins: 84,
+    numBinsPerOctave: 12
+)
+let alphas = ResonatorBankVec.alphasHeuristic(
+    frequencies: frequencies,
+    sampleRate: sampleRate
+)
 
-The pattern _v <- (1-k) * v + k * s_, where k is a constant in [0,1] is the iterative implementation of the EWMA. The single parameter _k_, which can be related to a time constant, controls the dynamics of the system, i.e. how quickly it adapts to variations in the input signal, as well as the frequency resolution.
+let bank = ResonatorBankVec(
+    frequencies: frequencies,
+    alphas: alphas,
+    sampleRate: sampleRate
+)
 
-The instantaneous contribution of each input sample value to the amplitude is proportional to _s * w_, which intuitively will be maximal when peaks in the input signal and peaks in the resonator's waveform are both equally spaced and aligned, i.e. when they have same frequency and are in phase.
+bank.update(frame: frame)
 
-In order to account for phase offset, the above calculation is performed at 2 phase values (there are only 2 degrees of freedom). For a sine waveform _sin(x)_, the natural candidates are phases 0 and 𝜋/2, i.e. _sin(x)_ and _sin(x+𝜋/2) = cos(x)_, which are conveniently computed by the oscillator's phasor.
+let powers = bank.powers
+let amplitudes = bank.amplitudes
+let phases = bank.phases
+```
 
-The resonator maintains two values, real and imaginary parts of a complex number _P = Pc + i Ps_, updated at each tick of the clock. For each input sample, from the current value of _P_, the current phasor value _Z_ (of norm 1), and the input sample value _s_:
+The output arrays use the same ordering as `frequencies`. Call `reset()` to
+clear accumulated state and restore the phasors.
 
-_P <- (1-k) * P + k * s * Z,  where k in [0,1]_
+### Track changing frequencies
 
-This is followed by another EWMA to dampen amplitude and phase oscillations.
+`TrackingResonatorBankVec` starts at a set of natural frequencies and adjusts
+each resonant frequency when its response is strong enough:
 
-At any tick, the resonator's amplitude is the norm of P, i.e. _sqrt(pc*pc + ps*ps)_, and the phase offset is _arctan(ps/pc)_.
+```swift
+let trackingBank = TrackingResonatorBankVec(
+    naturalFrequencies: frequencies,
+    alphas: alphas,
+    gammas: nil,
+    sampleRate: sampleRate
+)
 
-In the presence of significant response to an input signal, the instantaneous frequency can be estimated from the phase change of the complex state after processing each input sample. The tracking resonator adjusts its resonant frequency to track that instantaneous frequency.
+trackingBank.update(frame: frame)
 
-### Classes
+let detectedPowers = trackingBank.powers
+let trackedFrequencies = trackingBank.resonantFrequencies
+```
 
-- `Resonator`: computes contributions at 0 and PI/2 (sine and cosine); adopts `ResonatorProtocol`
-- `TrackingResonator`: computes contributions at 0 and PI/2 (sine and cosine), estimates phase differential and tracks estimated frequency; adopts `TrackingResonatorProtocol`
+When `betas` is omitted it defaults to `alphas`. When `gammas` is `nil`, the
+vector tracking bank uses half of each alpha.
 
+## Choosing an Implementation
 
-## Resonator Banks
+| Type | Role | Storage and execution |
+| --- | --- | --- |
+| `Oscillator` | Cosine signal generation | Scalar Swift state |
+| `Resonator` | One fixed-frequency analyzer | Scalar Swift state |
+| `TrackingResonator` | One self-tuning analyzer | Scalar Swift state |
+| `ResonatorBankArray` | Fixed-frequency bank | Array of `Resonator` instances; sequential or synchronous concurrent update |
+| `ResonatorBankVec` | Fixed-frequency bank | Structure-of-arrays storage using Accelerate |
+| `TrackingResonatorBankArray` | Self-tuning bank | Array of `TrackingResonator` instances; sequential or synchronous concurrent update |
+| `TrackingResonatorBankVec` | Self-tuning bank | Structure-of-arrays storage using Accelerate and SIMD |
 
-### Overview
+`Phasor` is the shared recursive phase implementation behind the scalar types.
+It has no public initializer, so client code normally starts with
+`Oscillator`, `Resonator`, or `TrackingResonator`.
 
-Resonator banks implement independents resonators initially tuned to various frequencies within a range.
-Plain resonators have fixed resonant frequencies, while tracking resonator banks continuously self-tune to the frequency components in the input signal.
+The array banks expose their resonator instances and are the clearest choice
+when individual configuration or inspection matters. The vector banks batch
+work across all frequencies and avoid per-resonator object dispatch. Measure
+both with your frequency count, frame size, and target hardware before choosing
+solely for performance.
 
-### Classes
-
-- `ResonatorBankVec`: a bank of independent resonators implemented as a single array (i.e. vectorized), to allow single calls to Accelerate functions across the resonators. The use of unsafe pointers and of SIMD parallelism makes this implementation extremely efficient on most hardware.
-- `ResonatorBankArray`: a bank of independent resonators implemented as instances of the Swift resonator class. The update function for live processing triggers resonator updates in concurrent task groups.
-- `TrackingResonatorBankVec`: a bank of independent resonators implemented as a single array (i.e. vectorized), to allow single calls to Accelerate functions across the resonators. The use of unsafe pointers and of SIMD parallelism makes this implementation extremely efficient on most hardware.
-- `TrackingResonatorBankArray`: a bank of independent resonators implemented as instances of the Swift resonator class. The update function for live processing triggers resonator updates in concurrent task groups.
-
-
-### Concurrency
-
-The Swift `ResonatorBankArray` and `TrackingResonatorBankArray` classes implements 2 update functions each:
-- `update` calls the update function for each resonator sequentially
-- `updateConcurrent` calls update for each resonator concurrently, with update calls grouped in a fixed number of concurrent tasks
-
-
-## C++ Implementation
-
-The package features C++ version of the Phasor, Oscillator, Resonator, ResonatorBank (as a vector of Resonator instances), ResonatorBankVec (vectorized implementation), TrackingResonator and TrackingResonatorBankVec, in an Objective-C++ wrapper to bridge with Swift. The wrapper provides similar interfaces to the Swift implementations to facilitate comparative performance evaluation.
-
-### C++ classes
-
-- `oscillator_cpp::Phasor`: the base class for independent oscillators
-- `oscillator_cpp::Oscillator`: a simple sinusoidal generator class
-- `oscillator_cpp::Resonator`: resonator (same computations as the Swift `Resonator` implementation)
-- `oscillator_cpp::ResonatorBank`: resonator bank as vector of Resonator instances. The update function for live processing triggers resonator updates in sequential or concurrent task groups (using Apple's Grand Central Dispatch).
-- `oscillator_cpp::ResonatorBankVec`: a bank of independent resonators implemented as a single vector, to allow single calls to Accelerate functions across the resonators. SIMD parallelism makes this implementation extremely efficient on most hardware.
-- `oscillator_cpp::TrackingResonator`: tracking resonator (same computations as the Swift `TrackingResonator` implementation)
-- `oscillator_cpp::TrackingResonatorBank`: tracking resonator bank as vector of TrackingResonator instances. The update function for live processing triggers resonator updates in sequential or concurrent task groups (using Apple's Grand Central Dispatch).
-- `oscillator_cpp::TrackingResonatorBankVec`: a bank of independent tracking resonators implemented as a single vector, to allow single calls to Accelerate functions across the resonators. SIMD parallelism makes this implementation extremely efficient on most hardware.
-
-### Concurrency
-
-The C++ `oscillator_cpp::ResonatorBank` class by defaults utilizes Apple's Grand Central Dispatch to implement the concurrent update function `updateConcurrent`.
-
-The code also provides a sample implementation of the `updateConcurrent` function utilizing `std::async`, which is not used by default.
-
-These methods are not thoroughly tested.
-
-### Objective-C++ wrappers
-
-These classes provide an Objective-C++ interface for the C++ classes so they can be used in Swift code.
+The `OscillatorsCpp` product exposes these bridge classes to Swift:
 
 - `PhasorCpp`
-- `PhasorCppProtected`
 - `ResonatorCpp`
 - `ResonatorBankCpp`
 - `ResonatorBankVecCpp`
 - `TrackingResonatorCpp`
 - `TrackingResonatorBankCpp`
 - `TrackingResonatorBankVecCpp`
+
+Their interfaces intentionally resemble the Swift implementations so results
+and performance can be compared.
+
+## Processing Buffers
+
+Scalar resonators accept one sample, a `[Float]`, or a raw buffer. Vector banks
+expose frame and raw-buffer updates. For interleaved buffers, pass the address
+of the first channel sample, the number of frames to process, and the distance
+between consecutive samples for that channel:
+
+```swift
+var interleavedStereo = [Float](repeating: 0, count: 1_024)
+let frameCount = interleavedStereo.count / 2
+
+interleavedStereo.withUnsafeMutableBufferPointer { buffer in
+    guard let firstSample = buffer.baseAddress else { return }
+
+    bank.update(
+        frameData: firstSample,
+        frameLength: frameCount,
+        sampleStride: 2
+    )
+}
+```
+
+The raw-pointer overloads read the buffer but currently require a mutable
+pointer. The caller is responsible for keeping the pointer valid and ensuring
+that `frameLength` and `sampleStride` remain within the allocation.
+
+## Model and Parameters
+
+A phasor stores a unit complex value `Z` and advances it recursively:
+
+```text
+theta = -2 pi f / sampleRate
+Z <- Z * W
+W = cos(theta) + i sin(theta)
+```
+
+An oscillator returns the real component of `Z`, scaled by its amplitude.
+Periodic normalization limits floating-point drift.
+
+A resonator maintains a complex exponentially weighted moving average:
+
+```text
+R <- (1 - alpha) * R + alpha * sample * Z
+```
+
+A second moving average controlled by `beta` smooths the response. `gamma`
+controls phase-derivative smoothing in a fixed resonator and frequency
+adaptation in a tracking resonator. Smaller coefficients respond more slowly;
+larger coefficients respond more quickly.
+
+Common outputs are:
+
+- `power`: squared magnitude of the smoothed complex response.
+- `amplitude`: square root of `power`.
+- `phase`: angle of the smoothed complex response, in radians.
+- `instantaneousFrequency`: phase-derived estimate from a fixed resonator.
+- `resonantFrequency`: current self-tuned frequency of a tracking resonator.
+- `naturalFrequency`: fallback frequency of a tracking resonator.
+
+`Dynamics.alpha(timeConstant:sampleRate:)` and
+`Dynamics.timeConstant(alpha:sampleRate:)` convert between EWMA coefficients
+and time constants. `Frequencies` provides equal-tempered, logarithmic, mel,
+Doppler, and response-equalization helpers.
+
+## Input Contracts and Runtime Behavior
+
+The current interfaces do not validate all inputs. Callers should provide:
+
+- Positive, finite sample rates and time constants.
+- Positive `sampleStride` values.
+- Matching counts for frequencies, alphas, betas, and gammas.
+- At least one frequency for vector banks.
+- Smoothing coefficients appropriate for an EWMA, normally in `0...1`.
+
+Instances are mutable state machines. Do not update the same instance
+concurrently. `updateConcurrent` partitions one bank across four synchronous
+`DispatchQueue.concurrentPerform` chunks; it returns only after all resonators
+finish and should not be assumed to be real-time safe.
+
+Changing a scalar phasor's `sampleRate` currently preserves its angular
+increment, not its frequency in hertz. Set `frequency` again after changing
+`sampleRate` when the hertz value must remain constant.
+
+Reading bank results such as `powers`, `amplitudes`, and `phases` creates new
+Swift arrays. Keep those reads outside allocation-sensitive audio callbacks
+unless profiling shows that the cost is acceptable.
+
+## Architecture
+
+```text
+Package.swift
+Sources/
+  Oscillators/       Swift scalar, array-bank, and Accelerate implementations
+  OscillatorsCpp/    C++ implementations and Objective-C++ Swift bridges
+Tests/
+  OscillatorsTests/  XCTest behavior and Swift/C++ parity tests
+```
+
+The scalar implementations act as readable reference models. The vector
+implementations reproduce the same state updates over split-complex buffers.
+Cross-implementation tests compare key Swift and C++ results within floating
+point tolerances.
+
+## Development
+
+Build and run the test suite with:
+
+```sh
+swift test
+```
+
+The suite covers utilities, oscillator stability, scalar resonator responses,
+fixed bank updates, selected concurrent paths, resets, tracking behavior, and
+several Swift/C++ parity cases.
+
+## License
+
+Copyright (c) 2022-2026 Alexandre R. J. François.
+
+Released under the [MIT License](LICENSE).

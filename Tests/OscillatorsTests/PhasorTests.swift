@@ -26,7 +26,7 @@ import XCTest
 @testable import Oscillators
 
 fileprivate let epsilon : Float = 0.001
-fileprivate let twoPi = Float.pi * 2.0
+fileprivate let twoPi = Float.pi * Float(2.0)
 
 final class PhasorTests: XCTestCase {
     
@@ -70,20 +70,36 @@ final class PhasorTests: XCTestCase {
     }
     
     func testPhasor() throws {
-        let phasor = Phasor(frequency: 441.0, sampleRate: AudioFixtures.defaultSampleRate)
-        let twoPiFrequency : Float = twoPi * phasor.frequency
+        let frequencies: [Float] = [10.0, 27.5, 55.0, 110.0, 220.0, 440.0, 880.0, 1_000.0, 1_760.0, 2_500.0, 4_410.0, 8_000.0]
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let sampleCount = Int(sampleRate)
+        let maximumFrequencyError: Float = 0.01
         
-        // This checks that the phasor's frequency does not drift after a number of iterations
-        // that corresponds to a multiple of the number of samples in the oscillator's period
-        let alpha : Float = twoPiFrequency
-        for i in 0..<4410000 {
-            phasor.incrementPhase()
-            if i % 1024 == 0 {
-                phasor.stabilize()
+        for frequency in frequencies {
+            let phasor = Phasor(frequency: frequency, sampleRate: sampleRate)
+//            var stabilizeCount: Int = 0
+            
+            for i in 0..<sampleCount {
+                phasor.incrementPhase()
+                if i % 1024 == 0 {
+                    phasor.stabilize()
+                }
+//                stabilizeCount = max(stabilizeCount, phasor.stabilizeIfNeeded())
             }
+            
+            let expectedPhase = -Double(twoPi) * Double(frequency) * Double(sampleCount) / Double(sampleRate)
+            let expectedZc = Float(cos(expectedPhase))
+            let expectedZs = Float(sin(expectedPhase))
+            let dot = phasor.Zc * expectedZc + phasor.Zs * expectedZs
+            let cross = expectedZc * phasor.Zs - expectedZs * phasor.Zc
+            let phaseError = Float(abs(atan2(Double(cross), Double(dot))))
+            let frequencyError = phaseError * sampleRate / (twoPi * Float(sampleCount))
+            
+            XCTAssertEqual(phasor.magnitude, 1.0, accuracy: epsilon, "frequency: \(frequency), magnitude error: \(phasor.magnitude - 1.0)")
+            XCTAssertLessThanOrEqual(frequencyError, maximumFrequencyError, "frequency: \(frequency), frequency error: \(frequencyError) Hz")
+            
+//            print(stabilizeCount, phasor.magnitude)
         }
-        XCTAssertEqual(phasor.Zc, cos(alpha), accuracy: epsilon, "\(phasor.Zc - cos(alpha))")
-        XCTAssertEqual(phasor.Zs, sin(alpha), accuracy: epsilon, "\(phasor.Zs - sin(alpha))")
     }
 
 }

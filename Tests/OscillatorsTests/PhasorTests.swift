@@ -68,6 +68,50 @@ final class PhasorTests: XCTestCase {
         XCTAssertEqual(phasor.Wcps, cos(omega)+sin(omega))
 
     }
+
+    func testSettingOmegaStillUpdatesMultiplier() throws {
+        let phasor = Phasor(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate)
+        let omega = Float(-0.5)
+
+        phasor.omega = omega
+
+        XCTAssertEqual(phasor.Wc, cos(omega), accuracy: 1e-6)
+        XCTAssertEqual(phasor.Ws, sin(omega), accuracy: 1e-6)
+        XCTAssertEqual(phasor.Wcps, cos(omega) + sin(omega), accuracy: 1e-6)
+    }
+
+    func testSettingMultiplierAllowsOmegaReadout() throws {
+        let phasor = Phasor(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate)
+        let omega = Float(-0.25)
+
+        phasor.setMultiplier(c: cos(omega), s: sin(omega))
+
+        XCTAssertEqual(phasor.omega, omega, accuracy: 1e-6)
+    }
+
+    func testSettingMultiplierAllowsFrequencyReadout() throws {
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let phasor = Phasor(frequency: 440.0, sampleRate: sampleRate)
+        let frequency = Float(880.0)
+        let omega = -twoPi * frequency / sampleRate
+
+        phasor.setMultiplier(c: cos(omega), s: sin(omega))
+
+        XCTAssertEqual(phasor.frequency, frequency, accuracy: 1e-4)
+    }
+
+    func testSettingMultiplierDoesNotChangeMultiplierBeforeReadout() throws {
+        let phasor = Phasor(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate)
+        let omega = Float(-0.125)
+        let c = cos(omega)
+        let s = sin(omega)
+
+        phasor.setMultiplier(c: c, s: s)
+
+        XCTAssertEqual(phasor.Wc, c, accuracy: 1e-6)
+        XCTAssertEqual(phasor.Ws, s, accuracy: 1e-6)
+        XCTAssertEqual(phasor.Wcps, c + s, accuracy: 1e-6)
+    }
     
     func testPhasor() throws {
         let frequencies: [Float] = [10.0, 27.5, 55.0, 110.0, 220.0, 440.0, 880.0, 1_000.0, 1_760.0, 2_500.0, 4_410.0, 8_000.0]

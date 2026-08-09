@@ -37,21 +37,32 @@ open class Phasor : PhasorProtocol {
         }
         set {
             omega = -newValue / sampleRateOverTwoPi
-            updateMultiplier()
         }
     }
     
     public var sampleRate: Float {
         didSet {
             sampleRateOverTwoPi = sampleRate / twoPi
-            updateMultiplier()
+            if multiplierRepresentation == .anglePrimary {
+                updateMultiplier()
+            }
         }
     }
     
     /// Angular velocity
     /// omega = -2 pi frequency / sample rate
-    public var omega: Float { // this is the angular velocity,
-        didSet {
+    public var omega: Float {
+        get {
+            switch multiplierRepresentation {
+            case .anglePrimary:
+                return _omega
+            case .multiplierPrimary:
+                return atan2(Ws, Wc)
+            }
+        }
+        set {
+            _omega = newValue
+            multiplierRepresentation = .anglePrimary
             updateMultiplier()
         }
     }
@@ -74,27 +85,41 @@ open class Phasor : PhasorProtocol {
     internal var Ws : Float = 0.0
     internal var Wcps : Float = 0.0 // pre-computed Oc + Os
 
+    private enum MultiplierRepresentation: Equatable {
+        case anglePrimary
+        case multiplierPrimary
+    }
+
+    private var _omega: Float
+    private var multiplierRepresentation: MultiplierRepresentation = .anglePrimary
     private var stabilizeCounter: Int = 0
     
     
     init(omega: Float, sampleRate: Float) {
         self.sampleRate = sampleRate
         self.sampleRateOverTwoPi = sampleRate / twoPi
-        self.omega = omega
+        self._omega = omega
         updateMultiplier()
     }
 
     init(frequency: Float, sampleRate: Float) {
         self.sampleRate = sampleRate
         self.sampleRateOverTwoPi = sampleRate / twoPi
-        self.omega = -frequency / self.sampleRateOverTwoPi
+        self._omega = -frequency / self.sampleRateOverTwoPi
         updateMultiplier()
     }
 
     func updateMultiplier() {
-        Wc = cos(omega)
-        Ws = sin(omega)
+        Wc = cos(_omega)
+        Ws = sin(_omega)
         Wcps = Wc + Ws
+    }
+
+    internal func setMultiplier(c: Float, s: Float) {
+        Wc = c
+        Ws = s
+        Wcps = Wc + Ws
+        multiplierRepresentation = .multiplierPrimary
     }
         
     /// Compute next value of the phasor

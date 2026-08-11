@@ -30,123 +30,80 @@ fileprivate let minMaxPower = Float(0.001)
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// and adjust its resonant frequency to track the actual frequency of the signal component
-public class TrackingResonator : Phasor, TrackingResonatorProtocol {
+public class TrackingResonator : ResonatorBase, TrackingResonatorProtocol {
     public static func gammaHeuristic(frequency: Float, sampleRate: Float, k: Float = 1, n: Float = 1) -> Float {
         Resonator.alphaHeuristic(frequency: frequency, sampleRate: sampleRate, k: k, n: n) / 2.0
     }
 
-    public var power: Float {
-        cc*cc + ss*ss
-    }
-    public var amplitude: Float {
-        sqrt(cc*cc + ss*ss)
-    }
-    public var phase: Float {
-        atan2(ss, cc)
-    }
-    public var phaseComps: (cos: Float, sin: Float) {
-        let mag = sqrt(cc*cc + ss*ss)
-        return (cc/mag, ss/mag)
-    }
-    public var deltaPhase: Float {
-        atan2(dps, dpc)
-    }
-    public var deltaPhaseComps: (cos: Float, sin: Float) {
-        let mag = sqrt(dps*dps + dpc*dpc)
-        return (dpc/mag, dps/mag)
-    }
-    
-    public var alpha: Float {
-        didSet {
-            omAlpha = 1.0 - alpha
-        }
-    }
-    private(set) var omAlpha : Float = 0.0
-    
-    public var beta: Float {
-        didSet {
-            omBeta = 1.0 - beta
-        }
-    }
-    private(set) var omBeta : Float = 0.0
-    
-    public var gamma: Float {
-        didSet {
-            omGamma = 1.0 - gamma
-        }
-    }
-    private(set) var omGamma : Float = 0.0
-
-    private(set) var trackFrequencyPowerThreshold = Float(0.001)
-    
-    // complex: r = c + j s
-    private(set) var c: Float = 0.0
-    private(set) var s: Float = 0.0
-
-    // Smoothed resonator output
-    public private(set) var cc: Float = 0.0
-    public private(set) var ss: Float = 0.0
-    
-    // delta-phase components (not normalized)
-    public private(set) var dpc: Float = 1.0
-    public private(set) var dps: Float = 0.0
-    
     public var resonantFrequency: Float {
         frequency
     }
     
-    public private(set) var naturalFrequency: Float
+    // Changing the natural frequency will most likely require to set alpha, beta and gamma accordingly
     public func setNaturalFrequency(_ naturalFrequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil){
-        self.naturalFrequency = naturalFrequency
+        let naturalOmega = -naturalFrequency / sampleRateOverTwoPi
+        setNaturalW(c: cos(naturalOmega), s: sin(naturalOmega))
         self.alpha = alpha
         self.beta = beta ?? alpha
         self.gamma = gamma ?? alpha
     }
+
+    public var naturalFrequency: Float {
+        get {
+            -atan2(naturalWs, naturalWc) * sampleRateOverTwoPi
+        }
+    }
     
+    public var naturalOmega: Float {
+        get {
+            atan2(naturalWs, naturalWc)
+        }
+    }
+    
+    var naturalWc: Float
+    var naturalWs: Float
+
+//    public func setNaturalFrequency(_ naturalFrequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil){
+//        self.naturalFrequency = naturalFrequency
+//        self.alpha = alpha
+//        self.beta = beta ?? alpha
+//        self.gamma = gamma ?? alpha
+//    }
+    
+    private(set) var trackFrequencyPowerThreshold = Float(0.001)
+
     public init(naturalFrequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, sampleRate: Float) {
-        self.naturalFrequency = naturalFrequency
-        self.alpha = alpha
-        self.omAlpha = 1.0 - alpha
-        self.beta = beta ?? alpha
-        self.omBeta = 1.0 - self.beta
-        self.gamma = gamma ?? alpha
-        self.omGamma = 1.0 - self.gamma
-        super.init(frequency: naturalFrequency, sampleRate: sampleRate)
+        let naturalOmega = -naturalFrequency / (sampleRate / twoPi)
+        self.naturalWc = cos(naturalOmega)
+        self.naturalWs = sin(naturalOmega)
+        super.init(frequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sampleRate)
     }
-    
-    func updateWithSample(_ sample: Float) {
-        let alphaSample : Float = alpha * sample
-        c = omAlpha * c + alphaSample * Zc
-        s = omAlpha * s + alphaSample * Zs
-        // save current values
-        let lcc = cc
-        let lss = ss
-        // update
-        cc = omBeta * cc + beta * c
-        ss = omBeta * ss + beta * s
         
-        // compute current * conjugate(previous)
-        // the phase time derivative estimate is the arg of this complex number
-        // no need to smoothe here
-        dpc = cc * lcc + ss * lss
-        dps = ss * lcc - cc * lss
-        
+    func updateTracking() {
         // Update tracking
         if power > trackFrequencyPowerThreshold {
             // This is an EWMA with parameter gamma
             omega -= gamma * atan2(dps, dpc)
         } else {
             // go back to natural frequency
-            self.frequency = naturalFrequency
+            self.restoreNaturalW()
         }
-        
-        incrementPhase()
     }
     
+    override func updateWithSample(_ sample: Float) {
+        // save current values
+        let lcc = cc
+        let lss = ss
+        updateResonatorWithSample(sample)
+        updateDeltaPhase(lcc: lcc, lss: lss)
+        updateTracking()
+        incrementPhase()
+    }
+        
     public func update(sample: Float, maxPower: Float = 0.25) {
         trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / Float(1000.0)
         updateWithSample(sample)
-        stabilize() // this is overkill but necessary
+        stabilize()
     }
     
     public func update(samples: [Float], maxPower: Float = 0.25) {
@@ -154,7 +111,7 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
         for sample in samples {
             updateWithSample(sample)
         }
-        stabilize() // this is overkill but necessary
+        stabilize()
     }
 
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float = 0.25) {
@@ -162,6 +119,15 @@ public class TrackingResonator : Phasor, TrackingResonatorProtocol {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }
-        stabilize() // this is overkill but necessary
+        stabilize()
+    }
+    
+    func setNaturalW(c: Float, s: Float) {
+        naturalWc = c
+        naturalWs = s
+    }
+
+    func restoreNaturalW() {
+        setW(c: naturalWc, s: naturalWs)
     }
 }

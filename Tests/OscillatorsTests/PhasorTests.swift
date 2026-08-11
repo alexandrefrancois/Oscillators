@@ -81,7 +81,7 @@ final class PhasorTests: XCTestCase {
         let phasor = Phasor(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate)
         let omega = Float(-0.25)
 
-        phasor.setMultiplier(c: cos(omega), s: sin(omega))
+        phasor.setW(c: cos(omega), s: sin(omega))
 
         XCTAssertEqual(phasor.omega, omega, accuracy: 1e-6)
     }
@@ -92,7 +92,7 @@ final class PhasorTests: XCTestCase {
         let frequency = Float(880.0)
         let omega = -twoPi * frequency / sampleRate
 
-        phasor.setMultiplier(c: cos(omega), s: sin(omega))
+        phasor.setW(c: cos(omega), s: sin(omega))
 
         XCTAssertEqual(phasor.frequency, frequency, accuracy: 1e-4)
     }
@@ -103,7 +103,7 @@ final class PhasorTests: XCTestCase {
         let c = cos(omega)
         let s = sin(omega)
 
-        phasor.setMultiplier(c: c, s: s)
+        phasor.setW(c: c, s: s)
 
         XCTAssertEqual(phasor.Wc, c, accuracy: 1e-6)
         XCTAssertEqual(phasor.Ws, s, accuracy: 1e-6)

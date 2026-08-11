@@ -36,6 +36,7 @@ final class TrackingResonatorTests: XCTestCase {
                                           gamma: DynamicsFixtures.defaultGamma,
                                           sampleRate: AudioFixtures.defaultSampleRate)
         
+        XCTAssertEqual(resonator.naturalFrequency, 440.0)
         XCTAssertEqual(resonator.alpha, DynamicsFixtures.defaultAlpha)
         XCTAssertEqual(resonator.beta, DynamicsFixtures.defaultBeta)
         XCTAssertEqual(resonator.gamma, DynamicsFixtures.defaultGamma)

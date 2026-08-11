@@ -33,17 +33,11 @@ fileprivate let twoPi = Float.pi * 2.0
 open class Phasor : PhasorProtocol {
     public var frequency: Float {
         get {
-            -omega * sampleRateOverTwoPi
+            -atan2(Ws, Wc) * sampleRateOverTwoPi
         }
         set {
             let omega = -newValue / sampleRateOverTwoPi
-            setMultiplier(c: cos(omega), s: sin(omega))
-        }
-    }
-    
-    public var sampleRate: Float {
-        didSet {
-            sampleRateOverTwoPi = sampleRate / twoPi
+            setW(c: cos(omega), s: sin(omega))
         }
     }
     
@@ -54,12 +48,17 @@ open class Phasor : PhasorProtocol {
             atan2(Ws, Wc)
         }
         set {
-            setMultiplier(c: cos(newValue), s: sin(newValue))
+            setW(c: cos(newValue), s: sin(newValue))
         }
     }
     
     internal var sampleRateOverTwoPi: Float // this is the angular velocity,
-
+    public var sampleRate: Float {
+        didSet {
+            sampleRateOverTwoPi = sampleRate / twoPi
+        }
+    }
+    
     public var magnitudeSq: Float {
         Zc*Zc + Zs*Zs
     }
@@ -82,17 +81,17 @@ open class Phasor : PhasorProtocol {
     init(omega: Float, sampleRate: Float) {
         self.sampleRate = sampleRate
         self.sampleRateOverTwoPi = sampleRate / twoPi
-        setMultiplier(c: cos(omega), s: sin(omega))
+        setW(c: cos(omega), s: sin(omega))
     }
 
     init(frequency: Float, sampleRate: Float) {
         self.sampleRate = sampleRate
         self.sampleRateOverTwoPi = sampleRate / twoPi
         let omega = -frequency / self.sampleRateOverTwoPi
-        setMultiplier(c: cos(omega), s: sin(omega))
+        setW(c: cos(omega), s: sin(omega))
     }
 
-    internal func setMultiplier(c: Float, s: Float) {
+    internal func setW(c: Float, s: Float) {
         Wc = c
         Ws = s
         Wcps = Wc + Ws

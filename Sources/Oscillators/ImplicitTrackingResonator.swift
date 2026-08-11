@@ -229,7 +229,8 @@ public final class ImplicitTrackingResonator: Phasor, TrackingResonatorProtocol 
         }
 
         let current = ComplexRotation(c: Wc, s: Ws)
-        let next = current.multiplied(by: correction).normalized(epsilon: minimumResidualMagnitudeSquared)
+        // Taylor expansion around 1 should be enough here
+        let next = current.multiplied(by: correction).normalizedTaylor(epsilon: minimumResidualMagnitudeSquared)
         setMultiplier(c: next.c, s: next.s)
     }
 

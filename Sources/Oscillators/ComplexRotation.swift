@@ -53,6 +53,17 @@ internal struct ComplexRotation {
         let inverseMagnitude = 1.0 / sqrt(magSquared)
         return ComplexRotation(c: c * inverseMagnitude, s: s * inverseMagnitude)
     }
+    
+    /// Normalize using the Taylor expansion around 1 for inverse square root.
+    func normalizedTaylor(epsilon: Float = 1e-20) -> ComplexRotation {
+        let magSquared = magnitudeSquared
+        guard magSquared > epsilon, magSquared.isFinite else {
+            return .identity
+        }
+        // Taylor expansion around 1 for 1/sqrt
+        let inverseMagnitude = (Float(3.0) - magSquared) / Float(2.0)
+        return ComplexRotation(c: c * inverseMagnitude, s: s * inverseMagnitude)
+    }
 
     static func chordCorrection(
         dpc: Float,
@@ -64,7 +75,6 @@ internal struct ComplexRotation {
         guard residualMagnitudeSquared > epsilon, residualMagnitudeSquared.isFinite else {
             return nil
         }
-
         let inverseResidualMagnitude = 1.0 / sqrt(residualMagnitudeSquared)
         let uc = dpc * inverseResidualMagnitude
         let us = dps * inverseResidualMagnitude
@@ -85,7 +95,6 @@ internal struct ComplexRotation {
         guard residualMagnitudeSquared > epsilon, residualMagnitudeSquared.isFinite else {
             return nil
         }
-
         let inverseResidualMagnitude = 1.0 / sqrt(residualMagnitudeSquared)
         let error = dps * inverseResidualMagnitude
         let correction = ComplexRotation(c: 1.0, s: -gamma * error)

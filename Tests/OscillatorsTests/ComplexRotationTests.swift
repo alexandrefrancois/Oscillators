@@ -26,7 +26,7 @@ import XCTest
 @testable import Oscillators
 
 final class ComplexRotationTests: XCTestCase {
-    private let epsilon: Float = 1e-5
+    private let epsilon: Float = 1e-6
 
     func testIdentityMultiplication() {
         let rotation = ComplexRotation(c: 0.25, s: -0.75)
@@ -127,5 +127,45 @@ final class ComplexRotationTests: XCTestCase {
             XCTAssertEqual(correction.c, cos(-gamma * delta), accuracy: 7e-4)
             XCTAssertEqual(correction.s, sin(-gamma * delta), accuracy: 7e-4)
         }
+    }
+
+    func testChordCorrectionRepeatedNormalizationDoesNotDrift() throws {
+        let drift = try repeatedCorrectionDrift { dpc, dps, gamma in
+            try XCTUnwrap(ComplexRotation.chordCorrection(dpc: dpc, dps: dps, gamma: gamma))
+        }
+
+        XCTAssertLessThanOrEqual(drift, 2e-5)
+    }
+
+    func testTangentCorrectionRepeatedNormalizationDoesNotDrift() throws {
+        let drift = try repeatedCorrectionDrift { dpc, dps, gamma in
+            try XCTUnwrap(ComplexRotation.tangentCorrection(dpc: dpc, dps: dps, gamma: gamma))
+        }
+
+        XCTAssertLessThanOrEqual(drift, 2e-5)
+    }
+
+    private func repeatedCorrectionDrift(
+        correction: (Float, Float, Float) throws -> ComplexRotation,
+        normalize: (ComplexRotation) -> ComplexRotation = { $0.normalized() }
+    ) throws -> Float {
+        var rotation = ComplexRotation.identity
+        var maximumDrift: Float = 0.0
+
+        for index in 0..<20_000 {
+            let delta = Float(index % 101 - 50) * 0.001
+            let scale = residualScale(at: index)
+            let gamma = Float(0.35)
+            let nextCorrection = try correction(scale * cos(delta), scale * sin(delta), gamma)
+            rotation = normalize(rotation.multiplied(by: nextCorrection))
+            maximumDrift = max(maximumDrift, abs(rotation.magnitudeSquared - 1.0))
+        }
+
+        return maximumDrift
+    }
+
+    private func residualScale(at index: Int) -> Float {
+        let scales: [Float] = [0.2, 0.5, 0.8, 1.0, 1.25, 1.5, 2.0]
+        return scales[index % scales.count]
     }
 }

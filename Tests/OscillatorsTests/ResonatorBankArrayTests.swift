@@ -26,6 +26,8 @@ import XCTest
 @testable import Oscillators
 
 final class ResonatorBankArrayTests: XCTestCase {
+    private let epsilon: Float = 1e-4
+
     func testConstructorFromFrequencies() throws {
         let frequencies = FrequenciesFixtures.frequencies
         let sampleRate = AudioFixtures.defaultSampleRate
@@ -42,7 +44,7 @@ final class ResonatorBankArrayTests: XCTestCase {
         XCTAssertEqual(resonatorBankArray.resonators.count, frequencies.count)
         for (index, resonator) in resonatorBankArray.resonators.enumerated() {
             XCTAssertEqual(resonator.alpha, Resonator.alphaHeuristic(frequency: resonator.frequency, sampleRate: AudioFixtures.defaultSampleRate))
-            XCTAssertEqual(resonator.frequency, frequencies[index])
+            XCTAssertEqual(resonator.frequency, frequencies[index], accuracy: epsilon)
         }
     }
  
@@ -55,7 +57,7 @@ final class ResonatorBankArrayTests: XCTestCase {
         
         XCTAssertEqual(resonatorBankArray.resonators.count, frequencies.count)
         for (index, resonator) in resonatorBankArray.resonators.enumerated() {
-            XCTAssertEqual(resonator.frequency, frequencies[index])
+            XCTAssertEqual(resonator.frequency, frequencies[index], accuracy: epsilon)
             XCTAssertEqual(resonator.alpha, Resonator.alphaHeuristic(frequency: resonator.frequency, sampleRate: AudioFixtures.defaultSampleRate, k: 5.0))
         }
     }

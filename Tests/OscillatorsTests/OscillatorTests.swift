@@ -26,11 +26,10 @@ import XCTest
 @testable import Oscillators
 import OscillatorsCpp
 
-fileprivate let epsilon : Float = 0.0001
-fileprivate let twoPi = Float.pi * 2.0
-
 final class OscillatorTests: XCTestCase {
-        
+    private let epsilon : Float = 1e-4
+    private let twoPi = Float.pi * 2.0
+
     func testConstructor() throws {
         let frequency = Float(440.0)
         let sampleRate = AudioFixtures.defaultSampleRate

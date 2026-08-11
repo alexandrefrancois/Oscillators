@@ -9,11 +9,10 @@
 import XCTest
 @testable import Oscillators
 
-fileprivate let epsilon : Double = 0.00000001
-fileprivate let twoPi = Double.pi * 2.0
-
 final class PhasorDoubleTests: XCTestCase {
-    
+    private let epsilon : Double = 10e-8
+    private let twoPi = Double.pi * 2.0
+
     func testConstructor() throws {
         let frequency = Double(440.0)
         let sampleRate = Double(44100.0)

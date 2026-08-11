@@ -25,11 +25,9 @@ SOFTWARE.
 import XCTest
 @testable import Oscillators
 
-fileprivate let epsilon : Float = 0.001
-fileprivate let twoPi = Float.pi * Float(2.0)
-
 final class PhasorTests: XCTestCase {
-    
+    private let twoPi = Float.pi * Float(2.0)
+
     func testConstructor() throws {
         let frequency = Float(440.0)
         let sampleRate = AudioFixtures.defaultSampleRate
@@ -138,7 +136,7 @@ final class PhasorTests: XCTestCase {
             let phaseError = Float(abs(atan2(Double(cross), Double(dot))))
             let frequencyError = phaseError * sampleRate / (twoPi * Float(sampleCount))
             
-            XCTAssertEqual(phasor.magnitude, 1.0, accuracy: epsilon, "frequency: \(frequency), magnitude error: \(phasor.magnitude - 1.0)")
+            XCTAssertEqual(phasor.magnitude, 1.0, accuracy: 1e-5, "frequency: \(frequency), magnitude error: \(phasor.magnitude - 1.0)")
             XCTAssertLessThanOrEqual(frequencyError, maximumFrequencyError, "frequency: \(frequency), frequency error: \(frequencyError) Hz")
             
 //            print(stabilizeCount, phasor.magnitude)

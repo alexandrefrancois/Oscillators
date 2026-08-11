@@ -27,7 +27,6 @@ import XCTest
 import OscillatorsCpp
 
 final class TrackingResonatorBankVecTests: XCTestCase {
-    let epsilon: Float = 1e-5
 
     func testInitialization() {
         let frequencies = FrequenciesFixtures.frequencies
@@ -79,7 +78,7 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         }
         let ampsAfterReset = trackingResonatorBank.amplitudes
         for val in ampsAfterReset {
-            XCTAssertEqual(val, 0.0, accuracy: epsilon)
+            XCTAssertEqual(val, 0.0, accuracy: 1e-5)
         }
     }
 
@@ -94,7 +93,7 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         let frame = SignalFixtures.makeSine(count: 100, freq: 440.0, sampleRate: AudioFixtures.defaultSampleRate)
         bankA.update(frame: frame)
         for x in frame { bankB.update(sample: x) }
-        XCTAssertEqual(bankA.amplitudes[0], bankB.amplitudes[0], accuracy: epsilon)
+        XCTAssertEqual(bankA.amplitudes[0], bankB.amplitudes[0], accuracy: 1e-5)
         XCTAssertEqual(bankA.phases[0], bankB.phases[0], accuracy: 1e-3)
     }
 

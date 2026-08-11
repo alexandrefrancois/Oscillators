@@ -25,9 +25,9 @@ SOFTWARE.
 import XCTest
 @testable import Oscillators
 
-fileprivate let epsilon : Float = 0.000001
-
 final class DynamicsTests: XCTestCase {
+    private let epsilon : Float = 1e-20
+
     func testTimeConstant() throws {
         let t = Dynamics.timeConstant(alpha: DynamicsFixtures.defaultAlpha, sampleRate: AudioFixtures.defaultSampleRate)
         XCTAssertEqual(t, 0.09999806, accuracy: epsilon)

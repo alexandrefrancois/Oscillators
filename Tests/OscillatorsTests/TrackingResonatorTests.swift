@@ -26,10 +26,9 @@ import XCTest
 @testable import Oscillators
 import OscillatorsCpp
 
-fileprivate let epsilon : Float = 0.000001
-
 final class TrackingResonatorTests: XCTestCase {
-    
+    private let epsilon : Float = 1e-7
+
     func testConstructor() throws {
         let resonator = TrackingResonator(naturalFrequency: 440.0,
                                           alpha: DynamicsFixtures.defaultAlpha,

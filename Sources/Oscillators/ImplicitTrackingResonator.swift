@@ -24,12 +24,22 @@ SOFTWARE.
 
 import Foundation
 
+fileprivate let twoPi = Float.pi * 2.0
 fileprivate let implicitMinMaxPower = Float(0.001)
 fileprivate let minimumResidualMagnitudeSquared = Float(1e-20)
 
-public enum ImplicitTrackingRule: Equatable {
+public enum ImplicitTrackingRule: Equatable, CaseIterable, CustomStringConvertible {
     case normalizedChord
     case tangent
+    
+    public var description: String {
+        switch self {
+        case .normalizedChord:
+            return "Chord"
+        case .tangent:
+            return "Tangent"
+        }
+    }
 }
 
 /// The resonant frequency is represented implicitly by the phasor multiplier W.
@@ -139,7 +149,7 @@ public final class ImplicitTrackingResonator: Phasor, TrackingResonatorProtocol 
         self.gamma = gamma ?? alpha
         self.omGamma = 1.0 - self.gamma
         self.trackingRule = trackingRule
-        let naturalOmega = -naturalFrequency / (sampleRate / (Float.pi * 2.0))
+        let naturalOmega = -naturalFrequency / (sampleRate / twoPi)
         self.naturalWc = cos(naturalOmega)
         self.naturalWs = sin(naturalOmega)
         super.init(frequency: naturalFrequency, sampleRate: sampleRate)

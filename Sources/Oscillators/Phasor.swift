@@ -36,16 +36,14 @@ open class Phasor : PhasorProtocol {
             -omega * sampleRateOverTwoPi
         }
         set {
-            omega = -newValue / sampleRateOverTwoPi
+            let omega = -newValue / sampleRateOverTwoPi
+            setMultiplier(c: cos(omega), s: sin(omega))
         }
     }
     
     public var sampleRate: Float {
         didSet {
             sampleRateOverTwoPi = sampleRate / twoPi
-            if multiplierRepresentation == .anglePrimary {
-                updateMultiplier()
-            }
         }
     }
     
@@ -53,19 +51,13 @@ open class Phasor : PhasorProtocol {
     /// omega = -2 pi frequency / sample rate
     public var omega: Float {
         get {
-            switch multiplierRepresentation {
-            case .anglePrimary:
-                return _omega
-            case .multiplierPrimary:
-                return atan2(Ws, Wc)
-            }
+            atan2(Ws, Wc)
         }
         set {
-            _omega = newValue
-            multiplierRepresentation = .anglePrimary
-            updateMultiplier()
+            setMultiplier(c: cos(newValue), s: sin(newValue))
         }
     }
+    
     internal var sampleRateOverTwoPi: Float // this is the angular velocity,
 
     public var magnitudeSq: Float {
@@ -85,43 +77,27 @@ open class Phasor : PhasorProtocol {
     internal var Ws : Float = 0.0
     internal var Wcps : Float = 0.0 // pre-computed Oc + Os
 
-    private enum MultiplierRepresentation: Equatable {
-        case anglePrimary
-        case multiplierPrimary
-    }
-
-    private var _omega: Float
-    private var multiplierRepresentation: MultiplierRepresentation = .anglePrimary
     private var stabilizeCounter: Int = 0
-    
     
     init(omega: Float, sampleRate: Float) {
         self.sampleRate = sampleRate
         self.sampleRateOverTwoPi = sampleRate / twoPi
-        self._omega = omega
-        updateMultiplier()
+        setMultiplier(c: cos(omega), s: sin(omega))
     }
 
     init(frequency: Float, sampleRate: Float) {
         self.sampleRate = sampleRate
         self.sampleRateOverTwoPi = sampleRate / twoPi
-        self._omega = -frequency / self.sampleRateOverTwoPi
-        updateMultiplier()
-    }
-
-    func updateMultiplier() {
-        Wc = cos(_omega)
-        Ws = sin(_omega)
-        Wcps = Wc + Ws
+        let omega = -frequency / self.sampleRateOverTwoPi
+        setMultiplier(c: cos(omega), s: sin(omega))
     }
 
     internal func setMultiplier(c: Float, s: Float) {
         Wc = c
         Ws = s
         Wcps = Wc + Ws
-        multiplierRepresentation = .multiplierPrimary
     }
-        
+
     /// Compute next value of the phasor
     /// Z <- Z * W
     internal func incrementPhase() {

@@ -66,10 +66,9 @@ final class PhasorTests: XCTestCase {
         XCTAssertEqual(phasor.Wc, cos(omega))
         XCTAssertEqual(phasor.Ws, sin(omega))
         XCTAssertEqual(phasor.Wcps, cos(omega)+sin(omega))
-
     }
 
-    func testSettingOmegaStillUpdatesMultiplier() throws {
+    func testSettingOmegaUpdatesMultiplier() throws {
         let phasor = Phasor(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate)
         let omega = Float(-0.5)
 
@@ -79,7 +78,7 @@ final class PhasorTests: XCTestCase {
         XCTAssertEqual(phasor.Ws, sin(omega), accuracy: 1e-6)
         XCTAssertEqual(phasor.Wcps, cos(omega) + sin(omega), accuracy: 1e-6)
     }
-
+    
     func testSettingMultiplierAllowsOmegaReadout() throws {
         let phasor = Phasor(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate)
         let omega = Float(-0.25)

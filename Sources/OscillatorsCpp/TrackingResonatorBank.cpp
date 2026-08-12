@@ -30,11 +30,11 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-TrackingResonatorBank::TrackingResonatorBank(size_t numResonators, const float* naturalFrequencies, const float* alphas, const float* betas, const float* gammas, float sampleRate)
+TrackingResonatorBank::TrackingResonatorBank(size_t numResonators, const float* naturalFrequencies, const float* alphas, const float* betas, const float* gammas, TrackingRule trackingRule, float sampleRate)
 : m_sampleRate(sampleRate), m_sigma(1.0), m_omSigma(0.0)  {
     m_resonators.reserve(numResonators);
     for (size_t i=0; i<numResonators; ++i) {
-        m_resonators.emplace_back(std::make_unique<TrackingResonator>(naturalFrequencies[i], alphas[i], betas[i], gammas[i], sampleRate));
+        m_resonators.emplace_back(std::make_unique<TrackingResonator>(naturalFrequencies[i], alphas[i], betas[i], gammas[i], trackingRule, sampleRate));
     }
     m_dispatchQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
     m_accPower.store(0.0001, std::memory_order_relaxed);

@@ -27,6 +27,7 @@ SOFTWARE.
 #import <Foundation/Foundation.h>
 
 #include "TrackingResonatorBank.hpp"
+#include "TrackingRuleBridge.hpp"
 
 using namespace oscillators_cpp;
 
@@ -36,9 +37,9 @@ using namespace oscillators_cpp;
 
 @implementation TrackingResonatorBankCpp
 
-- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)naturalFrequencies alphas:(const float*)alphas betas: (const float*)betas gammas: (const float*)gammas sampleRate:(float)sampleRate {
+- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)naturalFrequencies alphas:(const float*)alphas betas:(const float*)betas gammas:(const float*)gammas trackingRule:(TrackingRuleCpp)trackingRule sampleRate:(float)sampleRate {
     if (self = [super init]) {
-        self.resonatorBank = new TrackingResonatorBank(numResonators, naturalFrequencies, alphas, betas, gammas, sampleRate);
+        self.resonatorBank = new TrackingResonatorBank(numResonators, naturalFrequencies, alphas, betas, gammas, toTrackingRule(trackingRule), sampleRate);
     }
     return self;
 }

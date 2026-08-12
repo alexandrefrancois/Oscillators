@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2025-2026 Alexandre R. J. Francois
+Copyright (c) 2026 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,18 +23,31 @@ SOFTWARE.
 */
 
 #import <Foundation/Foundation.h>
-#import "ResonatorBaseCpp.h"
+#import "PhasorCpp.h"
 
-#import "TrackingRuleCpp.h"
-
-// Wrapper for the TrackingResonator class
-@interface TrackingResonatorCpp : ResonatorBaseCpp
-- (instancetype)initWithNaturalFrequency:(float)naturalFrequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma trackingRule:(TrackingRuleCpp)trackingRule sampleRate:(float)sampleRate;
-- (float)naturalFrequency;
-- (void)setNaturalFrequency:(float)frequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma;
-- (float)resonantFrequency;
-- (void)update:(float)sample maxPower:(float)maxPower
-NS_SWIFT_NAME(update(sample:maxPower:));
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride maxPower:(float)maxPower
-NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:maxPower:));
+// Wrapper for the Resonator class
+@interface ResonatorBaseCpp : PhasorCpp
+- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma sampleRate:(float)sampleRate;
+- (float)power;
+- (float)amplitude;
+- (float)alpha;
+- (void)setAlpha:(float)alpha;
+- (float)omAlpha; // used in test...
+- (float)beta;
+- (void)setBeta:(float)beta;
+- (float)omBeta; // used in test...
+- (float)gamma;
+- (void)setGamma:(float)gamma;
+- (float)omGamma; // used in test...
+- (float)c;
+- (float)s;
+- (float)cc;
+- (float)ss;
+- (float)dpc;
+- (float)dps;
+- (float)phase;
+- (float)deltaPhase;
+- (float)instantaneousFrequency;
+- (void)updateWithSample:(float)sample
+NS_SWIFT_NAME(updateWithSample(value:));
 @end

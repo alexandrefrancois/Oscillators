@@ -25,62 +25,40 @@ SOFTWARE.
 #ifndef TrackingResonator_hpp
 #define TrackingResonator_hpp
 
-#include "Phasor.hpp"
+#include "ResonatorBase.hpp"
+#include "TrackingRule.hpp"
 
 namespace oscillators_cpp {
 
-class TrackingResonator : public Phasor {
+class TrackingResonator : public ResonatorBase {
 private:
-    float m_alpha;
-    float m_omAlpha;
-    float m_cos;
-    float m_sin;
-    // smoothed
-    float m_beta;
-    float m_omBeta;
-    float m_cc;
-    float m_ss;
-    // multipled by conjugate, smoothed (delta-phase)
-    float m_dpc;
-    float m_dps;
-    float m_gamma;
-    float m_omGamma;
+    static constexpr float minimumResidualMagnitudeSquared = 1e-20f;
 
-    float m_naturalFrequency;
+    float m_naturalWc;
+    float m_naturalWs;
     float m_trackFrequencyPowerThreshold;
+    TrackingRule m_trackingRule;
 
+    void setNaturalW(float c, float s);
+    void restoreNaturalW();
+
+    void updateTracking(); // virtual function override
+    
+    void applyEWMATracking();
+    void applyChordCorrectionTracking();
+    void applyTangentCorrectionTracking();
+    
 public:
-    TrackingResonator(float naturalFrequency, float alpha, float beta, float gamma, float sampleRate);    
-    float naturalFrequency() const { return m_naturalFrequency; }
+    TrackingResonator(float naturalFrequency, float alpha, float beta, float gamma, TrackingRule trackingRule, float sampleRate);
+    
+    float naturalFrequency() const { return -m_sampleRate * atan2(m_naturalWs, m_naturalWc) / twoPi; }
     void setNaturalFrequency(float frequency, float alpha, float beta, float gamma);
     float resonantFrequency() const { return frequency(); }
-    float power() const { return m_cc * m_cc + m_ss * m_ss; }
-    float amplitude() const { return sqrt(m_cc * m_cc + m_ss * m_ss); }
-    float alpha() const { return m_alpha; }
-    void setAlpha(float alpha);
-    float omAlpha() const { return m_omAlpha; }
-    float beta() const { return m_beta; }
-    void setBeta(float beta);
-    float omBeta() const { return m_omBeta; }
-    float gamma() const { return m_gamma; }
-    void setGamma(float gamma);
-    float omGamma() const { return m_omGamma; }
-    float c() const { return m_cos; }
-    float s() const { return m_sin; }
-    float cc() const { return m_cc; }
-    float ss() const { return m_ss; }
-    float dpc() const { return m_dpc; }
-    float dps() const { return m_dps; }
-    float phase() const;
-    float phaseX() const { return m_cc / sqrt(m_cc * m_cc + m_ss * m_ss); }
-    float phaseY() const { return m_ss / sqrt(m_cc * m_cc + m_ss * m_ss); }
-    float deltaPhase() const;
-    float deltaPhaseX() const { return m_dpc / sqrt(m_dpc * m_dpc + m_dps * m_dps); }
-    float deltaPhaseY() const { return m_dps / sqrt(m_dpc * m_dpc + m_dps * m_dps); }
-    void updateWithSample(float sample);
-    void update(float sample, float maxPower);
-    void update(const std::vector<float> &samples, float maxPower);
-    void update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower);
+
+    void updateWithSample(float sample); // virtual function override
+    void update(float sample, float maxPower, float thresholdDivider = 1000.0f);
+    void update(const std::vector<float> &samples, float maxPower, float thresholdDivider = 1000.0f);
+    void update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower, float thresholdDivider = 1000.0f);
 };
 
 } // oscillators_cpp

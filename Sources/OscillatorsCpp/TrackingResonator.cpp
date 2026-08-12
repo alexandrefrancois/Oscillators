@@ -31,95 +31,127 @@ using namespace oscillators_cpp;
 
 constexpr float minMaxPower = 0.001;
 
-TrackingResonator::TrackingResonator(float naturalFrequency, float alpha, float beta, float gamma, float sampleRate) : Phasor(naturalFrequency, sampleRate),
-m_naturalFrequency(naturalFrequency), m_alpha(alpha), m_omAlpha(1.0 - alpha), m_beta(beta), m_omBeta(1.0 - beta), m_gamma(gamma), m_omGamma(1.0 - gamma),
-m_dpc(1.0), m_dps(0.0), m_trackFrequencyPowerThreshold(0.001) {
+TrackingResonator::TrackingResonator(float naturalFrequency, float alpha, float beta, float gamma, TrackingRule trackingRule, float sampleRate) : ResonatorBase(naturalFrequency, alpha, beta, gamma, sampleRate),
+    m_trackingRule(trackingRule),
+    m_trackFrequencyPowerThreshold(0.001) {
+        // natural frequency is not angular
+        const float omega = -twoPi*naturalFrequency/sampleRate;
+        setNaturalW(cos(omega), sin(omega));
 }
 
 void TrackingResonator::setNaturalFrequency(float frequency, float alpha, float beta, float gamma) {
-    m_naturalFrequency = frequency;
+    const float omega = -twoPi*frequency/m_sampleRate;
+    setNaturalW(cos(omega), sin(omega));
     setAlpha(alpha);
     setBeta(beta);
     setGamma(gamma);
 }
 
-void TrackingResonator::setAlpha(float alpha) {
-    if (alpha < 0.0 || alpha >1.0) {
-        throw std::out_of_range("Bad alpha passed to setAlpha()");
+void TrackingResonator::setNaturalW(float c, float s) {
+    m_naturalWc = c;
+    m_naturalWs = s;
+}
+
+void TrackingResonator::restoreNaturalW() {
+    setW(m_naturalWc, m_naturalWs);
+}
+
+//void TrackingResonator::updateTracking() {
+//    // Update tracking
+//    if(power() > m_trackFrequencyPowerThreshold) {
+//        // go towards instantaneous frequency
+//        // this is EWMA with parameter gamma
+//        setOmega(omega() - m_gamma * atan2(m_dps, m_dpc));
+//    } else {
+//        // go back to natural frequency
+//        restoreNaturalW();
+//    }
+//}
+
+void TrackingResonator::updateTracking() {
+    if (power() > m_trackFrequencyPowerThreshold) {
+        switch (m_trackingRule) {
+        case TrackingRule::ewma:
+            applyEWMATracking();
+            break;
+        case TrackingRule::normalizedChord:
+            applyChordCorrectionTracking();
+            break;
+        case TrackingRule::tangent:
+            applyTangentCorrectionTracking();
+            break;
+        }
+
+        normalizeW();
+    } else {
+        restoreNaturalW();
     }
-    m_alpha = alpha;
-    m_omAlpha = 1.0 - m_alpha;
 }
 
-void TrackingResonator::setBeta(float beta) {
-    if (beta < 0.0 || beta >1.0) {
-        throw std::out_of_range("Bad beta passed to setBeta()");
+void TrackingResonator::applyEWMATracking() {
+    setOmega(omega() - m_gamma * atan2(m_dps, m_dpc));
+}
+
+void TrackingResonator::applyChordCorrectionTracking() {
+    const float residualMagnitudeSquared = m_dpc * m_dpc + m_dps * m_dps;
+
+    if (residualMagnitudeSquared <= minimumResidualMagnitudeSquared ||
+        !std::isfinite(residualMagnitudeSquared)) {
+        return;
     }
-    m_beta = beta;
-    m_omBeta = 1.0 - m_beta;
+
+    const float inverseResidualMagnitude = 1.0f / sqrt(residualMagnitudeSquared);
+
+    rotateW(
+        m_omGamma + m_gamma * m_dpc * inverseResidualMagnitude,
+        -m_gamma * m_dps * inverseResidualMagnitude
+    );
 }
 
-void TrackingResonator::setGamma(float gamma) {
-    if (gamma < 0.0 || gamma >1.0) {
-        throw std::out_of_range("Bad gamma passed to setGamma()");
+void TrackingResonator::applyTangentCorrectionTracking() {
+    const float residualMagnitudeSquared = m_dpc * m_dpc + m_dps * m_dps;
+
+    if (residualMagnitudeSquared <= minimumResidualMagnitudeSquared ||
+        !std::isfinite(residualMagnitudeSquared)) {
+        return;
     }
-    m_gamma = gamma;
-    m_omGamma = 1.0 - m_gamma;
-}
 
-float TrackingResonator::phase() const {
-    return atan2(m_ss, m_cc); // returns value in [-pi,pi]
-}
+    const float inverseResidualMagnitude = 1.0f / sqrt(residualMagnitudeSquared);
 
-float TrackingResonator::deltaPhase() const {
-    return atan2(m_dps, m_dpc); // returns value in [-pi,pi]
+    rotateW(
+        1.0f,
+        -m_gamma * m_dps * inverseResidualMagnitude
+    );
 }
 
 void TrackingResonator::updateWithSample(float sample) {
-    const float alphaSample = m_alpha * sample;
-    m_cos = m_omAlpha * m_cos + alphaSample * m_Zc;
-    m_sin = m_omAlpha * m_sin + alphaSample * m_Zs;
     const float lcc = m_cc;
     const float lss = m_ss;
-    m_cc = m_omBeta * m_cc + m_beta * m_cos;
-    m_ss = m_omBeta * m_ss + m_beta * m_sin;
-    // compute current * conjugate(previous)
-    // the phase time derivative estimate is the arg of this complex number
-    m_dpc = m_cc * lcc + m_ss * lss;
-    m_dps = m_ss * lcc - m_cc * lss;
-
-    // Update tracking
-    if(power() > m_trackFrequencyPowerThreshold) {
-        // go towards instantaneous frequency
-        // this is EWMA with parameter gamma
-        setOmega(omega() - m_gamma * atan2(m_dps, m_dpc));
-    } else {
-        // go back to natural frequency
-        setFrequency(m_naturalFrequency);
-    }
-    
+    updateResonatorWithSample(sample);
+    updateDeltaPhase(lcc, lss);
+    updateTracking();
     incrementPhase();
 }
 
-void TrackingResonator::update(float sample, float maxPower) {
-    m_trackFrequencyPowerThreshold = fmax(minMaxPower, maxPower) / 1000.0f;
+void TrackingResonator::update(float sample, float maxPower, float thresholdDivider) {
+    m_trackFrequencyPowerThreshold = fmax(minMaxPower, maxPower) / thresholdDivider;
     updateWithSample(sample);
-    stabilize(); // this is overkill but necessary
+    stabilize();
 }
 
-void TrackingResonator::update(const std::vector<float> &samples, float maxPower) {
-    m_trackFrequencyPowerThreshold = fmax(minMaxPower, maxPower) / 1000.0f;
+void TrackingResonator::update(const std::vector<float> &samples, float maxPower, float thresholdDivider) {
+    m_trackFrequencyPowerThreshold = fmax(minMaxPower, maxPower) / thresholdDivider;
     for (float sample : samples) {
         updateWithSample(sample);
     }
-    stabilize(); // this is overkill but necessary
+    stabilize();
 }
 
-void TrackingResonator::update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower) {
-    m_trackFrequencyPowerThreshold = fmax(minMaxPower, maxPower) / 1000.0f;
+void TrackingResonator::update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower, float thresholdDivider) {
+    m_trackFrequencyPowerThreshold = fmax(minMaxPower, maxPower) / thresholdDivider;
     const size_t sampleSpan = frameSampleSpan(frameLength, sampleStride);
     for (size_t sampleIndex = 0; sampleIndex < sampleSpan; sampleIndex += sampleStride) {
         updateWithSample(frameData[sampleIndex]);
     }
-    stabilize(); // this is overkill but necessary
+    stabilize();
 }

@@ -38,7 +38,7 @@ using namespace oscillators_cpp;
     return self;
 }
 
-- (void)dealloc {
+- (void)dealloc {    
     delete self.oscillator;
 }
 

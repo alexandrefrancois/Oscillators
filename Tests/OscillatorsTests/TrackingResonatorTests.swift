@@ -179,7 +179,7 @@ final class TrackingResonatorTests: XCTestCase {
         let sr: Float = AudioFixtures.defaultSampleRate
         let input = SignalFixtures.makeSine(count: N, freq: f0, sampleRate: sr)
         let swiftRes = TrackingResonator(naturalFrequency: f0, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .ewma, sampleRate: sr)
-        guard let cppRes = TrackingResonatorCpp(naturalFrequency: f0, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sr) else {
+        guard let cppRes = TrackingResonatorCpp(naturalFrequency: f0, alpha: alpha, beta: beta, gamma: gamma, trackingRule: TrackingRuleCpp.EWMA, sampleRate: sr) else {
             XCTFail("Cpp TrackingResonator could not be instantiated"); return
         }
         for x in input {
@@ -233,12 +233,14 @@ final class TrackingResonatorTests: XCTestCase {
             alpha: alpha,
             beta: beta,
             gamma: gamma,
+            trackingRule: TrackingRuleCpp.EWMA,
             sampleRate: sampleRate
         ), let cppStrided = TrackingResonatorCpp(
             naturalFrequency: f0,
             alpha: alpha,
             beta: beta,
             gamma: gamma,
+            trackingRule: TrackingRuleCpp.EWMA,
             sampleRate: sampleRate
         ) else {
             XCTFail("Cpp TrackingResonator could not be instantiated")

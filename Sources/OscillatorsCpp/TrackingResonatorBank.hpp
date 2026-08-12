@@ -48,7 +48,7 @@ public:
     TrackingResonatorBank & operator=(const TrackingResonatorBank&) = delete;
     TrackingResonatorBank(const TrackingResonatorBank&) = delete;
 
-    TrackingResonatorBank(size_t numResonators, const float* naturalFrequencies, const float* alphas, const float* betas, const float* gammas, float sampleRate);
+    TrackingResonatorBank(size_t numResonators, const float* naturalFrequencies, const float* alphas, const float* betas, const float* gammas, TrackingRule trackingRule, float sampleRate);
 
     float sampleRate() { return m_sampleRate; }
     size_t numResonators() { return m_resonators.size(); }

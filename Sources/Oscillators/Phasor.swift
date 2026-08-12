@@ -100,10 +100,6 @@ open class Phasor : PhasorProtocol {
     /// Compute new value for W
     /// W <- W * dW
     internal func rotateW(c: Float, s: Float) {
-//        let newWc = Wc * c - Ws * s
-//        let newWs = Wc * s + Ws * c
-//        setW(c: newWc, s: newWs)
-        
         // complex multiplication with 3 real multiplications
         let ac = Wc*c
         let bd = Ws*s
@@ -121,6 +117,7 @@ open class Phasor : PhasorProtocol {
         let k = (Float(3.0) - Wc*Wc - Ws*Ws) / Float(2.0)
         Wc *= k
         Ws *= k
+        Wcps = Wc + Ws
     }
 
     /// Compute next value of the phasor
@@ -137,7 +134,6 @@ open class Phasor : PhasorProtocol {
     /// Apply re-normalization correction to compensate for
     /// numerical drift, use Taylor expansion around 1 to approximate
     /// 1/sqrt(x) to reduce computational cost.
-    /// This can be applied every few hundred (?) samples
     internal func stabilize() {
         let k = (Float(3.0) - Zc*Zc - Zs*Zs) / Float(2.0)
         Zc *= k

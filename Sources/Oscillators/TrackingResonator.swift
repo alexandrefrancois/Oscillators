@@ -155,22 +155,22 @@ public class TrackingResonator : ResonatorBase, TrackingResonatorProtocol {
         incrementPhase()
     }
         
-    public func update(sample: Float, maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / Float(1000.0)
+    public func update(sample: Float, maxPower: Float = 0.25, thresholdDivider: Float = 1000.0) {
+        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / thresholdDivider
         updateWithSample(sample)
         stabilize()
     }
     
-    public func update(samples: [Float], maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / Float(1000.0)
+    public func update(samples: [Float], maxPower: Float = 0.25, thresholdDivider: Float = 1000.0) {
+        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / thresholdDivider
         for sample in samples {
             updateWithSample(sample)
         }
         stabilize()
     }
 
-    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / Float(1000.0)
+    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float = 0.25, thresholdDivider: Float = 1000.0) {
+        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / thresholdDivider
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }

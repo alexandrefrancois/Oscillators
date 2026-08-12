@@ -26,16 +26,18 @@ SOFTWARE.
 #import "PhasorCppProtected.h"
 
 #import <Foundation/Foundation.h>
+#import "TrackingResonatorCpp.h"
 
 #include "TrackingResonator.hpp"
+#include "TrackingRuleBridge.hpp"
 
 using namespace oscillators_cpp;
 
 @implementation TrackingResonatorCpp
 
-- (instancetype)initWithNaturalFrequency:(float)naturalFrequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma sampleRate:(float)sampleRate {
+- (instancetype)initWithNaturalFrequency:(float)naturalFrequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma trackingRule:(TrackingRuleCpp)trackingRule sampleRate:(float)sampleRate {
     if (self = [super init]) {
-        self.oscillator = new TrackingResonator(naturalFrequency, alpha, beta, gamma, sampleRate);
+        self.oscillator = new TrackingResonator(naturalFrequency, alpha, beta, gamma, toTrackingRule(trackingRule), sampleRate);
     }
     return self;
 }
@@ -54,86 +56,6 @@ using namespace oscillators_cpp;
 
 - (float)resonantFrequency {
     return self.resonator->resonantFrequency();
-}
-
-- (float)power {
-    return self.resonator->power();
-}
-
-- (float)amplitude {
-    return self.resonator->amplitude();
-}
-
-- (float)alpha {
-    return self.resonator->alpha();
-}
-
-- (void)setAlpha:(float)alpha {
-    self.resonator->setAlpha(alpha);
-}
-
-- (float)omAlpha {
-    return self.resonator->omAlpha();
-}
-
-- (float)beta {
-    return self.resonator->beta();
-}
-
-- (void)setBeta:(float)beta {
-    self.resonator->setBeta(beta);
-}
-
-- (float)omBeta {
-    return self.resonator->omBeta();
-}
-
-- (float)gamma {
-    return self.resonator->gamma();
-}
-
-- (void)setGamma:(float)gamma {
-    self.resonator->setGamma(gamma);
-}
-
-- (float)omGamma {
-    return self.resonator->omGamma();
-}
-
-- (float)c {
-    return self.resonator->c();
-}
-
-- (float)s {
-    return self.resonator->s();
-}
-
-- (float)cc {
-    return self.resonator->cc();
-}
-
-- (float)ss {
-    return self.resonator->ss();
-}
-
-- (float)dpc {
-    return self.resonator->dpc();
-}
-
-- (float)dps {
-    return self.resonator->dps();
-}
-
-- (float)phase {
-    return self.resonator->phase();
-}
-
-- (float)deltaPhase {
-    return self.resonator->deltaPhase();
-}
-
-- (void)updateWithSample:(float)sample {
-    self.resonator->updateWithSample(sample);
 }
 
 - (void)update:(float)sample maxPower:(float)maxPower {

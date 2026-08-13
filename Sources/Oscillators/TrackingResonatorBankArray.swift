@@ -66,26 +66,26 @@ public class TrackingResonatorBankArray {
         Float(bitPattern: _accPowerBits.load(ordering: .relaxed))
     }
     
-    public init(naturalFrequencies: [Float], alphas: [Float], betas: [Float], gammas: [Float], sampleRate: Float) {
+    public init(naturalFrequencies: [Float], alphas: [Float], betas: [Float], gammas: [Float], trackingRule: TrackingRule, sampleRate: Float) {
         assert(naturalFrequencies.count == alphas.count)
         // setup an oscillator for each frequency
         for (idx, naturalFrequency) in naturalFrequencies.enumerated() {
-            resonators.append(TrackingResonator(naturalFrequency: naturalFrequency, alpha: alphas[idx], beta: betas[idx], gamma: gammas[idx], sampleRate: sampleRate))
+            resonators.append(TrackingResonator(naturalFrequency: naturalFrequency, alpha: alphas[idx], beta: betas[idx], gamma: gammas[idx], trackingRule: trackingRule, sampleRate: sampleRate))
         }
     }
     
     /// A constructor that takes a function of frequency and sample rate to compute alphas
-    public init(frequencies: [Float], sampleRate: Float, k: Float = 1.0, alphaHeuristic: (Float, Float, Float) -> Float) {
+    public init(frequencies: [Float], sampleRate: Float, k: Float = 1.0, trackingRule: TrackingRule, alphaHeuristic: (Float, Float, Float) -> Float) {
         // setup an oscillator for each frequency
         for frequency in frequencies {
-            resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alphaHeuristic(frequency, sampleRate, k), sampleRate: sampleRate))
+            resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alphaHeuristic(frequency, sampleRate, k), trackingRule: trackingRule, sampleRate: sampleRate))
         }
     }
     
-    public init(alphas: [Float], sigma: Float, sampleRate: Float, frequency: Float) {
+    public init(alphas: [Float], sigma: Float, sampleRate: Float, frequency: Float, trackingRule: TrackingRule) {
         // setup an oscillator for each alpha
         for alpha in alphas {
-            resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alpha, sampleRate: sampleRate))
+            resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alpha, trackingRule: trackingRule, sampleRate: sampleRate))
         }
     }
         

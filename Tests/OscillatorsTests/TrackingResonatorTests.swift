@@ -34,6 +34,7 @@ final class TrackingResonatorTests: XCTestCase {
                                           alpha: DynamicsFixtures.defaultAlpha,
                                           beta: DynamicsFixtures.defaultBeta,
                                           gamma: DynamicsFixtures.defaultGamma,
+                                          trackingRule: .ewma,
                                           sampleRate: AudioFixtures.defaultSampleRate)
         
         XCTAssertEqual(resonator.naturalFrequency, 440.0)
@@ -48,6 +49,7 @@ final class TrackingResonatorTests: XCTestCase {
                                           alpha: alpha,
                                           beta: alpha,
                                           gamma: alpha,
+                                          trackingRule: .ewma,
                                           sampleRate: AudioFixtures.defaultSampleRate)
         XCTAssertEqual(resonator.alpha, alpha)
         XCTAssertEqual(resonator.omAlpha, 1.0-alpha)
@@ -64,6 +66,7 @@ final class TrackingResonatorTests: XCTestCase {
                                           alpha: alpha,
                                           beta: alpha,
                                           gamma: alpha,
+                                          trackingRule: .ewma,
                                           sampleRate: AudioFixtures.defaultSampleRate)
         XCTAssertEqual(resonator.beta, alpha)
         XCTAssertEqual(resonator.omBeta, 1.0-alpha)
@@ -80,6 +83,7 @@ final class TrackingResonatorTests: XCTestCase {
                                           alpha: alpha,
                                           beta: alpha,
                                           gamma: alpha,
+                                          trackingRule: .ewma,
                                           sampleRate: AudioFixtures.defaultSampleRate)
         XCTAssertEqual(resonator.gamma, alpha)
         XCTAssertEqual(resonator.omGamma, 1.0-alpha)
@@ -95,6 +99,7 @@ final class TrackingResonatorTests: XCTestCase {
                                           alpha: 1.0,
                                           beta: 1.0,
                                           gamma: 1.0,
+                                          trackingRule: .ewma,
                                           sampleRate: AudioFixtures.defaultSampleRate)
         let expectedC = resonator.Zc
         let expectedS = resonator.Zs
@@ -110,7 +115,7 @@ final class TrackingResonatorTests: XCTestCase {
     
     func testImpulseResponse() {
         let N = 128
-        let resonator = TrackingResonator(naturalFrequency: 440.0, alpha: 0.9, beta: 0.9, gamma: 0.9, sampleRate: AudioFixtures.defaultSampleRate)
+        let resonator = TrackingResonator(naturalFrequency: 440.0, alpha: 0.9, beta: 0.9, gamma: 0.9, trackingRule: .ewma, sampleRate: AudioFixtures.defaultSampleRate)
         let impulse = SignalFixtures.makeImpulse(count: N)
         var outputs = [Float]()
         for x in impulse {
@@ -125,7 +130,7 @@ final class TrackingResonatorTests: XCTestCase {
     
     func testStepResponse() {
         let N = 128
-        let resonator = TrackingResonator(naturalFrequency: 440.0, alpha: 0.95, beta: 0.95, gamma: 0.95, sampleRate: AudioFixtures.defaultSampleRate)
+        let resonator = TrackingResonator(naturalFrequency: 440.0, alpha: 0.95, beta: 0.95, gamma: 0.95, trackingRule: .ewma, sampleRate: AudioFixtures.defaultSampleRate)
         let step = SignalFixtures.makeStep(count: N, value: 1.0)
         var outputs = [Float]()
         for x in step {
@@ -141,7 +146,7 @@ final class TrackingResonatorTests: XCTestCase {
         let N = 256
         let f0: Float = 440.0
         let sr: Float = AudioFixtures.defaultSampleRate
-        let resonator = TrackingResonator(naturalFrequency: f0, alpha: 0.95, beta: 0.95, gamma: 0.95, sampleRate: sr)
+        let resonator = TrackingResonator(naturalFrequency: f0, alpha: 0.95, beta: 0.95, gamma: 0.95, trackingRule: .ewma, sampleRate: sr)
         let sine = SignalFixtures.makeSine(count: N, freq: f0, sampleRate: sr)
         var outputs = [Float]()
         for x in sine {
@@ -154,7 +159,7 @@ final class TrackingResonatorTests: XCTestCase {
     
     func testResonatorConvergence() {
         let N = 200
-        let resonator = TrackingResonator(naturalFrequency: 440.0, alpha: 0.7, beta: 0.7, gamma: 0.7, sampleRate: AudioFixtures.defaultSampleRate)
+        let resonator = TrackingResonator(naturalFrequency: 440.0, alpha: 0.7, beta: 0.7, gamma: 0.7, trackingRule: .ewma, sampleRate: AudioFixtures.defaultSampleRate)
         let step = SignalFixtures.makeStep(count: N, value: 1.0)
         for x in step { resonator.updateWithSample(x) }
         let amp_prev = resonator.amplitude
@@ -173,7 +178,7 @@ final class TrackingResonatorTests: XCTestCase {
         let alpha: Float = 0.9, beta: Float = 0.9, gamma: Float = 0.9
         let sr: Float = AudioFixtures.defaultSampleRate
         let input = SignalFixtures.makeSine(count: N, freq: f0, sampleRate: sr)
-        let swiftRes = TrackingResonator(naturalFrequency: f0, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sr)
+        let swiftRes = TrackingResonator(naturalFrequency: f0, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .ewma, sampleRate: sr)
         guard let cppRes = TrackingResonatorCpp(naturalFrequency: f0, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sr) else {
             XCTFail("Cpp TrackingResonator could not be instantiated"); return
         }
@@ -198,6 +203,7 @@ final class TrackingResonatorTests: XCTestCase {
             alpha: alpha,
             beta: beta,
             gamma: gamma,
+            trackingRule: .ewma,
             sampleRate: sampleRate
         )
         let swiftStrided = TrackingResonator(
@@ -205,6 +211,7 @@ final class TrackingResonatorTests: XCTestCase {
             alpha: alpha,
             beta: beta,
             gamma: gamma,
+            trackingRule: .ewma,
             sampleRate: sampleRate
         )
 

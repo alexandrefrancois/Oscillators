@@ -177,15 +177,15 @@ final class TrackingResonatorComparisonTests: XCTestCase {
             sampleRate: sampleRate
         ).samples
 
-        let legacy = measureUpdateTime(method: .legacy, samples: samples, naturalFrequency: 440.0)
+        let ewma = measureUpdateTime(method: .ewma, samples: samples, naturalFrequency: 440.0)
         let chord = measureUpdateTime(method: .normalizedChord, samples: samples, naturalFrequency: 440.0)
         let tangent = measureUpdateTime(method: .tangent, samples: samples, naturalFrequency: 440.0)
 
-        XCTAssertGreaterThan(legacy, 0.0)
+        XCTAssertGreaterThan(ewma, 0.0)
         XCTAssertGreaterThan(chord, 0.0)
         XCTAssertGreaterThan(tangent, 0.0)
 
-        print("Relative update throughput, excluding frequency readout: legacy=1.00x chord=\(legacy / chord)x tangent=\(legacy / tangent)x")
+        print("Relative update throughput, excluding frequency readout: ewma=1.00x chord=\(ewma / chord)x tangent=\(ewma / tangent)x")
     }
 
     private func compare(samples: [Float], targets: [Float], naturalFrequency: Float) -> [ComparisonResult] {
@@ -201,20 +201,20 @@ final class TrackingResonatorComparisonTests: XCTestCase {
         estimates.reserveCapacity(samples.count)
 
         switch method {
-        case .legacy:
-            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sampleRate)
+        case .ewma:
+            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .ewma, sampleRate: sampleRate)
             for sample in samples {
                 resonator.update(sample: sample, maxPower: maxPower)
                 estimates.append(resonator.resonantFrequency)
             }
         case .normalizedChord:
-            let resonator = ImplicitTrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sampleRate, trackingRule: .normalizedChord)
+            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .normalizedChord, sampleRate: sampleRate)
             for sample in samples {
                 resonator.update(sample: sample, maxPower: maxPower)
                 estimates.append(resonator.resonantFrequency)
             }
         case .tangent:
-            let resonator = ImplicitTrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sampleRate, trackingRule: .tangent)
+            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .tangent, sampleRate: sampleRate)
             for sample in samples {
                 resonator.update(sample: sample, maxPower: maxPower)
                 estimates.append(resonator.resonantFrequency)
@@ -228,14 +228,14 @@ final class TrackingResonatorComparisonTests: XCTestCase {
         let start = Date()
 
         switch method {
-        case .legacy:
-            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sampleRate)
+        case .ewma:
+            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .ewma, sampleRate: sampleRate)
             resonator.update(samples: samples, maxPower: maxPower)
         case .normalizedChord:
-            let resonator = ImplicitTrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sampleRate, trackingRule: .normalizedChord)
+            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .normalizedChord, sampleRate: sampleRate)
             resonator.update(samples: samples, maxPower: maxPower)
         case .tangent:
-            let resonator = ImplicitTrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sampleRate, trackingRule: .tangent)
+            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .tangent, sampleRate: sampleRate)
             resonator.update(samples: samples, maxPower: maxPower)
         }
 
@@ -253,7 +253,7 @@ final class TrackingResonatorComparisonTests: XCTestCase {
     }
 
     private enum TrackingMethod: CaseIterable {
-        case legacy
+        case ewma
         case normalizedChord
         case tangent
     }

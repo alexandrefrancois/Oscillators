@@ -97,6 +97,32 @@ open class Phasor : PhasorProtocol {
         Wcps = Wc + Ws
     }
 
+    /// Compute new value for W
+    /// W <- W * dW
+    internal func rotateW(c: Float, s: Float) {
+//        let newWc = Wc * c - Ws * s
+//        let newWs = Wc * s + Ws * c
+//        setW(c: newWc, s: newWs)
+        
+        // complex multiplication with 3 real multiplications
+        let ac = Wc*c
+        let bd = Ws*s
+        let abcd = (Wcps) * (c+s)
+        Wc = ac - bd
+        Ws = abcd - ac - bd
+        Wcps = Wc + Ws
+    }
+
+    /// Apply re-normalization correction to compensate for
+    /// numerical drift, use Taylor expansion around 1 to approximate
+    /// 1/sqrt(x) to reduce computational cost.
+    /// This can be applied every few hundred (?) samples
+    internal func normalizeW() {
+        let k = (Float(3.0) - Wc*Wc - Ws*Ws) / Float(2.0)
+        Wc *= k
+        Ws *= k
+    }
+
     /// Compute next value of the phasor
     /// Z <- Z * W
     internal func incrementPhase() {

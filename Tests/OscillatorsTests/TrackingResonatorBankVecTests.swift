@@ -107,7 +107,7 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         let fx = 12
         let frame = SignalFixtures.makeSine(count: N, freq: frequencies[fx], sampleRate: sampleRate)
         let bank = TrackingResonatorBankVec(naturalFrequencies: frequencies, alphas: alphas, betas: betas, gammas: gammas, sampleRate: sampleRate)
-        let standAlone = TrackingResonator(naturalFrequency: frequencies[fx], alpha: alphas[fx], beta: betas[fx], gamma: gammas[fx], sampleRate: sampleRate)
+        let standAlone = TrackingResonator(naturalFrequency: frequencies[fx], alpha: alphas[fx], beta: betas[fx], gamma: gammas[fx], trackingRule: .ewma, sampleRate: sampleRate)
         for x in frame {
             bank.update(sample: x)
             standAlone.updateWithSample(x)

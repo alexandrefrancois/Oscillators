@@ -27,6 +27,24 @@ import Accelerate
 
 fileprivate let twoPi = Float.pi * 2.0
 fileprivate let minMaxPower = Float(0.001)
+fileprivate let minimumResidualMagnitudeSquared = Float(1e-20)
+
+public enum TrackingRule: Equatable, CaseIterable, CustomStringConvertible {
+    case ewma
+    case normalizedChord
+    case tangent
+    
+    public var description: String {
+        switch self {
+        case .ewma:
+            return "EWMA"
+        case .normalizedChord:
+            return "Chord"
+        case .tangent:
+            return "Tangent"
+        }
+    }
+}
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// and adjust its resonant frequency to track the actual frequency of the signal component
@@ -62,34 +80,71 @@ public class TrackingResonator : ResonatorBase, TrackingResonatorProtocol {
     
     var naturalWc: Float
     var naturalWs: Float
-
-//    public func setNaturalFrequency(_ naturalFrequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil){
-//        self.naturalFrequency = naturalFrequency
-//        self.alpha = alpha
-//        self.beta = beta ?? alpha
-//        self.gamma = gamma ?? alpha
-//    }
     
     private(set) var trackFrequencyPowerThreshold = Float(0.001)
+    private typealias ApplyTrackingRuleFunc = () -> Void
+    private var applyTrackingRule: ApplyTrackingRuleFunc? = nil
 
-    public init(naturalFrequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, sampleRate: Float) {
+    public init(naturalFrequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, trackingRule: TrackingRule, sampleRate: Float ) {
         let naturalOmega = -naturalFrequency / (sampleRate / twoPi)
         self.naturalWc = cos(naturalOmega)
         self.naturalWs = sin(naturalOmega)
         super.init(frequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sampleRate)
+        switch trackingRule {
+        case .ewma:
+            applyTrackingRule = applyEWMATracking
+        case .normalizedChord:
+            // Normalized interpolation on the unit circle between identity and the
+            // conjugate residual rotation. Near lock it is first-order equivalent
+            // to applying omega -= gamma * deltaPhase.
+            applyTrackingRule = applyChordCorrectionTracking
+        case .tangent:
+            // Normalized residual quadrature is a signed local adaptation signal
+            // that moves the phasor multiplier tangentially on the unit circle.
+            applyTrackingRule = applyTangentCorrectionTracking
+        }
     }
         
     func updateTracking() {
-        // Update tracking
         if power > trackFrequencyPowerThreshold {
-            // This is an EWMA with parameter gamma
-            omega -= gamma * atan2(dps, dpc)
+            applyTrackingRule?()
+            normalizeW()
         } else {
-            // go back to natural frequency
-            self.restoreNaturalW()
+            restoreNaturalW()
         }
     }
     
+    /// Apply EWMA to correct W
+    func applyEWMATracking() {
+        let omega = atan2(Ws, Wc) - gamma * atan2(dps, dpc)
+        setW(c: cos(omega), s: sin(omega))
+    }
+    
+    /// Normalized interpolation on the unit circle between identity and the
+    /// conjugate residual rotation. Near lock it is first-order equivalent
+    /// to applying omega -= gamma * deltaPhase.
+    func applyChordCorrectionTracking() {
+        let residualMagnitudeSquared = dpc * dpc + dps * dps
+        guard residualMagnitudeSquared > minimumResidualMagnitudeSquared,
+              residualMagnitudeSquared.isFinite
+        else { return }
+        let inverseResidualMagnitude = 1.0 / sqrt(residualMagnitudeSquared)
+        rotateW(c: omGamma + gamma * dpc * inverseResidualMagnitude,
+                s: -gamma * dps * inverseResidualMagnitude)
+    }
+
+    /// Normalized residual quadrature is a signed local adaptation signal
+    /// that moves the phasor multiplier tangentially on the unit circle.
+    func applyTangentCorrectionTracking() {
+        let residualMagnitudeSquared = dpc * dpc + dps * dps
+        guard residualMagnitudeSquared > minimumResidualMagnitudeSquared,
+              residualMagnitudeSquared.isFinite
+        else { return }
+        let inverseResidualMagnitude = 1.0 / sqrt(residualMagnitudeSquared)
+        rotateW(c: 1.0,
+                s: -gamma * dps * inverseResidualMagnitude)
+    }
+
     override func updateWithSample(_ sample: Float) {
         // save current values
         let lcc = cc

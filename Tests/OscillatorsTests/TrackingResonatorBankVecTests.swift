@@ -88,8 +88,8 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let gammas = TrackingResonatorBankArray.gammasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
-        let bankA = TrackingResonatorBankVec(naturalFrequencies: frequencies, alphas: alphas, betas: betas, gammas: gammas, sampleRate: AudioFixtures.defaultSampleRate)
-        let bankB = TrackingResonatorBankVec(naturalFrequencies: frequencies, alphas: alphas, betas: betas, gammas: gammas, sampleRate: AudioFixtures.defaultSampleRate)
+        let bankA = TrackingResonatorBankVec(naturalFrequencies: frequencies, alphas: alphas, betas: betas, gammas: gammas, trackingRule: .ewma, sampleRate: AudioFixtures.defaultSampleRate)
+        let bankB = TrackingResonatorBankVec(naturalFrequencies: frequencies, alphas: alphas, betas: betas, gammas: gammas, trackingRule: TrackingRule.ewma, sampleRate: AudioFixtures.defaultSampleRate)
         let frame = SignalFixtures.makeSine(count: 100, freq: 440.0, sampleRate: AudioFixtures.defaultSampleRate)
         bankA.update(frame: frame)
         for x in frame { bankB.update(sample: x) }
@@ -106,7 +106,7 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         let N = 128
         let fx = 12
         let frame = SignalFixtures.makeSine(count: N, freq: frequencies[fx], sampleRate: sampleRate)
-        let bank = TrackingResonatorBankVec(naturalFrequencies: frequencies, alphas: alphas, betas: betas, gammas: gammas, sampleRate: sampleRate)
+        let bank = TrackingResonatorBankVec(naturalFrequencies: frequencies, alphas: alphas, betas: betas, gammas: gammas, trackingRule: .ewma, sampleRate: sampleRate)
         let standAlone = TrackingResonator(naturalFrequency: frequencies[fx], alpha: alphas[fx], beta: betas[fx], gamma: gammas[fx], trackingRule: .ewma, sampleRate: sampleRate)
         for x in frame {
             bank.update(sample: x)

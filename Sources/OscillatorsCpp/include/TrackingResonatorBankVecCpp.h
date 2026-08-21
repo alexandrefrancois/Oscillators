@@ -24,9 +24,11 @@ SOFTWARE.
 
 #import <Foundation/Foundation.h>
 
+#import "TrackingRuleCpp.h"
+
 // Wrapper for the ResonatorBank class
 @interface TrackingResonatorBankVecCpp : NSObject
-- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)frequencies alphas:(const float*)alphas betas:(const float*)betas gammas:(const float*)gammas sampleRate:(float)sampleRate;
+- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)frequencies alphas:(const float*)alphas betas:(const float*)betas gammas:(const float*)gammas trackingRule:(TrackingRuleCpp)trackingRule sampleRate:(float)sampleRate;
 - (float)sampleRate;
 - (int)numResonators;
 - (void)getAlphas:(float*)dest size:(int)size;

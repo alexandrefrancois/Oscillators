@@ -315,8 +315,9 @@ public class TrackingResonatorBankVec {
                      dPtr.baseAddress!, 1,
                      dPtr.baseAddress!, 1,
                      vDSP_Length(numResonators))
-                        
+
             // Single pass threshold and merge
+            // output is tracked or natural frequencies in first half of dPtr
             Self.fuseThresholdAndMerge(
                 powersPtr: powersPtr,
                 dPtr: dPtr,
@@ -531,17 +532,17 @@ public class TrackingResonatorBankVec {
     // Single pass all in one
     // apply threshold and reset
     static func fuseThresholdAndMerge(powersPtr: UnsafeMutableBufferPointer<Float>,
-                                      D: DSPSplitComplex,
-                                      nW: DSPSplitComplex,
-                                      W: DSPSplitComplex,
+                                      D: DSPSplitComplex, // input: tracked omegas
+                                      nW: DSPSplitComplex, // input: natural omegas
+                                      W: DSPSplitComplex, // output
                                       threshold: Float) {
         guard let pBase = powersPtr.baseAddress else { return }
         let drBase = D.realp
         let diBase = D.imagp
-        let wrBase = W.realp
-        let wiBase = W.imagp
         let nrBase = nW.realp
         let niBase = nW.imagp
+        let wrBase = W.realp
+        let wiBase = W.imagp
         
         let count = powersPtr.count
         let thresholdVec = SIMD8<Float>(repeating: threshold)
@@ -552,8 +553,6 @@ public class TrackingResonatorBankVec {
             let p = UnsafeRawPointer(pBase.advanced(by: i)).load(as: SIMD8<Float>.self)
             let dr = UnsafeRawPointer(drBase.advanced(by: i)).load(as: SIMD8<Float>.self)
             let di = UnsafeRawPointer(diBase.advanced(by: i)).load(as: SIMD8<Float>.self)
-            let wr = UnsafeRawPointer(wrBase.advanced(by: i)).load(as: SIMD8<Float>.self)
-            let wi = UnsafeRawPointer(wiBase.advanced(by: i)).load(as: SIMD8<Float>.self)
             let nr = UnsafeRawPointer(nrBase.advanced(by: i)).load(as: SIMD8<Float>.self)
             let ni = UnsafeRawPointer(niBase.advanced(by: i)).load(as: SIMD8<Float>.self)
 

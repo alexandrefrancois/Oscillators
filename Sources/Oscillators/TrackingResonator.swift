@@ -108,7 +108,8 @@ public class TrackingResonator : ResonatorBase, TrackingResonatorProtocol {
     func updateTracking() {
         if power > trackFrequencyPowerThreshold {
             applyTrackingRule?()
-            normalizeW()
+            // is this really necessary?
+//            normalizeW()
         } else {
             restoreNaturalW()
         }

@@ -82,7 +82,8 @@ void TrackingResonator::updateTracking() {
             break;
         }
 
-        normalizeW();
+        // is this really necessary?
+//        normalizeW();
     } else {
         restoreNaturalW();
     }

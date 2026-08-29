@@ -96,7 +96,7 @@ void TrackingResonatorBank::getDeltaPhases(float *dest, size_t size) {
     }
 }
 
-void TrackingResonatorBank::update(const float sample) {
+void TrackingResonatorBank::update(const float sample, float thresholdDivider) {
     // 1. Snapshot the current atomic value
     // Using relaxed memory order is most efficient for audio parameters
     const float lastAccPower = m_accPower.load(std::memory_order_relaxed);
@@ -105,7 +105,7 @@ void TrackingResonatorBank::update(const float sample) {
 
     // 2. Sequential processing loop
     for (auto &resonatorPtr : m_resonators) {
-        resonatorPtr->update(sample, m_accPower);
+        resonatorPtr->update(sample, m_accPower, thresholdDivider);
         const float power = resonatorPtr->power();
         if(power > maxPower) {
             maxPower = power;
@@ -119,7 +119,7 @@ void TrackingResonatorBank::update(const float sample) {
     m_accPower.store(nextAccPower, std::memory_order_relaxed);
 }
 
-void TrackingResonatorBank::update(const std::vector<float> &samples) {
+void TrackingResonatorBank::update(const std::vector<float> &samples, float thresholdDivider) {
     // 1. Snapshot the current atomic value
     // Using relaxed memory order is most efficient for audio parameters
     const float lastAccPower = m_accPower.load(std::memory_order_relaxed);
@@ -128,7 +128,7 @@ void TrackingResonatorBank::update(const std::vector<float> &samples) {
     
     // 2. Sequential processing loop
     for (auto &resonatorPtr : m_resonators) {
-        resonatorPtr->update(samples, m_accPower);
+        resonatorPtr->update(samples, m_accPower, thresholdDivider);
         const float power = resonatorPtr->power();
         if(power > maxPower) {
             maxPower = power;
@@ -142,7 +142,7 @@ void TrackingResonatorBank::update(const std::vector<float> &samples) {
     m_accPower.store(nextAccPower, std::memory_order_relaxed);
 }
 
-void TrackingResonatorBank::update(const float *frameData, size_t frameLength, size_t sampleStride) {
+void TrackingResonatorBank::update(const float *frameData, size_t frameLength, size_t sampleStride, float thresholdDivider) {
     // 1. Snapshot the current atomic value
     // Using relaxed memory order is most efficient for audio parameters
     const float lastAccPower = m_accPower.load(std::memory_order_relaxed);
@@ -152,7 +152,7 @@ void TrackingResonatorBank::update(const float *frameData, size_t frameLength, s
     // 2. Sequential processing loop
     for (auto &resonatorPtr : m_resonators) {
         // Pass the snapshotted float value, not the atomic itself
-        resonatorPtr->update(frameData, frameLength, sampleStride, lastAccPower);
+        resonatorPtr->update(frameData, frameLength, sampleStride, lastAccPower, thresholdDivider);
         
         const float power = resonatorPtr->power();
         if (power > maxPower) {
@@ -168,7 +168,7 @@ void TrackingResonatorBank::update(const float *frameData, size_t frameLength, s
 }
 
 // concurrency with Apple GCD
-void TrackingResonatorBank::updateConcurrent(const float *frameData, size_t frameLength, size_t sampleStride) {
+void TrackingResonatorBank::updateConcurrent(const float *frameData, size_t frameLength, size_t sampleStride, float thresholdDivider) {
     const float lastAccPower = m_accPower.load(std::memory_order_relaxed);
     const size_t numResonators = m_resonators.size();
     
@@ -186,7 +186,7 @@ void TrackingResonatorBank::updateConcurrent(const float *frameData, size_t fram
         size_t end = (chunkIdx == numChunks - 1) ? numResonators : ((chunkIdx + 1) * numResonators) / numChunks;
 
         for (size_t i = start; i < end; ++i) {
-            m_resonators[i]->update(frameData, frameLength, sampleStride, lastAccPower);
+            m_resonators[i]->update(frameData, frameLength, sampleStride, lastAccPower, thresholdDivider);
             localMax = std::max(localMax, m_resonators[i]->power());
         }
 

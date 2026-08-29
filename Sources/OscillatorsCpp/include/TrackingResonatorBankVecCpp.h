@@ -39,12 +39,12 @@ SOFTWARE.
 - (void)getAmplitudes:(float*)dest size:(int)size;
 - (void)getPhases:(float*)dest size:(int)size;
 - (float)accPower;
-- (void)update:(float)sample
-NS_SWIFT_NAME(update(sample:));
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride powers:(float*)powers amplitudes:(float*)amplitudes
-NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:powers:amplitudes:));
+- (void)update:(float)sample thresholdDivider:(float)thresholdDivider
+NS_SWIFT_NAME(update(sample:thresholdDivider:));
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride thresholdDivider:(float)thresholdDivider
+NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:thresholdDivider:));
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride powers:(float*)powers amplitudes:(float*)amplitudes thresholdDivider:(float)thresholdDivider
+NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:powers:amplitudes:thresholdDivider:));
 - (void)setTimeConstant:(float)tau sampleRate:(float)sampleRate;
 @end
 

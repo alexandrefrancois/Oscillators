@@ -62,10 +62,10 @@ public:
     void getPhases(float *dest, size_t size);
     void getDeltaPhases(float *dest, size_t size);
     float accPower() const { return m_accPower; };
-    void update(const float sample);
-    void update(const std::vector<float> &samples);
-    void update(const float *frameData, size_t frameLength, size_t sampleStride);
-    void updateConcurrent(const float *frameData, size_t frameLength, size_t sampleStride);
+    void update(const float sample, float thresholdDivider);
+    void update(const std::vector<float> &samples, float thresholdDivider);
+    void update(const float *frameData, size_t frameLength, size_t sampleStride, float thresholdDivider);
+    void updateConcurrent(const float *frameData, size_t frameLength, size_t sampleStride, float thresholdDivider);
     void setTimeConstant(float tau, size_t frameLength, size_t sampleStride, float sampleRate);
 };
 

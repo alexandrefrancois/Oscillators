@@ -33,8 +33,8 @@ SOFTWARE.
 - (float)naturalFrequency;
 - (void)setNaturalFrequency:(float)frequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma;
 - (float)resonantFrequency;
-- (void)update:(float)sample maxPower:(float)maxPower
-NS_SWIFT_NAME(update(sample:maxPower:));
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride maxPower:(float)maxPower
-NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:maxPower:));
+- (void)update:(float)sample maxPower:(float)maxPower thresholdDivider:(float)thresholdDivider
+NS_SWIFT_NAME(update(sample:maxPower:thresholdDivider:));
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride maxPower:(float)maxPower thresholdDivider:(float)thresholdDivider
+NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:maxPower:thresholdDivider:));
 @end

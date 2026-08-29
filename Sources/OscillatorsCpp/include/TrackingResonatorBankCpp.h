@@ -41,11 +41,11 @@ SOFTWARE.
 - (void)getPhases:(float*)dest size:(int)size;
 - (void)getDeltaPhases:(float*)dest size:(int)size;
 - (float)accPower;
-- (void)update:(float)sample
-NS_SWIFT_NAME(update(sample:));
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
-- (void)updateConcurrent:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
-NS_SWIFT_NAME(updateConcurrent(frameData:frameLength:sampleStride:));
+- (void)update:(float)sample thresholdDivider:(float)thresholdDivider
+NS_SWIFT_NAME(update(sample:thresholdDivider:));
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride thresholdDivider:(float)thresholdDivider
+NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:thresholdDivider:));
+- (void)updateConcurrent:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride thresholdDivider:(float)thresholdDivider
+NS_SWIFT_NAME(updateConcurrent(frameData:frameLength:sampleStride:thresholdDivider:));
 - (void)setTimeConstant:(float)tau frameLength:(int)frameLength sampleStride:(int)sampleStride sampleRate:(float)sampleRate;
 @end

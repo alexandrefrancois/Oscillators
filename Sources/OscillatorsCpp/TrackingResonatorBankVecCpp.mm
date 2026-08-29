@@ -92,16 +92,16 @@ using namespace oscillators_cpp;
     return self.resonatorBank->accPower();
 }
 
-- (void)update:(float)sample {
-    self.resonatorBank->update(sample);
+- (void)update:(float)sample thresholdDivider:(float)thresholdDivider {
+    self.resonatorBank->update(sample, thresholdDivider);
 }
 
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
-    self.resonatorBank->update(frame, frameLength, sampleStride);
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride thresholdDivider:(float)thresholdDivider {
+    self.resonatorBank->update(frame, frameLength, sampleStride, thresholdDivider);
 }
 
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride powers:(float*)powers amplitudes:(float*)amplitudes {
-    self.resonatorBank->update(frame, frameLength, sampleStride, powers, amplitudes);
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride powers:(float*)powers amplitudes:(float*)amplitudes thresholdDivider:(float)thresholdDivider {
+    self.resonatorBank->update(frame, frameLength, sampleStride, powers, amplitudes, thresholdDivider);
 }
 
 - (void)setTimeConstant:(float)tau sampleRate:(float)sampleRate {

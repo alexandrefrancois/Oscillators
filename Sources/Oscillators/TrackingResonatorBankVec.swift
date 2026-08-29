@@ -132,7 +132,7 @@ public class TrackingResonatorBankVec {
     private var rsqrtPtr : UnsafeMutableBufferPointer<Float>
     
     private let trackingRule: TrackingRule
-    
+
     public init(naturalFrequencies: [Float], alphas: [Float], betas: [Float]? = nil, gammas: [Float]?, trackingRule: TrackingRule, sampleRate: Float) {
         // check that frequencies and alphas have the same size
         assert(naturalFrequencies.count == alphas.count)
@@ -248,7 +248,7 @@ public class TrackingResonatorBankVec {
     }
     
     /// Update all resonators in parallel
-    func update(sample: Float) {
+    func update(sample: Float, thresholdDivider: Float) {
         var sampleVar = sample
         vDSP_vsmul(alphas, 1, &sampleVar, alphasSample.baseAddress!, 1, vDSP_Length(twoNumResonators));
         
@@ -291,7 +291,7 @@ public class TrackingResonatorBankVec {
         // Save previous smoothed value
         _ = rrmPtr.initialize(from: rrPtr)
         
-        let trackFrequencyPowerThreshold = max(minMaxPower, accPower) / 1000.0
+        let trackFrequencyPowerThreshold = max(minMaxPower, accPower) / thresholdDivider
 
         switch trackingRule {
         case .ewma: // update via omegas
@@ -446,18 +446,18 @@ public class TrackingResonatorBankVec {
     
     /// Process a frame of samples.
     /// Apply stabilization (norm correction) at the end
-    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
+    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, thresholdDivider: Float) {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
-            update(sample: frameData[sampleIndex])
+            update(sample: frameData[sampleIndex], thresholdDivider: thresholdDivider)
         }
         stabilize() // this is overkill but necessary
     }
     
     /// Process a frame of samples.
     /// Apply stabilization (norm correction) at the end
-    public func update(frame: [Float]) {
+    public func update(frame: [Float], thresholdDivider: Float) {
         for sample in frame {
-            update(sample: sample)
+            update(sample: sample, thresholdDivider: thresholdDivider)
         }
         stabilize() // this is overkill but necessary
     }

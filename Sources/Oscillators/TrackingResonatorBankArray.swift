@@ -89,7 +89,7 @@ public class TrackingResonatorBankArray {
         }
     }
         
-    public func update(sample: Float) {
+    public func update(sample: Float, thresholdDivider: Float) {
         // 1. Snapshot the current atomic power (Load bits -> Float)
         let currentAccPower = Float(bitPattern: _accPowerBits.load(ordering: .relaxed))
         
@@ -98,7 +98,7 @@ public class TrackingResonatorBankArray {
         // 2. Sequential update of all resonators for a single sample
         for resonator in resonators {
             // Pass the snapshotted value to the update method
-            resonator.update(sample: sample, maxPower: currentAccPower)
+            resonator.update(sample: sample, maxPower: currentAccPower, thresholdDivider: thresholdDivider)
             
             let power = resonator.power
             if power > maxPower {
@@ -114,7 +114,7 @@ public class TrackingResonatorBankArray {
     }
     
     /// Sequentially update all resonators
-    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
+    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, thresholdDivider: Float) {
         // 1. Snapshot the current atomic power (Load bits -> Float)
         let currentAccPower = Float(bitPattern: _accPowerBits.load(ordering: .relaxed))
         
@@ -127,7 +127,8 @@ public class TrackingResonatorBankArray {
                 frameData: frameData,
                 frameLength: frameLength,
                 sampleStride: sampleStride,
-                maxPower: currentAccPower
+                maxPower: currentAccPower,
+                thresholdDivider: thresholdDivider
             )
             
             let power = resonator.power
@@ -144,7 +145,7 @@ public class TrackingResonatorBankArray {
     }
     
     /// Concurrently update all resonators
-    public func updateConcurrent(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
+    public func updateConcurrent(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, thresholdDivider: Float) {
         let numResonators = resonators.count
         guard numResonators > 0 else { return }
 
@@ -165,7 +166,8 @@ public class TrackingResonatorBankArray {
                     frameData: frameData,
                     frameLength: frameLength,
                     sampleStride: sampleStride,
-                    maxPower: currentAccPower
+                    maxPower: currentAccPower,
+                    thresholdDivider: thresholdDivider
                 )
                 chunkMax = max(chunkMax, resonators[i].power)
             }

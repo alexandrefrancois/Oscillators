@@ -56,9 +56,9 @@ public:
     float resonantFrequency() const { return frequency(); }
 
     void updateWithSample(float sample); // virtual function override
-    void update(float sample, float maxPower, float thresholdDivider = 1000.0f);
-    void update(const std::vector<float> &samples, float maxPower, float thresholdDivider = 1000.0f);
-    void update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower, float thresholdDivider = 1000.0f);
+    void update(float sample, float maxPower, float thresholdDivider);
+    void update(const std::vector<float> &samples, float maxPower, float thresholdDivider);
+    void update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower, float thresholdDivider);
 };
 
 } // oscillators_cpp

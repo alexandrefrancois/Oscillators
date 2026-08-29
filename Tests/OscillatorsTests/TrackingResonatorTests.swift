@@ -215,13 +215,14 @@ final class TrackingResonatorTests: XCTestCase {
             sampleRate: sampleRate
         )
 
-        swiftReference.update(samples: channelSamples, maxPower: 1.0)
+        swiftReference.update(samples: channelSamples, maxPower: 1.0, thresholdDivider: 1000.0)
         interleaved.withUnsafeMutableBufferPointer { buffer in
             swiftStrided.update(
                 frameData: buffer.baseAddress!,
                 frameLength: frameLength,
                 sampleStride: 2,
-                maxPower: 1.0
+                maxPower: 1.0,
+                thresholdDivider: 1000.0
             )
         }
 
@@ -253,7 +254,8 @@ final class TrackingResonatorTests: XCTestCase {
                 frameData: buffer.baseAddress!,
                 frameLength: Int32(frameLength),
                 sampleStride: 2,
-                maxPower: 1.0
+                maxPower: 1.0,
+                thresholdDivider: 1000.0
             )
         }
 

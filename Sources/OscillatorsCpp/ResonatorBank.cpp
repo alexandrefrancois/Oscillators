@@ -34,10 +34,10 @@ using namespace oscillators_cpp;
 
 constexpr size_t resonatorStride = 6;
 
-ResonatorBank::ResonatorBank(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, const float* gammas, float sampleRate) : m_sampleRate(sampleRate) {
+ResonatorBank::ResonatorBank(size_t numResonators, const float* frequencies, float sampleRate, const float* alphas, const float* betas, const float* gammas) : m_sampleRate(sampleRate) {
     m_resonators.reserve(numResonators);
     for (size_t i=0; i<numResonators; ++i) {
-        m_resonators.emplace_back(std::make_unique<Resonator>(frequencies[i], alphas[i], betas[i], gammas[i], sampleRate));
+        m_resonators.emplace_back(std::make_unique<Resonator>(frequencies[i], sampleRate, alphas[i], betas[i], gammas[i]));
     }
 #ifndef STD_CONCURRENCY
     m_dispatchGroup = dispatch_group_create();

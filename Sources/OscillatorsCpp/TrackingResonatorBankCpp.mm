@@ -37,9 +37,9 @@ using namespace oscillators_cpp;
 
 @implementation TrackingResonatorBankCpp
 
-- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)naturalFrequencies alphas:(const float*)alphas betas:(const float*)betas gammas:(const float*)gammas trackingRule:(TrackingRuleCpp)trackingRule sampleRate:(float)sampleRate {
+- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)naturalFrequencies sampleRate:(float)sampleRate alphas:(const float*)alphas betas:(const float*)betas gammas:(const float*)gammas trackingRule:(TrackingRuleCpp)trackingRule thresholdDB:(float)thresholdDB {
     if (self = [super init]) {
-        self.resonatorBank = new TrackingResonatorBank(numResonators, naturalFrequencies, alphas, betas, gammas, toTrackingRule(trackingRule), sampleRate);
+        self.resonatorBank = new TrackingResonatorBank(numResonators, naturalFrequencies, sampleRate, alphas, betas, gammas, toTrackingRule(trackingRule), thresholdDB);
     }
     return self;
 }
@@ -96,16 +96,20 @@ using namespace oscillators_cpp;
     return self.resonatorBank->accPower();
 }
 
-- (void)update:(float)sample thresholdDivider:(float)thresholdDivider {
-    self.resonatorBank->update(sample, thresholdDivider);
+- (void)setPowerThresholdDB:(float)thresholdDB {
+    self.resonatorBank->setPowerThresholdDB(thresholdDB);
 }
 
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride thresholdDivider:(float)thresholdDivider {
-    self.resonatorBank->update(frame, frameLength, sampleStride, thresholdDivider);
+- (void)update:(float)sample {
+    self.resonatorBank->update(sample);
 }
 
-- (void)updateConcurrent:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride thresholdDivider:(float)thresholdDivider {
-    self.resonatorBank->updateConcurrent(frame, frameLength, sampleStride, thresholdDivider);
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
+    self.resonatorBank->update(frame, frameLength, sampleStride);
+}
+
+- (void)updateConcurrent:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
+    self.resonatorBank->updateConcurrent(frame, frameLength, sampleStride);
 }
 
 - (void)setTimeConstant:(float)tau frameLength:(int)frameLength sampleStride:(int)sampleStride sampleRate:(float)sampleRate {

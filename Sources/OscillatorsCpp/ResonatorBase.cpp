@@ -29,7 +29,7 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-ResonatorBase::ResonatorBase(float frequency, float alpha, float beta, float gamma, float sampleRate) : Phasor(frequency, sampleRate),
+ResonatorBase::ResonatorBase(float frequency, float sampleRate, float alpha, float beta, float gamma) : Phasor(frequency, sampleRate),
 m_alpha(alpha), m_omAlpha(1.0 - alpha), m_beta(beta), m_omBeta(1.0 - beta), m_gamma(gamma), m_omGamma(1.0 - gamma),
 m_dpc(1.0), m_dps(0.0) {
 }

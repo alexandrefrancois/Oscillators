@@ -28,7 +28,7 @@ SOFTWARE.
 
 // Wrapper for the TrackingResonatorBank class
 @interface TrackingResonatorBankCpp : NSObject
-- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)frequencies alphas:(const float*)alphas betas:(const float*)betas gammas:(const float*)gammas trackingRule:(TrackingRuleCpp)trackingRule sampleRate:(float)sampleRate;
+- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)frequencies sampleRate:(float)sampleRate alphas:(const float*)alphas betas:(const float*)betas gammas:(const float*)gammas trackingRule:(TrackingRuleCpp)trackingRule thresholdDB:(float)thresholdDB;
 - (float)sampleRate;
 - (int)numResonators;
 - (void)getAlphas:(float*)dest size:(int)size;
@@ -41,11 +41,12 @@ SOFTWARE.
 - (void)getPhases:(float*)dest size:(int)size;
 - (void)getDeltaPhases:(float*)dest size:(int)size;
 - (float)accPower;
-- (void)update:(float)sample thresholdDivider:(float)thresholdDivider
-NS_SWIFT_NAME(update(sample:thresholdDivider:));
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride thresholdDivider:(float)thresholdDivider
-NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:thresholdDivider:));
-- (void)updateConcurrent:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride thresholdDivider:(float)thresholdDivider
-NS_SWIFT_NAME(updateConcurrent(frameData:frameLength:sampleStride:thresholdDivider:));
+- (void)setPowerThresholdDB:(float)thresholdDB;
+- (void)update:(float)sample
+NS_SWIFT_NAME(update(sample:));
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
+NS_SWIFT_NAME(update(frameData:frameLength:sampleStride:));
+- (void)updateConcurrent:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride
+NS_SWIFT_NAME(updateConcurrent(frameData:frameLength:sampleStride:));
 - (void)setTimeConstant:(float)tau frameLength:(int)frameLength sampleStride:(int)sampleStride sampleRate:(float)sampleRate;
 @end

@@ -26,7 +26,7 @@ SOFTWARE.
 
 // Wrapper for the ResonatorBank class
 @interface ResonatorBankVecCpp : NSObject
-- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies alphas:(const float*)alphas betas:(const float*)betas sampleRate:(float)sampleRate;
+- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies sampleRate:(float)sampleRate alphas:(const float*)alphas betas:(const float*)betas;
 - (float)sampleRate;
 - (int)numResonators;
 - (float)frequencyValue:(int)index;

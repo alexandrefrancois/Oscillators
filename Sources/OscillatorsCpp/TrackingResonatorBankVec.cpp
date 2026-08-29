@@ -35,15 +35,15 @@ constexpr float zero = 0.0f;
 constexpr float one = 1.0f;
 constexpr float minusOne = -1.0f;
 
-constexpr float minMaxPower = 0.001f;
+constexpr float minPowerThreshold = 1e-12;
 
-TrackingResonatorBankVec::TrackingResonatorBankVec(size_t numResonators, const std::vector<float> &frequencies, const std::vector<float> &alphas, const std::vector<float> &betas, const std::vector<float> &gammas, TrackingRule trackingRule, float sampleRate)
-: TrackingResonatorBankVec(numResonators, frequencies.data(), alphas.data(), betas.data(), gammas.data(), trackingRule, sampleRate) {
+TrackingResonatorBankVec::TrackingResonatorBankVec(size_t numResonators, const std::vector<float> &frequencies, float sampleRate, const std::vector<float> &alphas, const std::vector<float> &betas, const std::vector<float> &gammas, TrackingRule trackingRule, float thresholdDB)
+: TrackingResonatorBankVec(numResonators, frequencies.data(), sampleRate, alphas.data(), betas.data(), gammas.data(), trackingRule, thresholdDB) {
 }
 
-TrackingResonatorBankVec::TrackingResonatorBankVec(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, const float* gammas, TrackingRule trackingRule, float sampleRate)
+TrackingResonatorBankVec::TrackingResonatorBankVec(size_t numResonators, const float* frequencies, float sampleRate, const float* alphas, const float* betas, const float* gammas, TrackingRule trackingRule, float thresholdDB)
 : m_trackingRule(trackingRule), m_sampleRate(sampleRate), m_numResonators(numResonators), m_twoNumResonators(2*numResonators) {
-        
+    
     // initialize from passed frequencies
     m_naturalFrequencies.resize(m_numResonators);
     memcpy(m_naturalFrequencies.data(), frequencies, m_numResonators * sizeof(float));
@@ -73,6 +73,8 @@ TrackingResonatorBankVec::TrackingResonatorBankVec(size_t numResonators, const f
     vDSP_vfill(&one, m_omGammas.data(), 1, m_twoNumResonators);
     vDSP_vsmsa(m_gammas.data(), 1, &minusOne, &one, m_omGammas.data(), 1, m_twoNumResonators);
 
+    setPowerThresholdDB(thresholdDB);
+    
     // setup resonators
     m_r.resize(m_twoNumResonators);
     vDSP_vfill(&zero, m_r.data(), 1, m_twoNumResonators);
@@ -207,7 +209,7 @@ void TrackingResonatorBankVec::getDeltaPhases(float *dest, size_t size) {
     vDSP_zvphas(&D, 1, dest, 1, m_numResonators);
 }
 
-void TrackingResonatorBankVec::update(const float sample, float thresholdDivider) {
+void TrackingResonatorBankVec::update(const float sample) {
     vDSP_vsmul(m_alphas.data(), 1, &sample, m_alphasSample.data(), 1, m_twoNumResonators);
         
     // resonator
@@ -253,7 +255,9 @@ void TrackingResonatorBankVec::update(const float sample, float thresholdDivider
     // Save previous smoothed value
     memcpy(m_rrm.data(), m_rr.data(), m_twoNumResonators * sizeof(float));
     
-    const float trackFrequencyPowerThreshold = fmax(minMaxPower, m_accPower) / thresholdDivider;
+    const float trackFrequencyPowerThreshold = m_accPower * m_trackingPowerThresholdRatio;
+//    const float trackFrequencyPowerThreshold = fmax(minPowerThreshold, m_accPower * m_trackingPowerThresholdRatio);
+
     DSPSplitComplex nW = {m_nw.data(), m_nw.data() + m_numResonators};
     DSPSplitComplex W = {m_w.data(), m_w.data() + m_numResonators};
     int count = static_cast<int>(m_numResonators);
@@ -422,9 +426,9 @@ void TrackingResonatorBankVec::update(const float sample, float thresholdDivider
                1);
 }
 
-void TrackingResonatorBankVec::update(const std::vector<float> &samples, float thresholdDivider) {
+void TrackingResonatorBankVec::update(const std::vector<float> &samples) {
     for (float sample : samples) {
-        update(sample, thresholdDivider);
+        update(sample);
     }
     stabilize(); // this is overkill but necessary
 }
@@ -432,10 +436,10 @@ void TrackingResonatorBankVec::update(const std::vector<float> &samples, float t
 /// Process a frame of samples.
 /// Apply stabilization (norm correction) at the end
 /// Compute amplitudes (phasor magnitudes) at the end
-void TrackingResonatorBankVec::update(const float *frameData, size_t frameLength, size_t sampleStride, float thresholdDivider) {
+void TrackingResonatorBankVec::update(const float *frameData, size_t frameLength, size_t sampleStride) {
     const size_t sampleSpan = frameSampleSpan(frameLength, sampleStride);
     for (size_t sampleIndex = 0; sampleIndex < sampleSpan; sampleIndex += sampleStride) {
-        update(frameData[sampleIndex], thresholdDivider);
+        update(frameData[sampleIndex]);
     }
     stabilize(); // this is overkill but necessary
 }
@@ -443,10 +447,10 @@ void TrackingResonatorBankVec::update(const float *frameData, size_t frameLength
 /// Process a frame of samples.
 /// Apply stabilization (norm correction) at the end
 /// Compute amplitudes (phasor magnitudes) at the end
-void TrackingResonatorBankVec::update(const float *frameData, size_t frameLength, size_t sampleStride, float* powers, float* amplitudes, float thresholdDivider) {
+void TrackingResonatorBankVec::update(const float *frameData, size_t frameLength, size_t sampleStride, float* powers, float* amplitudes) {
     const size_t sampleSpan = frameSampleSpan(frameLength, sampleStride);
     for (size_t sampleIndex = 0; sampleIndex < sampleSpan; sampleIndex += sampleStride) {
-        update(frameData[sampleIndex], thresholdDivider);
+        update(frameData[sampleIndex]);
     }
     stabilize(); // this is overkill but necessary
 }
@@ -467,6 +471,10 @@ void TrackingResonatorBankVec::setTimeConstant(float tau, float sampleRate) {
     float frameDuration =  1.0f / sampleRate;
     m_sigma = 1.0f - exp(-frameDuration / tau);
     m_omSigma = 1.0f - m_sigma;
+}
+
+void TrackingResonatorBankVec::setPowerThresholdDB(float thresholdDB) {
+    m_trackingPowerThresholdRatio = pow(10.0, thresholdDB / 10.0);
 }
 
 // This optimization saves a few 10s of ns per sample...

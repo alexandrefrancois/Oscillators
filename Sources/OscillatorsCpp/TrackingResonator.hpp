@@ -36,12 +36,13 @@ private:
 
     float m_naturalWc;
     float m_naturalWs;
-    float m_trackFrequencyPowerThreshold;
+    float m_trackingPowerThresholdRatio;
+    float m_trackingPowerThreshold;
     TrackingRule m_trackingRule;
 
     void setNaturalW(float c, float s);
     void restoreNaturalW();
-
+    
     void updateTracking(); // virtual function override
     
     void applyEWMATracking();
@@ -49,16 +50,17 @@ private:
     void applyTangentCorrectionTracking();
     
 public:
-    TrackingResonator(float naturalFrequency, float alpha, float beta, float gamma, TrackingRule trackingRule, float sampleRate);
+    TrackingResonator(float naturalFrequency, float sampleRate, float alpha, float beta, float gamma, TrackingRule trackingRule, float thresholdDB);
     
     float naturalFrequency() const { return -m_sampleRate * atan2(m_naturalWs, m_naturalWc) / twoPi; }
     void setNaturalFrequency(float frequency, float alpha, float beta, float gamma);
     float resonantFrequency() const { return frequency(); }
+    void setPowerThresholdDB(float thresholdDB);
 
     void updateWithSample(float sample); // virtual function override
-    void update(float sample, float maxPower, float thresholdDivider);
-    void update(const std::vector<float> &samples, float maxPower, float thresholdDivider);
-    void update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower, float thresholdDivider);
+    void update(float sample, float maxPower);
+    void update(const std::vector<float> &samples, float maxPower);
+    void update(const float *frameData, size_t frameLength, size_t sampleStride, float maxPower);
 };
 
 } // oscillators_cpp

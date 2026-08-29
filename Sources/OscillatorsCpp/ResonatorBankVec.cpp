@@ -32,11 +32,11 @@ using namespace oscillators_cpp;
 constexpr float PI = 3.14159265358979323846; // PI
 constexpr float twoPi = 2.0 * PI;
 
-ResonatorBankVec::ResonatorBankVec(size_t numResonators, const std::vector<float> &frequencies, const std::vector<float> &alphas, const std::vector<float> &betas, float sampleRate)
-: ResonatorBankVec(numResonators, frequencies.data(), alphas.data(), betas.data(), sampleRate) {
+ResonatorBankVec::ResonatorBankVec(size_t numResonators, const std::vector<float> &frequencies, float sampleRate, const std::vector<float> &alphas, const std::vector<float> &betas)
+: ResonatorBankVec(numResonators, frequencies.data(), sampleRate, alphas.data(), betas.data()) {
 }
 
-ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, float sampleRate)
+ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencies, float sampleRate, const float* alphas, const float* betas)
 : m_sampleRate(sampleRate), m_numResonators(numResonators), m_twoNumResonators(2*numResonators) {
     
     constexpr float zero = 0.0f;

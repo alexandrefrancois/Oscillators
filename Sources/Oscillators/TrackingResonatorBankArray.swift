@@ -58,38 +58,45 @@ public class TrackingResonatorBankArray {
     }
     private(set) var omSigma : Float = 0.0
     
-    // 1. Use UInt32 to store the bits of the Float
+    // Use UInt32 to store the bits of the Float
     private let _accPowerBits = ManagedAtomic<UInt32>(Float(0.0001).bitPattern)
 
     public var accPower: Float {
-        // 2. Load as UInt32 and bit-cast back to Float
+        // Load as UInt32 and bit-cast back to Float
         Float(bitPattern: _accPowerBits.load(ordering: .relaxed))
     }
     
-    public init(naturalFrequencies: [Float], alphas: [Float], betas: [Float], gammas: [Float], trackingRule: TrackingRule, sampleRate: Float) {
+    // this might require a bit more care for concurrency...
+    public func setPowerThresholdDB(_ thresholdDB: Float) {
+        for resonator in resonators {
+            resonator.setPowerThresholdDB(thresholdDB)
+        }
+    }
+
+    public init(naturalFrequencies: [Float], sampleRate: Float, alphas: [Float], betas: [Float], gammas: [Float], trackingRule: TrackingRule, thresholdDB: Float) {
         assert(naturalFrequencies.count == alphas.count)
         // setup an oscillator for each frequency
         for (idx, naturalFrequency) in naturalFrequencies.enumerated() {
-            resonators.append(TrackingResonator(naturalFrequency: naturalFrequency, alpha: alphas[idx], beta: betas[idx], gamma: gammas[idx], trackingRule: trackingRule, sampleRate: sampleRate))
+            resonators.append(TrackingResonator(naturalFrequency: naturalFrequency, sampleRate: sampleRate, alpha: alphas[idx], beta: betas[idx], gamma: gammas[idx], trackingRule: trackingRule, thresholdDB: thresholdDB))
         }
     }
     
     /// A constructor that takes a function of frequency and sample rate to compute alphas
-    public init(frequencies: [Float], sampleRate: Float, k: Float = 1.0, trackingRule: TrackingRule, alphaHeuristic: (Float, Float, Float) -> Float) {
+    public init(frequencies: [Float], sampleRate: Float, k: Float = 1.0, trackingRule: TrackingRule, thresholdDB: Float, alphaHeuristic: (Float, Float, Float) -> Float) {
         // setup an oscillator for each frequency
         for frequency in frequencies {
-            resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alphaHeuristic(frequency, sampleRate, k), trackingRule: trackingRule, sampleRate: sampleRate))
+            resonators.append(TrackingResonator(naturalFrequency: frequency, sampleRate: sampleRate, alpha: alphaHeuristic(frequency, sampleRate, k), trackingRule: trackingRule, thresholdDB: thresholdDB))
         }
     }
     
-    public init(alphas: [Float], sigma: Float, sampleRate: Float, frequency: Float, trackingRule: TrackingRule) {
+    public init(alphas: [Float], sigma: Float, sampleRate: Float, frequency: Float, trackingRule: TrackingRule, thresholdDB: Float) {
         // setup an oscillator for each alpha
         for alpha in alphas {
-            resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alpha, trackingRule: trackingRule, sampleRate: sampleRate))
+            resonators.append(TrackingResonator(naturalFrequency: frequency, sampleRate: sampleRate, alpha: alpha, trackingRule: trackingRule, thresholdDB: thresholdDB))
         }
     }
         
-    public func update(sample: Float, thresholdDivider: Float) {
+    public func update(sample: Float) {
         // 1. Snapshot the current atomic power (Load bits -> Float)
         let currentAccPower = Float(bitPattern: _accPowerBits.load(ordering: .relaxed))
         
@@ -98,7 +105,7 @@ public class TrackingResonatorBankArray {
         // 2. Sequential update of all resonators for a single sample
         for resonator in resonators {
             // Pass the snapshotted value to the update method
-            resonator.update(sample: sample, maxPower: currentAccPower, thresholdDivider: thresholdDivider)
+            resonator.update(sample: sample, maxPower: currentAccPower)
             
             let power = resonator.power
             if power > maxPower {
@@ -114,7 +121,7 @@ public class TrackingResonatorBankArray {
     }
     
     /// Sequentially update all resonators
-    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, thresholdDivider: Float) {
+    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         // 1. Snapshot the current atomic power (Load bits -> Float)
         let currentAccPower = Float(bitPattern: _accPowerBits.load(ordering: .relaxed))
         
@@ -127,8 +134,7 @@ public class TrackingResonatorBankArray {
                 frameData: frameData,
                 frameLength: frameLength,
                 sampleStride: sampleStride,
-                maxPower: currentAccPower,
-                thresholdDivider: thresholdDivider
+                maxPower: currentAccPower
             )
             
             let power = resonator.power
@@ -145,7 +151,7 @@ public class TrackingResonatorBankArray {
     }
     
     /// Concurrently update all resonators
-    public func updateConcurrent(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, thresholdDivider: Float) {
+    public func updateConcurrent(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         let numResonators = resonators.count
         guard numResonators > 0 else { return }
 
@@ -166,8 +172,7 @@ public class TrackingResonatorBankArray {
                     frameData: frameData,
                     frameLength: frameLength,
                     sampleStride: sampleStride,
-                    maxPower: currentAccPower,
-                    thresholdDivider: thresholdDivider
+                    maxPower: currentAccPower
                 )
                 chunkMax = max(chunkMax, resonators[i].power)
             }

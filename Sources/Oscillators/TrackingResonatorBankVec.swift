@@ -27,7 +27,7 @@ import Accelerate
 import simd
 
 fileprivate let twoPi = Float.pi * 2.0
-fileprivate let minMaxPower = Float(0.001)
+fileprivate let minPowerThreshold = Float(1e-6)
 fileprivate let minimumResidualMagnitudeSquared = Float(1e-20)
 
 /// A bank of independent tracking resonators implemented as a single array, computations use the Accelerate framework with manual memory management (unsafe pointers)
@@ -132,8 +132,12 @@ public class TrackingResonatorBankVec {
     private var rsqrtPtr : UnsafeMutableBufferPointer<Float>
     
     private let trackingRule: TrackingRule
+    private(set) var trackingPowerThresholdRatio = Float(0.001)
+    public func setPowerThresholdDB(_ thresholdDB: Float) {
+        trackingPowerThresholdRatio = pow(10.0, thresholdDB / 10.0)
+    }
 
-    public init(naturalFrequencies: [Float], alphas: [Float], betas: [Float]? = nil, gammas: [Float]?, trackingRule: TrackingRule, sampleRate: Float) {
+    public init(naturalFrequencies: [Float], sampleRate: Float, alphas: [Float], betas: [Float]? = nil, gammas: [Float]?, trackingRule: TrackingRule, thresholdDB: Float) {
         // check that frequencies and alphas have the same size
         assert(naturalFrequencies.count == alphas.count)
         
@@ -161,6 +165,7 @@ public class TrackingResonatorBankVec {
             self.omGammas = vDSP.add(multiplication: (self.gammas, -1.0), 1.0)
         }
         self.trackingRule = trackingRule
+        self.trackingPowerThresholdRatio = pow(10.0, thresholdDB / 10.0)
 
         twoNumResonators = 2 * numResonators
         
@@ -248,7 +253,7 @@ public class TrackingResonatorBankVec {
     }
     
     /// Update all resonators in parallel
-    func update(sample: Float, thresholdDivider: Float) {
+    func update(sample: Float) {
         var sampleVar = sample
         vDSP_vsmul(alphas, 1, &sampleVar, alphasSample.baseAddress!, 1, vDSP_Length(twoNumResonators));
         
@@ -291,7 +296,8 @@ public class TrackingResonatorBankVec {
         // Save previous smoothed value
         _ = rrmPtr.initialize(from: rrPtr)
         
-        let trackFrequencyPowerThreshold = max(minMaxPower, accPower) / thresholdDivider
+//        let trackingPowerThreshold = max(minPowerThreshold, accPower * trackingPowerThresholdRatio)
+        let trackingPowerThreshold = accPower * trackingPowerThresholdRatio
 
         switch trackingRule {
         case .ewma: // update via omegas
@@ -322,7 +328,7 @@ public class TrackingResonatorBankVec {
                 powersPtr: powersPtr,
                 dPtr: dPtr,
                 naturalOmegasPtr: naturalOmegasPtr,
-                threshold: trackFrequencyPowerThreshold)
+                threshold: trackingPowerThreshold)
             // at this point the first half of dPtr contains the tracked or natural omegas,
             
             // Update W
@@ -376,7 +382,7 @@ public class TrackingResonatorBankVec {
             // Single pass threshold and merge
             // input powers and D
             // output W
-            Self.fuseThresholdAndMerge(powersPtr: powersPtr, D: D, nW: nW, W: W, threshold: trackFrequencyPowerThreshold)
+            Self.fuseThresholdAndMerge(powersPtr: powersPtr, D: D, nW: nW, W: W, threshold: trackingPowerThreshold)
             
             // Is this really necessary?
 //            // normalize W
@@ -423,7 +429,7 @@ public class TrackingResonatorBankVec {
             // Single pass threshold and merge
             // input powers and D
             // output W
-            Self.fuseThresholdAndMerge(powersPtr: powersPtr, D: D, nW: nW, W: W, threshold: trackFrequencyPowerThreshold)
+            Self.fuseThresholdAndMerge(powersPtr: powersPtr, D: D, nW: nW, W: W, threshold: trackingPowerThreshold)
             
             // Is this really necessary?
 //            // normalize W
@@ -446,18 +452,18 @@ public class TrackingResonatorBankVec {
     
     /// Process a frame of samples.
     /// Apply stabilization (norm correction) at the end
-    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, thresholdDivider: Float) {
+    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int) {
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
-            update(sample: frameData[sampleIndex], thresholdDivider: thresholdDivider)
+            update(sample: frameData[sampleIndex])
         }
         stabilize() // this is overkill but necessary
     }
     
     /// Process a frame of samples.
     /// Apply stabilization (norm correction) at the end
-    public func update(frame: [Float], thresholdDivider: Float) {
+    public func update(frame: [Float], thresholdDB: Float) {
         for sample in frame {
-            update(sample: sample, thresholdDivider: thresholdDivider)
+            update(sample: sample)
         }
         stabilize() // this is overkill but necessary
     }

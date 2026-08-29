@@ -35,9 +35,9 @@ using namespace oscillators_cpp;
 
 @implementation TrackingResonatorCpp
 
-- (instancetype)initWithNaturalFrequency:(float)naturalFrequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma trackingRule:(TrackingRuleCpp)trackingRule sampleRate:(float)sampleRate {
+- (instancetype)initWithNaturalFrequency:(float)naturalFrequency sampleRate:(float)sampleRate alpha:(float)alpha beta:(float)beta gamma:(float)gamma trackingRule:(TrackingRuleCpp)trackingRule thresholdDB:(float)thresholdDB {
     if (self = [super init]) {
-        self.oscillator = new TrackingResonator(naturalFrequency, alpha, beta, gamma, toTrackingRule(trackingRule), sampleRate);
+        self.oscillator = new TrackingResonator(naturalFrequency, sampleRate, alpha, beta, gamma, toTrackingRule(trackingRule), thresholdDB);
     }
     return self;
 }
@@ -58,12 +58,16 @@ using namespace oscillators_cpp;
     return self.resonator->resonantFrequency();
 }
 
-- (void)update:(float)sample maxPower:(float)maxPower thresholdDivider:(float)thresholdDivider {
-    self.resonator->update(sample, maxPower, thresholdDivider);
+- (void)setPowerThresholdDB:(float)thresholdDB {
+    self.resonator->setPowerThresholdDB(thresholdDB);
 }
 
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride maxPower:(float)maxPower thresholdDivider:(float)thresholdDivider {
-    self.resonator->update(frame, frameLength, sampleStride, maxPower, thresholdDivider);
+- (void)update:(float)sample maxPower:(float)maxPower {
+    self.resonator->update(sample, maxPower);
+}
+
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride maxPower:(float)maxPower {
+    self.resonator->update(frame, frameLength, sampleStride, maxPower);
 }
 
 @end

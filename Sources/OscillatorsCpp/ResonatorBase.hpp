@@ -52,7 +52,7 @@ protected:
     virtual void updateDeltaPhase(float lcc, float lss); // this one is overridden in derived classes
 
 public:
-    ResonatorBase(float frequency, float alpha, float beta, float gamma, float sampleRate);
+    ResonatorBase(float frequency, float sampleRate, float alpha, float beta, float gamma);
     
     float power() const { return m_cc * m_cc + m_ss * m_ss; }
     float amplitude() const { return sqrt(m_cc * m_cc + m_ss * m_ss); }

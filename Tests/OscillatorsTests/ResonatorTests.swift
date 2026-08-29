@@ -30,15 +30,14 @@ final class ResonatorTests: XCTestCase {
     private let epsilon : Float = 1e-6
 
     func testConstructor() throws {
-        let resonator = Resonator(frequency: 440.0,
-                                  alpha: DynamicsFixtures.defaultAlpha, sampleRate: AudioFixtures.defaultSampleRate)
+        let resonator = Resonator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: DynamicsFixtures.defaultAlpha)
         
         XCTAssertEqual(resonator.alpha, DynamicsFixtures.defaultAlpha)
     }
     
     func testSetAlpha() throws {
         var alpha: Float = 0.99
-        let resonator = Resonator(frequency: 440.0, alpha: alpha, sampleRate: AudioFixtures.defaultSampleRate)
+        let resonator = Resonator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: alpha)
         XCTAssertEqual(resonator.alpha, alpha)
         XCTAssertEqual(resonator.omAlpha, 1.0-alpha)
 
@@ -48,7 +47,7 @@ final class ResonatorTests: XCTestCase {
     }
     
     func testUpdateWithSample() throws {
-        let resonator = Resonator(frequency: 440.0, alpha: 1.0, sampleRate: AudioFixtures.defaultSampleRate)
+        let resonator = Resonator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: 1.0)
         let expectedC = resonator.Zc
         let expectedS = resonator.Zs
         resonator.updateWithSample(1.0)
@@ -61,7 +60,7 @@ final class ResonatorTests: XCTestCase {
         
     func testImpulseResponse() {
         let N = 128
-        let resonator = Resonator(frequency: 440.0, alpha: 0.9, beta: 0.9, gamma: 0.9, sampleRate: AudioFixtures.defaultSampleRate)
+        let resonator = Resonator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: 0.9, beta: 0.9, gamma: 0.9)
         let impulse = SignalFixtures.makeImpulse(count: N)
         var outputs = [Float]()
         for x in impulse { resonator.updateWithSample(x); outputs.append(resonator.amplitude) }
@@ -71,7 +70,7 @@ final class ResonatorTests: XCTestCase {
     
     func testStepResponse() {
         let N = 128
-        let resonator = Resonator(frequency: 440.0, alpha: 0.95, beta: 0.95, gamma: 0.95, sampleRate: AudioFixtures.defaultSampleRate)
+        let resonator = Resonator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: 0.95, beta: 0.95, gamma: 0.95)
         let step = SignalFixtures.makeStep(count: N, value: 1.0)
         var outputs = [Float]()
         for x in step { resonator.updateWithSample(x); outputs.append(resonator.amplitude) }
@@ -83,7 +82,7 @@ final class ResonatorTests: XCTestCase {
         let N = 256
         let f0: Float = 440.0
         let sr: Float = AudioFixtures.defaultSampleRate
-        let resonator = Resonator(frequency: f0, alpha: 0.95, beta: 0.95, gamma: 0.95, sampleRate: sr)
+        let resonator = Resonator(frequency: f0, sampleRate: sr, alpha: 0.95, beta: 0.95, gamma: 0.95)
         let sine = SignalFixtures.makeSine(count: N, freq: f0, sampleRate: sr)
         var outputs = [Float]()
         for x in sine { resonator.updateWithSample(x); outputs.append(resonator.amplitude) }
@@ -92,7 +91,7 @@ final class ResonatorTests: XCTestCase {
     
     func testConvergence() {
         let N = 200
-        let resonator = Resonator(frequency: 440.0, alpha: 0.7, beta: 0.7, gamma: 0.7, sampleRate: AudioFixtures.defaultSampleRate)
+        let resonator = Resonator(frequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: 0.7, beta: 0.7, gamma: 0.7)
         let step = SignalFixtures.makeStep(count: N, value: 1.0)
         for x in step { resonator.updateWithSample(x) }
         let amp_prev = resonator.amplitude
@@ -111,8 +110,8 @@ final class ResonatorTests: XCTestCase {
         let alpha: Float = 0.9, beta: Float = 0.9, gamma: Float = 0.9
         let sr: Float = AudioFixtures.defaultSampleRate
         let input = SignalFixtures.makeSine(count: N, freq: f0, sampleRate: sr)
-        let swiftRes = Resonator(frequency: f0, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sr)
-        guard let cppRes = ResonatorCpp(frequency: f0, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sr) else {
+        let swiftRes = Resonator(frequency: f0, sampleRate: sr, alpha: alpha, beta: beta, gamma: gamma)
+        guard let cppRes = ResonatorCpp(frequency: f0, sampleRate: sr, alpha: alpha, beta: beta, gamma: gamma) else {
             XCTFail("Cpp Resonator could not be instantiated"); return
         }
         for x in input {
@@ -131,8 +130,8 @@ final class ResonatorTests: XCTestCase {
         let channelSamples = SignalFixtures.makeSine(count: frameLength, freq: f0, sampleRate: sampleRate)
         var interleaved = channelSamples.flatMap { [$0, Float(-0.25)] }
 
-        let swiftReference = Resonator(frequency: f0, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sampleRate)
-        let swiftStrided = Resonator(frequency: f0, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sampleRate)
+        let swiftReference = Resonator(frequency: f0, sampleRate: sampleRate, alpha: alpha, beta: beta, gamma: gamma)
+        let swiftStrided = Resonator(frequency: f0, sampleRate: sampleRate, alpha: alpha, beta: beta, gamma: gamma)
 
         swiftReference.update(samples: channelSamples)
         interleaved.withUnsafeMutableBufferPointer { buffer in
@@ -148,16 +147,16 @@ final class ResonatorTests: XCTestCase {
 
         guard let cppReference = ResonatorCpp(
             frequency: f0,
+            sampleRate: sampleRate,
             alpha: alpha,
             beta: beta,
-            gamma: gamma,
-            sampleRate: sampleRate
+            gamma: gamma
         ), let cppStrided = ResonatorCpp(
             frequency: f0,
+            sampleRate: sampleRate,
             alpha: alpha,
             beta: beta,
-            gamma: gamma,
-            sampleRate: sampleRate
+            gamma: gamma
         ) else {
             XCTFail("Cpp Resonator could not be instantiated")
             return

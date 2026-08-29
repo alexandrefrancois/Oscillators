@@ -27,7 +27,7 @@ SOFTWARE.
 
 // Wrapper for the Resonator class
 @interface ResonatorCpp : ResonatorBaseCpp
-- (instancetype)initWithFrequency:(float)frequency alpha:(float)alpha beta:(float)beta gamma:(float)gamma sampleRate:(float)sampleRate;
+- (instancetype)initWithFrequency:(float)frequency sampleRate:(float)sampleRate alpha:(float)alpha beta:(float)beta gamma:(float)gamma;
 - (void)update:(float)sample
 NS_SWIFT_NAME(update(sample:));
 - (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride

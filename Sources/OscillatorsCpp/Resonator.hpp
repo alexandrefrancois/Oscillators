@@ -35,8 +35,8 @@ protected:
     void updateDeltaPhase(float lcc, float lss);
     
 public:
-    Resonator(float frequency, float alpha, float beta, float gamma, float sampleRate)
-    : ResonatorBase(frequency, alpha, beta, gamma, sampleRate) {}
+    Resonator(float frequency, float sampleRate, float alpha, float beta, float gamma)
+    : ResonatorBase(frequency, sampleRate, alpha, beta, gamma) {}
     
     void update(float sample);
     void update(const std::vector<float> &samples);

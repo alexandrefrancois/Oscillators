@@ -37,9 +37,9 @@ using namespace oscillators_cpp;
 
 @implementation TrackingResonatorBankVecCpp
 
-- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)naturalFrequencies alphas:(const float*)alphas betas:(const float*)betas gammas:(const float*)gammas trackingRule:(TrackingRuleCpp)trackingRule  sampleRate:(float)sampleRate {
+- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)naturalFrequencies sampleRate:(float)sampleRate alphas:(const float*)alphas betas:(const float*)betas gammas:(const float*)gammas trackingRule:(TrackingRuleCpp)trackingRule thresholdDB:(float)thresholdDB {
     if (self = [super init]) {
-        self.resonatorBank = new TrackingResonatorBankVec(numResonators, naturalFrequencies, alphas, betas, gammas, toTrackingRule(trackingRule), sampleRate);
+        self.resonatorBank = new TrackingResonatorBankVec(numResonators, naturalFrequencies, sampleRate, alphas, betas, gammas, toTrackingRule(trackingRule), thresholdDB);
     }
     return self;
 }
@@ -92,20 +92,24 @@ using namespace oscillators_cpp;
     return self.resonatorBank->accPower();
 }
 
-- (void)update:(float)sample thresholdDivider:(float)thresholdDivider {
-    self.resonatorBank->update(sample, thresholdDivider);
+- (void)update:(float)sample {
+    self.resonatorBank->update(sample);
 }
 
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride thresholdDivider:(float)thresholdDivider {
-    self.resonatorBank->update(frame, frameLength, sampleStride, thresholdDivider);
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride {
+    self.resonatorBank->update(frame, frameLength, sampleStride);
 }
 
-- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride powers:(float*)powers amplitudes:(float*)amplitudes thresholdDivider:(float)thresholdDivider {
-    self.resonatorBank->update(frame, frameLength, sampleStride, powers, amplitudes, thresholdDivider);
+- (void)update:(float*)frame frameLength:(int)frameLength sampleStride:(int)sampleStride powers:(float*)powers amplitudes:(float*)amplitudes {
+    self.resonatorBank->update(frame, frameLength, sampleStride, powers, amplitudes);
 }
 
 - (void)setTimeConstant:(float)tau sampleRate:(float)sampleRate {
     self.resonatorBank->setTimeConstant(tau, sampleRate);
+}
+
+- (void)setPowerThresholdDB:(float)thresholdDB {
+    self.resonatorBank->setPowerThresholdDB(thresholdDB);
 }
 
 @end

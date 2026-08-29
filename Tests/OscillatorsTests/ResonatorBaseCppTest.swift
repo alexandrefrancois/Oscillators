@@ -29,10 +29,10 @@ final class ResonatorBaseCppTests: XCTestCase {
     
     func testConstructor() throws {
         let resonator = ResonatorBaseCpp(frequency: 440.0,
+                                         sampleRate: AudioFixtures.defaultSampleRate,
                                          alpha: DynamicsFixtures.defaultAlpha,
                                          beta: DynamicsFixtures.defaultAlpha,
-                                         gamma: DynamicsFixtures.defaultAlpha,
-                                         sampleRate: AudioFixtures.defaultSampleRate)
+                                         gamma: DynamicsFixtures.defaultAlpha)
         
         guard let resonator = resonator else { return XCTAssert(false) }
 

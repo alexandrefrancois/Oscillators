@@ -96,7 +96,7 @@ public class ResonatorBase : Phasor {
     public internal(set) var dpc: Float = 0.0
     public internal(set) var dps: Float = 0.0
     
-    public init(frequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, sampleRate: Float) {
+    public init(frequency: Float, sampleRate: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil) {
         self.alpha = alpha
         self.omAlpha = 1.0 - alpha
         self.beta = beta ?? alpha

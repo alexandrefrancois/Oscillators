@@ -85,13 +85,14 @@ private:
     std::vector<float> m_rsqrt;
     
     TrackingRule m_trackingRule;
+    float m_trackingPowerThresholdRatio;
     
 public:
     TrackingResonatorBankVec & operator=(const TrackingResonatorBankVec&) = delete;
     TrackingResonatorBankVec(const TrackingResonatorBankVec&) = delete;
     
-    TrackingResonatorBankVec(size_t numResonators, const std::vector<float> &frequencies, const std::vector<float> &alphas, const std::vector<float> &betas, const std::vector<float> &gammas, TrackingRule trackingRule, float sampleRate);
-    TrackingResonatorBankVec(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, const float* gammas, TrackingRule trackingRule, float sampleRate);
+    TrackingResonatorBankVec(size_t numResonators, const std::vector<float> &frequencies, float sampleRate, const std::vector<float> &alphas, const std::vector<float> &betas, const std::vector<float> &gammas, TrackingRule trackingRule, float thresholdDB);
+    TrackingResonatorBankVec(size_t numResonators, const float* frequencies, float sampleRate, const float* alphas, const float* betas, const float* gammas, TrackingRule trackingRule, float thresholdDB);
     
     float sampleRate() { return m_sampleRate; }
     size_t numResonators() { return m_numResonators; }
@@ -106,14 +107,15 @@ public:
     void getDeltaPhases(float *dest, size_t size);
     float accPower() const { return m_accPower; };
     
-    void update(const float sample, const float thresholdDivider);
-    void update(const std::vector<float> &samples, float thresholdDivider);
-    void update(const float *frameData, size_t frameLength, size_t sampleStride, float thresholdDivider);
-    void update(const float *frameData, size_t frameLength, size_t sampleStride, float* powers, float* amplitudes, float thresholdDivider);
+    void update(const float sample);
+    void update(const std::vector<float> &samples);
+    void update(const float *frameData, size_t frameLength, size_t sampleStride);
+    void update(const float *frameData, size_t frameLength, size_t sampleStride, float* powers, float* amplitudes);
     
     void stabilize();
     
     void setTimeConstant(float tau, float sampleRate);
+    void setPowerThresholdDB(float thresholdDB);
 
     static void thresholdAndMerge(const float* powers,
                                   float* trackedOmegas,

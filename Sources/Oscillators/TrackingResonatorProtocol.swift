@@ -31,12 +31,14 @@ public protocol TrackingResonatorProtocol {
     var amplitude : Float { get }
     var alpha : Float { get set }
 
+    func setPowerThresholdDB(_ thresholdDB: Float)
+    
     /// This function performs an update of the resonator amplitude from a single sample
-    func update(sample: Float, maxPower: Float, thresholdDivider: Float)
+    func update(sample: Float, maxPower: Float)
     
     /// This function performs an update of the resonator amplitude from an array of samples
-    func update(samples: [Float], maxPower: Float, thresholdDivider: Float)
+    func update(samples: [Float], maxPower: Float)
     
     /// This function performs an update of the resonator amplitude from a buffer of samples
-    func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float, thresholdDivider: Float)
+    func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float)
 }

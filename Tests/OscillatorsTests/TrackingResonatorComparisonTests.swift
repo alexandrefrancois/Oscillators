@@ -34,7 +34,7 @@ final class TrackingResonatorComparisonTests: XCTestCase {
     private let warmUpCount = 3_000
     private let settlingBand: Float = 1.0
     private let settlingHoldCount = Int(AudioFixtures.defaultSampleRate * 0.02)
-    private let thresholdDivider: Float = 1000.0
+    private let thresholdDB: Float = -60.0
 
     func testMatchedToneComparison() {
         let trace = TrackingSignalFixtures.constantTone(
@@ -203,21 +203,21 @@ final class TrackingResonatorComparisonTests: XCTestCase {
 
         switch method {
         case .ewma:
-            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .ewma, sampleRate: sampleRate)
+            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, sampleRate: sampleRate, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .ewma, thresholdDB: thresholdDB)
             for sample in samples {
-                resonator.update(sample: sample, maxPower: maxPower, thresholdDivider: thresholdDivider)
+                resonator.update(sample: sample, maxPower: maxPower)
                 estimates.append(resonator.resonantFrequency)
             }
         case .normalizedChord:
-            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .normalizedChord, sampleRate: sampleRate)
+            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, sampleRate: sampleRate, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .normalizedChord, thresholdDB: thresholdDB)
             for sample in samples {
-                resonator.update(sample: sample, maxPower: maxPower, thresholdDivider: thresholdDivider)
+                resonator.update(sample: sample, maxPower: maxPower)
                 estimates.append(resonator.resonantFrequency)
             }
         case .tangent:
-            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .tangent, sampleRate: sampleRate)
+            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, sampleRate: sampleRate, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .tangent, thresholdDB: thresholdDB)
             for sample in samples {
-                resonator.update(sample: sample, maxPower: maxPower, thresholdDivider: thresholdDivider)
+                resonator.update(sample: sample, maxPower: maxPower)
                 estimates.append(resonator.resonantFrequency)
             }
         }
@@ -230,14 +230,14 @@ final class TrackingResonatorComparisonTests: XCTestCase {
 
         switch method {
         case .ewma:
-            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .ewma, sampleRate: sampleRate)
-            resonator.update(samples: samples, maxPower: maxPower, thresholdDivider: thresholdDivider)
+            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, sampleRate: sampleRate, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .ewma, thresholdDB: thresholdDB)
+            resonator.update(samples: samples, maxPower: maxPower)
         case .normalizedChord:
-            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .normalizedChord, sampleRate: sampleRate)
-            resonator.update(samples: samples, maxPower: maxPower, thresholdDivider: thresholdDivider)
+            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, sampleRate: sampleRate, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .normalizedChord, thresholdDB: thresholdDB)
+            resonator.update(samples: samples, maxPower: maxPower)
         case .tangent:
-            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .tangent, sampleRate: sampleRate)
-            resonator.update(samples: samples, maxPower: maxPower, thresholdDivider: thresholdDivider)
+            let resonator = TrackingResonator(naturalFrequency: naturalFrequency, sampleRate: sampleRate, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .tangent, thresholdDB: thresholdDB)
+            resonator.update(samples: samples, maxPower: maxPower)
         }
 
         return Date().timeIntervalSince(start)

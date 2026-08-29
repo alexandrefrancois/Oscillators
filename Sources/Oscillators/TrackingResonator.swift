@@ -26,7 +26,7 @@ import Foundation
 import Accelerate
 
 fileprivate let twoPi = Float.pi * 2.0
-fileprivate let minMaxPower = Float(0.001)
+fileprivate let minPowerThreshold = Float(1e-12)
 fileprivate let minimumResidualMagnitudeSquared = Float(1e-20)
 
 public enum TrackingRule: Equatable, CaseIterable, CustomStringConvertible {
@@ -81,15 +81,21 @@ public class TrackingResonator : ResonatorBase, TrackingResonatorProtocol {
     var naturalWc: Float
     var naturalWs: Float
     
-    private(set) var trackFrequencyPowerThreshold = Float(0.001)
+    private(set) var trackingPowerThresholdRatio = Float(0.001)
+    public func setPowerThresholdDB(_ thresholdDB: Float) {
+        trackingPowerThresholdRatio = pow(10.0, thresholdDB / 10.0)
+    }
+
+    private(set) var trackingPowerThreshold = Float(0.001)
     private typealias ApplyTrackingRuleFunc = () -> Void
     private var applyTrackingRule: ApplyTrackingRuleFunc? = nil
-
-    public init(naturalFrequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, trackingRule: TrackingRule, sampleRate: Float ) {
+    
+    public init(naturalFrequency: Float, sampleRate: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, trackingRule: TrackingRule, thresholdDB: Float) {
         let naturalOmega = -naturalFrequency / (sampleRate / twoPi)
         self.naturalWc = cos(naturalOmega)
         self.naturalWs = sin(naturalOmega)
-        super.init(frequency: naturalFrequency, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sampleRate)
+        self.trackingPowerThresholdRatio = pow(10.0, thresholdDB / 10.0)
+        super.init(frequency: naturalFrequency, sampleRate: sampleRate, alpha: alpha, beta: beta, gamma: gamma)
         switch trackingRule {
         case .ewma:
             applyTrackingRule = applyEWMATracking
@@ -106,10 +112,8 @@ public class TrackingResonator : ResonatorBase, TrackingResonatorProtocol {
     }
         
     func updateTracking() {
-        if power > trackFrequencyPowerThreshold {
+        if power > trackingPowerThreshold {
             applyTrackingRule?()
-            // is this really necessary?
-//            normalizeW()
         } else {
             restoreNaturalW()
         }
@@ -156,22 +160,23 @@ public class TrackingResonator : ResonatorBase, TrackingResonatorProtocol {
         incrementPhase()
     }
         
-    public func update(sample: Float, maxPower: Float = 0.25, thresholdDivider: Float) {
-        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / thresholdDivider
+    public func update(sample: Float, maxPower: Float = 0.25) {
+        trackingPowerThreshold = maxPower * trackingPowerThresholdRatio
+//        trackingPowerThreshold = max(minPowerThreshold, trackingPowerThreshold)
         updateWithSample(sample)
         stabilize()
     }
     
-    public func update(samples: [Float], maxPower: Float = 0.25, thresholdDivider: Float) {
-        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / thresholdDivider
+    public func update(samples: [Float], maxPower: Float = 0.25) {
+        trackingPowerThreshold = maxPower * trackingPowerThresholdRatio
         for sample in samples {
             updateWithSample(sample)
         }
         stabilize()
     }
 
-    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float = 0.25, thresholdDivider: Float) {
-        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / thresholdDivider
+    public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float = 0.25) {
+        trackingPowerThreshold = maxPower * trackingPowerThresholdRatio
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }

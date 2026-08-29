@@ -36,9 +36,9 @@ using namespace oscillators_cpp;
 
 @implementation ResonatorBankCpp
 
-- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies alphas:(const float*)alphas betas: (const float*)betas gammas: (const float*)gammas sampleRate:(float)sampleRate {
+- (instancetype)initWithNumResonators:(int)numResonators frequencies:(const float*)frequencies sampleRate:(float)sampleRate alphas:(const float*)alphas betas: (const float*)betas gammas: (const float*)gammas {
     if (self = [super init]) {
-        self.resonatorBank = new ResonatorBank(numResonators, frequencies, alphas, betas, gammas, sampleRate);
+        self.resonatorBank = new ResonatorBank(numResonators, frequencies, sampleRate, alphas, betas, gammas);
     }
     return self;
 }

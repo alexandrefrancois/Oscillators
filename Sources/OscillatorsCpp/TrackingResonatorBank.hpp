@@ -48,7 +48,7 @@ public:
     TrackingResonatorBank & operator=(const TrackingResonatorBank&) = delete;
     TrackingResonatorBank(const TrackingResonatorBank&) = delete;
 
-    TrackingResonatorBank(size_t numResonators, const float* naturalFrequencies, const float* alphas, const float* betas, const float* gammas, TrackingRule trackingRule, float sampleRate);
+    TrackingResonatorBank(size_t numResonators, const float* naturalFrequencies, float sampleRate, const float* alphas, const float* betas, const float* gammas, TrackingRule trackingRule, float thresholdDB);
 
     float sampleRate() { return m_sampleRate; }
     size_t numResonators() { return m_resonators.size(); }
@@ -62,10 +62,11 @@ public:
     void getPhases(float *dest, size_t size);
     void getDeltaPhases(float *dest, size_t size);
     float accPower() const { return m_accPower; };
-    void update(const float sample, float thresholdDivider);
-    void update(const std::vector<float> &samples, float thresholdDivider);
-    void update(const float *frameData, size_t frameLength, size_t sampleStride, float thresholdDivider);
-    void updateConcurrent(const float *frameData, size_t frameLength, size_t sampleStride, float thresholdDivider);
+    void setPowerThresholdDB(float thresholdDB);
+    void update(const float sample);
+    void update(const std::vector<float> &samples);
+    void update(const float *frameData, size_t frameLength, size_t sampleStride);
+    void updateConcurrent(const float *frameData, size_t frameLength, size_t sampleStride);
     void setTimeConstant(float tau, size_t frameLength, size_t sampleStride, float sampleRate);
 };
 

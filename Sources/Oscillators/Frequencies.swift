@@ -155,7 +155,7 @@ extension Frequencies {
     /// - returns: an array of coefficients (one per frequency)
     public static func frequencySweep(frequencies: [Float], alphas: [Float], betas: [Float]? = nil, sampleRate: Float) -> [Float] {
         var output = [Float](repeating: 0, count: frequencies.count)
-        let bank = ResonatorBankVec(frequencies: frequencies, alphas: alphas, betas: betas ?? nil, sampleRate: sampleRate)
+        let bank = ResonatorBankVec(frequencies: frequencies, sampleRate: sampleRate, alphas: alphas, betas: betas ?? nil)
         for (idx, frequency) in frequencies.enumerated() {
             let oscillator = Oscillator(frequency: frequency, sampleRate: sampleRate)
             let duration = 40 * Dynamics.timeConstant(alpha: alphas[idx], sampleRate: sampleRate)

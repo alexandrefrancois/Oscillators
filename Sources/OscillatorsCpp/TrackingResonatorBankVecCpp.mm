@@ -27,6 +27,7 @@ SOFTWARE.
 #import <Foundation/Foundation.h>
 
 #include "TrackingResonatorBankVec.hpp"
+#include "TrackingRuleBridge.hpp"
 
 using namespace oscillators_cpp;
 
@@ -36,9 +37,9 @@ using namespace oscillators_cpp;
 
 @implementation TrackingResonatorBankVecCpp
 
-- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)naturalFrequencies alphas:(const float*)alphas betas:(const float*)betas gammas:(const float*)gammas sampleRate:(float)sampleRate {
+- (instancetype)initWithNumResonators:(int)numResonators naturalFrequencies:(const float*)naturalFrequencies sampleRate:(float)sampleRate alphas:(const float*)alphas betas:(const float*)betas gammas:(const float*)gammas trackingRule:(TrackingRuleCpp)trackingRule thresholdDB:(float)thresholdDB {
     if (self = [super init]) {
-        self.resonatorBank = new TrackingResonatorBankVec(numResonators, naturalFrequencies, alphas, betas, gammas, sampleRate);
+        self.resonatorBank = new TrackingResonatorBankVec(numResonators, naturalFrequencies, sampleRate, alphas, betas, gammas, toTrackingRule(trackingRule), thresholdDB);
     }
     return self;
 }
@@ -105,6 +106,10 @@ using namespace oscillators_cpp;
 
 - (void)setTimeConstant:(float)tau sampleRate:(float)sampleRate {
     self.resonatorBank->setTimeConstant(tau, sampleRate);
+}
+
+- (void)setPowerThresholdDB:(float)thresholdDB {
+    self.resonatorBank->setPowerThresholdDB(thresholdDB);
 }
 
 @end

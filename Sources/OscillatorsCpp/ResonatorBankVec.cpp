@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 #include "ResonatorBankVec.hpp"
+#include "FrameStride.hpp"
 
 #include <Accelerate/Accelerate.h>
 
@@ -31,11 +32,11 @@ using namespace oscillators_cpp;
 constexpr float PI = 3.14159265358979323846; // PI
 constexpr float twoPi = 2.0 * PI;
 
-ResonatorBankVec::ResonatorBankVec(size_t numResonators, const std::vector<float> &frequencies, const std::vector<float> &alphas, const std::vector<float> &betas, float sampleRate)
-: ResonatorBankVec(numResonators, frequencies.data(), alphas.data(), betas.data(), sampleRate) {
+ResonatorBankVec::ResonatorBankVec(size_t numResonators, const std::vector<float> &frequencies, float sampleRate, const std::vector<float> &alphas, const std::vector<float> &betas)
+: ResonatorBankVec(numResonators, frequencies.data(), sampleRate, alphas.data(), betas.data()) {
 }
 
-ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, float sampleRate)
+ResonatorBankVec::ResonatorBankVec(size_t numResonators, const float* frequencies, float sampleRate, const float* alphas, const float* betas)
 : m_sampleRate(sampleRate), m_numResonators(numResonators), m_twoNumResonators(2*numResonators) {
     
     constexpr float zero = 0.0f;
@@ -117,7 +118,7 @@ float ResonatorBankVec::betaValue(size_t index) {
     if (index >= m_numResonators) {
         throw std::out_of_range("Bad index passed to alphaValue()");
     }
-    return m_alphas[index];
+    return m_betas[index];
 }
 
 void ResonatorBankVec::getPowers(float *dest, size_t size) {
@@ -189,8 +190,9 @@ void ResonatorBankVec::update(const std::vector<float> &samples) {
 /// Apply stabilization (norm correction) at the end
 /// Compute amplitudes (phasor magnitudes) at the end
 void ResonatorBankVec::update(const float *frameData, size_t frameLength, size_t sampleStride) {
-    for (int i=0; i<frameLength; i += sampleStride) {
-        update(frameData[i]);
+    const size_t sampleSpan = frameSampleSpan(frameLength, sampleStride);
+    for (size_t sampleIndex = 0; sampleIndex < sampleSpan; sampleIndex += sampleStride) {
+        update(frameData[sampleIndex]);
     }
     stabilize(); // this is overkill but necessary
 }
@@ -199,8 +201,9 @@ void ResonatorBankVec::update(const float *frameData, size_t frameLength, size_t
 /// Apply stabilization (norm correction) at the end
 /// Compute amplitudes (phasor magnitudes) at the end
 void ResonatorBankVec::update(const float *frameData, size_t frameLength, size_t sampleStride, float* powers, float* amplitudes) {
-    for (int i=0; i<frameLength; i += sampleStride) {
-        update(frameData[i]);
+    const size_t sampleSpan = frameSampleSpan(frameLength, sampleStride);
+    for (size_t sampleIndex = 0; sampleIndex < sampleSpan; sampleIndex += sampleStride) {
+        update(frameData[sampleIndex]);
     }
     stabilize(); // this is overkill but necessary
 }

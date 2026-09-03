@@ -58,11 +58,11 @@ public class ResonatorBankArray {
         resonators.map { $0.instantaneousFrequency }
     }
     
-    public init(frequencies: [Float], alphas: [Float], betas: [Float], gammas: [Float], sampleRate: Float) {
+    public init(frequencies: [Float], sampleRate: Float, alphas: [Float], betas: [Float], gammas: [Float]) {
         assert(frequencies.count == alphas.count)
         // setup an oscillator for each frequency
         for (idx, frequency) in frequencies.enumerated() {
-            resonators.append(Resonator(frequency: frequency, alpha: alphas[idx], beta: betas[idx], gamma: gammas[idx], sampleRate: sampleRate))
+            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alphas[idx], beta: betas[idx], gamma: gammas[idx]))
         }
     }
     
@@ -70,14 +70,14 @@ public class ResonatorBankArray {
     public init(frequencies: [Float], sampleRate: Float, k: Float = 1.0, n: Float = 1.0, alphaHeuristic: (Float, Float, Float, Float) -> Float) {
         // setup an oscillator for each frequency
         for frequency in frequencies {
-            resonators.append(Resonator(frequency: frequency, alpha: alphaHeuristic(frequency, sampleRate, k, n), sampleRate: sampleRate))
+            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alphaHeuristic(frequency, sampleRate, k, n)))
         }
     }
     
     public init(alphas: [Float], sampleRate: Float, frequency: Float) {
         // setup an oscillator for each alpha
         for alpha in alphas {
-            resonators.append(Resonator(frequency: frequency, alpha: alpha, sampleRate: sampleRate))
+            resonators.append(Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alpha))
         }
     }
     

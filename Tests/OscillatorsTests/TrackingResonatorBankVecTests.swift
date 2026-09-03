@@ -27,7 +27,7 @@ import XCTest
 import OscillatorsCpp
 
 final class TrackingResonatorBankVecTests: XCTestCase {
-    let epsilon: Float = 1e-5
+    private let thresholdDB: Float = -60.0
 
     func testInitialization() {
         let frequencies = FrequenciesFixtures.frequencies
@@ -37,10 +37,13 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         let gammas = TrackingResonatorBankArray.gammasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let trackingResonatorBank = TrackingResonatorBankVec(
             naturalFrequencies: frequencies,
+            sampleRate: sampleRate,
             alphas: alphas,
             betas: betas,
             gammas: gammas,
-            sampleRate: sampleRate)
+            trackingRule: TrackingRule.ewma,
+            thresholdDB: thresholdDB
+        )
         XCTAssertEqual(trackingResonatorBank.numResonators, frequencies.count, "Number of resonators mismatch")
         for i in 0..<trackingResonatorBank.numResonators {
             XCTAssertEqual(trackingResonatorBank.naturalFrequencies[i], FrequenciesFixtures.frequencies[i])
@@ -62,14 +65,17 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         let gammas = TrackingResonatorBankArray.gammasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let trackingResonatorBank = TrackingResonatorBankVec(
             naturalFrequencies: frequencies,
+            sampleRate: sampleRate,
             alphas: alphas,
             betas: betas,
             gammas: gammas,
-            sampleRate: sampleRate)
+            trackingRule: .ewma,
+            thresholdDB: thresholdDB
+        )
         
         let N = 128
         let sine = SignalFixtures.makeSine(count: N, freq: 440.0, sampleRate: AudioFixtures.defaultSampleRate)
-        trackingResonatorBank.update(frame: sine)
+        trackingResonatorBank.update(frame: sine, thresholdDB: thresholdDB)
         let amps = trackingResonatorBank.amplitudes
         XCTAssertTrue(amps.reduce(false) { $0 || $1 > 0.0 })
         trackingResonatorBank.reset()
@@ -79,7 +85,7 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         }
         let ampsAfterReset = trackingResonatorBank.amplitudes
         for val in ampsAfterReset {
-            XCTAssertEqual(val, 0.0, accuracy: epsilon)
+            XCTAssertEqual(val, 0.0, accuracy: 1e-5)
         }
     }
 
@@ -89,12 +95,12 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let gammas = TrackingResonatorBankArray.gammasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
-        let bankA = TrackingResonatorBankVec(naturalFrequencies: frequencies, alphas: alphas, betas: betas, gammas: gammas, sampleRate: AudioFixtures.defaultSampleRate)
-        let bankB = TrackingResonatorBankVec(naturalFrequencies: frequencies, alphas: alphas, betas: betas, gammas: gammas, sampleRate: AudioFixtures.defaultSampleRate)
+        let bankA = TrackingResonatorBankVec(naturalFrequencies: frequencies, sampleRate: AudioFixtures.defaultSampleRate, alphas: alphas, betas: betas, gammas: gammas, trackingRule: .ewma, thresholdDB: thresholdDB)
+        let bankB = TrackingResonatorBankVec(naturalFrequencies: frequencies, sampleRate: AudioFixtures.defaultSampleRate, alphas: alphas, betas: betas, gammas: gammas, trackingRule: TrackingRule.ewma, thresholdDB: thresholdDB)
         let frame = SignalFixtures.makeSine(count: 100, freq: 440.0, sampleRate: AudioFixtures.defaultSampleRate)
-        bankA.update(frame: frame)
+        bankA.update(frame: frame, thresholdDB: thresholdDB)
         for x in frame { bankB.update(sample: x) }
-        XCTAssertEqual(bankA.amplitudes[0], bankB.amplitudes[0], accuracy: epsilon)
+        XCTAssertEqual(bankA.amplitudes[0], bankB.amplitudes[0], accuracy: 1e-5)
         XCTAssertEqual(bankA.phases[0], bankB.phases[0], accuracy: 1e-3)
     }
 
@@ -107,11 +113,13 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         let N = 128
         let fx = 12
         let frame = SignalFixtures.makeSine(count: N, freq: frequencies[fx], sampleRate: sampleRate)
-        let bank = TrackingResonatorBankVec(naturalFrequencies: frequencies, alphas: alphas, betas: betas, gammas: gammas, sampleRate: sampleRate)
-        let standAlone = TrackingResonator(naturalFrequency: frequencies[fx], alpha: alphas[fx], beta: betas[fx], gamma: gammas[fx], sampleRate: sampleRate)
+        let bank = TrackingResonatorBankVec(naturalFrequencies: frequencies, sampleRate: sampleRate, alphas: alphas, betas: betas, gammas: gammas, trackingRule: .ewma, thresholdDB: thresholdDB)
+        let standAlone = TrackingResonator(naturalFrequency: frequencies[fx], sampleRate: sampleRate, alpha: alphas[fx], beta: betas[fx], gamma: gammas[fx], trackingRule: .ewma, thresholdDB: thresholdDB)
         for x in frame {
+            // get accPower from the bank
             bank.update(sample: x)
-            standAlone.updateWithSample(x)
+            let maxPower = bank.accPower
+            standAlone.update(sample: x, maxPower: maxPower)
         }
         let ampBank = bank.amplitudes[fx]
         let ampSolo = standAlone.amplitude
@@ -131,21 +139,27 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         var frame = SignalFixtures.makeSine(count: N, freq: 220.0, sampleRate: sampleRate)
         let swiftBank = TrackingResonatorBankVec(
             naturalFrequencies: frequencies,
+            sampleRate: sampleRate,
             alphas: alphas,
             betas: betas,
             gammas: gammas,
-            sampleRate: sampleRate)
+            trackingRule: .ewma,
+            thresholdDB: thresholdDB
+        )
         guard let cppBank = TrackingResonatorBankVecCpp(
             numResonators: Int32(frequencies.count),
             naturalFrequencies: frequencies,
+            sampleRate: sampleRate,
             alphas: alphas,
             betas: betas,
             gammas: gammas,
-            sampleRate: sampleRate) else {
+            trackingRule: .EWMA,
+            thresholdDB: thresholdDB
+        ) else {
             XCTFail("Cpp TrackingResonatorBankVec could not be instantiated"); return
         }
         
-        swiftBank.update(frame: frame)
+        swiftBank.update(frame: frame, thresholdDB: thresholdDB)
         cppBank.update(frameData: &frame, frameLength: Int32(N), sampleStride: 1)
 
         // Compare amplitudes and phases elementwise with tolerance
@@ -156,6 +170,96 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         for i in 0..<swiftBank.numResonators {
             XCTAssertEqual(swiftBank.amplitudes[i], cppAmplitudes[i], accuracy: 1e-4, "Amplitude mismatch at index \(i)")
             XCTAssertEqual(swiftBank.phases[i], cppPhases[i], accuracy: 1e-4, "Phase mismatch at index \(i)")
+        }
+    }
+
+    func testRawBufferStrideTreatsFrameLengthAsFrameCount() {
+        let frequencies = FrequenciesFixtures.frequencies
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let gammas = TrackingResonatorBankArray.gammasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let frameLength = 96
+        let channelSamples = SignalFixtures.makeSine(count: frameLength, freq: 440.0, sampleRate: sampleRate)
+        var interleaved = channelSamples.flatMap { [$0, Float(-0.25)] }
+
+        let swiftReference = TrackingResonatorBankVec(
+            naturalFrequencies: frequencies,
+            sampleRate: sampleRate,
+            alphas: alphas,
+            betas: betas,
+            gammas: gammas,
+            trackingRule: TrackingRule.ewma,
+            thresholdDB: thresholdDB
+        )
+        let swiftStrided = TrackingResonatorBankVec(
+            naturalFrequencies: frequencies,
+            sampleRate: sampleRate,
+            alphas: alphas,
+            betas: betas,
+            gammas: gammas,
+            trackingRule: TrackingRule.ewma,
+            thresholdDB: thresholdDB
+        )
+
+        channelSamples.forEach { swiftReference.update(sample: $0) }
+        interleaved.withUnsafeMutableBufferPointer { buffer in
+            swiftStrided.update(
+                frameData: buffer.baseAddress!,
+                frameLength: frameLength,
+                sampleStride: 2
+            )
+        }
+
+        for index in 0..<frequencies.count {
+            XCTAssertEqual(swiftStrided.amplitudes[index], swiftReference.amplitudes[index], accuracy: 1e-5)
+            XCTAssertEqual(swiftStrided.phases[index], swiftReference.phases[index], accuracy: 1e-5)
+        }
+
+        guard let cppReference = TrackingResonatorBankVecCpp(
+            numResonators: Int32(frequencies.count),
+            naturalFrequencies: frequencies,
+            sampleRate: sampleRate,
+            alphas: alphas,
+            betas: betas,
+            gammas: gammas,
+            trackingRule: TrackingRuleCpp.EWMA,
+            thresholdDB: thresholdDB
+        ), let cppStrided = TrackingResonatorBankVecCpp(
+            numResonators: Int32(frequencies.count),
+            naturalFrequencies: frequencies,
+            sampleRate: sampleRate,
+            alphas: alphas,
+            betas: betas,
+            gammas: gammas,
+            trackingRule: TrackingRuleCpp.EWMA,
+            thresholdDB: thresholdDB
+        ) else {
+            XCTFail("Cpp TrackingResonatorBankVec could not be instantiated")
+            return
+        }
+
+        channelSamples.forEach { cppReference.update(sample: $0) }
+        interleaved.withUnsafeMutableBufferPointer { buffer in
+            cppStrided.update(
+                frameData: buffer.baseAddress!,
+                frameLength: Int32(frameLength),
+                sampleStride: 2
+            )
+        }
+
+        var cppReferenceAmplitudes = [Float](repeating: 0.0, count: frequencies.count)
+        var cppStridedAmplitudes = [Float](repeating: 0.0, count: frequencies.count)
+        var cppReferencePhases = [Float](repeating: 0.0, count: frequencies.count)
+        var cppStridedPhases = [Float](repeating: 0.0, count: frequencies.count)
+        cppReference.getAmplitudes(&cppReferenceAmplitudes, size: Int32(cppReferenceAmplitudes.count))
+        cppStrided.getAmplitudes(&cppStridedAmplitudes, size: Int32(cppStridedAmplitudes.count))
+        cppReference.getPhases(&cppReferencePhases, size: Int32(cppReferencePhases.count))
+        cppStrided.getPhases(&cppStridedPhases, size: Int32(cppStridedPhases.count))
+
+        for index in 0..<frequencies.count {
+            XCTAssertEqual(cppStridedAmplitudes[index], cppReferenceAmplitudes[index], accuracy: 1e-5)
+            XCTAssertEqual(cppStridedPhases[index], cppReferencePhases[index], accuracy: 1e-5)
         }
     }
 }

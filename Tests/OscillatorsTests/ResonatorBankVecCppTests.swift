@@ -33,9 +33,9 @@ final class ResonatorBankVecCppTests: XCTestCase {
         var betas = [Float](repeating: DynamicsFixtures.defaultAlpha, count: frequencies.count)
         let resonatorBankCpp = ResonatorBankVecCpp(numResonators: (Int32)(frequencies.count),
                                                    frequencies: &frequencies,
+                                                   sampleRate: AudioFixtures.defaultSampleRate,
                                                    alphas: &alphas,
-                                                   betas: &betas,
-                                                   sampleRate: AudioFixtures.defaultSampleRate)
+                                                   betas: &betas)
         guard let resonatorBankCpp = resonatorBankCpp else { return XCTAssert(false) }
         
         XCTAssertEqual((Int)(resonatorBankCpp.numResonators()), frequencies.count)
@@ -50,9 +50,9 @@ final class ResonatorBankVecCppTests: XCTestCase {
         var betas = [Float](repeating: DynamicsFixtures.defaultAlpha, count: freqs.count)
         let resonatorBankCpp = ResonatorBankVecCpp(numResonators: (Int32)(freqs.count),
                                                    frequencies: &freqs,
+                                                   sampleRate: AudioFixtures.defaultSampleRate,
                                                    alphas: &alphas,
-                                                   betas: &betas,
-                                                   sampleRate: AudioFixtures.defaultSampleRate)
+                                                   betas: &betas)
         guard let resonatorBankCpp = resonatorBankCpp else { return XCTAssert(false) }
         
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)

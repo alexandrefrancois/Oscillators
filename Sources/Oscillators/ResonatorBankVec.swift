@@ -81,7 +81,7 @@ public class ResonatorBankVec {
     /// Reverse square root buffer (intermediate calculations)
     private var rsqrtPtr : UnsafeMutableBufferPointer<Float>
 
-    public init(frequencies: [Float], alphas: [Float], betas: [Float]? = nil, sampleRate: Float) {
+    public init(frequencies: [Float], sampleRate: Float, alphas: [Float], betas: [Float]? = nil) {
         // check that frequencies and alphas have the same size
         assert(frequencies.count == alphas.count)
         

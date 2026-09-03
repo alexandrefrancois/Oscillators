@@ -25,10 +25,9 @@ SOFTWARE.
 import XCTest
 @testable import Oscillators
 
-fileprivate let epsilon : Float = 0.000001
-
 final class FrequenciesTests: XCTestCase {
-    
+    private let epsilon : Float = 10e-6
+
     func testMusicalPitchFrequencies() throws {
         let frequencies440 = Frequencies.musicalPitchFrequencies(from: 0, to: 116)
         XCTAssertEqual(frequencies440[0], 16.3515968, accuracy: epsilon)

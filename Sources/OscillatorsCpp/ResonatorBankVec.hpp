@@ -65,8 +65,8 @@ public:
     ResonatorBankVec & operator=(const ResonatorBankVec&) = delete;
     ResonatorBankVec(const ResonatorBankVec&) = delete;
 
-    ResonatorBankVec(size_t numResonators, const std::vector<float> &frequencies, const std::vector<float> &alphas, const std::vector<float> &betas, float sampleRate);
-    ResonatorBankVec(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, float sampleRate);
+    ResonatorBankVec(size_t numResonators, const std::vector<float> &frequencies, float sampleRate, const std::vector<float> &alphas, const std::vector<float> &betas);
+    ResonatorBankVec(size_t numResonators, const float* frequencies, float sampleRate, const float* alphas, const float* betas);
 
     float sampleRate() { return m_sampleRate; }
     size_t numResonators() { return m_numResonators; }

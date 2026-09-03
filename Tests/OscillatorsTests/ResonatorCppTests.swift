@@ -29,10 +29,10 @@ final class ResonatorCppTests: XCTestCase {
     
     func testConstructor() throws {
         let resonator = ResonatorCpp(frequency: 440.0,
+                                     sampleRate: AudioFixtures.defaultSampleRate,
                                      alpha: DynamicsFixtures.defaultAlpha,
                                      beta: DynamicsFixtures.defaultAlpha,
-                                     gamma: DynamicsFixtures.defaultAlpha,
-                                     sampleRate: AudioFixtures.defaultSampleRate)
+                                     gamma: DynamicsFixtures.defaultAlpha)
         
         guard let resonator = resonator else { return XCTAssert(false) }
 
@@ -45,10 +45,10 @@ final class ResonatorCppTests: XCTestCase {
         let beta: Float = 0.88
         let gamma: Float = 0.99
         let resonator = ResonatorCpp(frequency: 440.0,
+                                     sampleRate: AudioFixtures.defaultSampleRate,
                                      alpha: alpha,
                                      beta: beta,
-                                     gamma: gamma,
-                                     sampleRate: AudioFixtures.defaultSampleRate)
+                                     gamma: gamma)
         guard let resonator = resonator else { return XCTAssert(false, "ResonatorCpp could not be instantiated") }
         XCTAssertEqual(resonator.alpha(), alpha)
         XCTAssertEqual(resonator.omAlpha(), 1.0-alpha)
@@ -65,10 +65,10 @@ final class ResonatorCppTests: XCTestCase {
         var beta: Float = 0.88
         let gamma: Float = 0.99
         let resonator = ResonatorCpp(frequency: 440.0,
+                                     sampleRate: AudioFixtures.defaultSampleRate,
                                      alpha: alpha,
                                      beta: beta,
-                                     gamma: gamma,
-                                     sampleRate: AudioFixtures.defaultSampleRate)
+                                     gamma: gamma)
         guard let resonator = resonator else { return XCTAssert(false, "ResonatorCpp could not be instantiated") }
         XCTAssertEqual(resonator.beta(), beta)
         XCTAssertEqual(resonator.omBeta(), 1.0-beta)
@@ -85,10 +85,10 @@ final class ResonatorCppTests: XCTestCase {
         let beta: Float = 0.88
         var gamma: Float = 0.99
         let resonator = ResonatorCpp(frequency: 440.0,
+                                     sampleRate: AudioFixtures.defaultSampleRate,
                                      alpha: alpha,
                                      beta: beta,
-                                     gamma: gamma,
-                                     sampleRate: AudioFixtures.defaultSampleRate)
+                                     gamma: gamma)
         guard let resonator = resonator else { return XCTAssert(false, "ResonatorCpp could not be instantiated") }
         XCTAssertEqual(resonator.gamma(), gamma)
         XCTAssertEqual(resonator.omGamma(), 1.0-gamma)
@@ -102,10 +102,10 @@ final class ResonatorCppTests: XCTestCase {
 
     func testUpdateWithSample() throws {
         let resonator = ResonatorCpp(frequency: 440.0,
+                                     sampleRate: AudioFixtures.defaultSampleRate,
                                      alpha: 1.0,
                                      beta: 1.0,
-                                     gamma: 1.0,
-                                     sampleRate: AudioFixtures.defaultSampleRate);
+                                     gamma: 1.0);
         guard let resonator = resonator else { return XCTAssert(false, "ResonatorCpp could not be instantiated") }
         resonator.updateWithSample(value: 1.0)
         resonator.updateWithSample(value: 0.0)

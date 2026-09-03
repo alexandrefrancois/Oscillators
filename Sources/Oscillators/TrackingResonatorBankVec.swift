@@ -27,9 +27,10 @@ import Accelerate
 import simd
 
 fileprivate let twoPi = Float.pi * 2.0
-fileprivate let minMaxPower = Float(0.001)
+fileprivate let minPowerThreshold = Float(1e-6)
+fileprivate let minimumResidualMagnitudeSquared = Float(1e-20)
 
-/// A bank of independent resonators implemented as a single array, computations use the Accelerate framework with manual memory management (unsafe pointers)
+/// A bank of independent tracking resonators implemented as a single array, computations use the Accelerate framework with manual memory management (unsafe pointers)
 public class TrackingResonatorBankVec {
     public static func alphasHeuristic(frequencies: [Float], sampleRate: Float, k: Float = 1) -> [Float] {
         frequencies.map { frequency in
@@ -117,7 +118,10 @@ public class TrackingResonatorBankVec {
     /// hold sample value * alphas
     private var alphasSample : UnsafeMutableBufferPointer<Float>
     
+    private var nwPtr : UnsafeMutableBufferPointer<Float>
+    private var nW : DSPSplitComplex
     private var naturalOmegasPtr : UnsafeMutableBufferPointer<Float>
+
     private var powersPtr : UnsafeMutableBufferPointer<Float>
     private var maskPtr : UnsafeMutableBufferPointer<Float>
     private var inverseMaskPtr : UnsafeMutableBufferPointer<Float>
@@ -127,7 +131,13 @@ public class TrackingResonatorBankVec {
     /// Reverse square root buffer (intermediate calculations)
     private var rsqrtPtr : UnsafeMutableBufferPointer<Float>
     
-    public init(naturalFrequencies: [Float], alphas: [Float], betas: [Float]? = nil, gammas: [Float]?, sampleRate: Float) {
+    private let trackingRule: TrackingRule
+    private(set) var trackingPowerThresholdRatio = Float(0.001)
+    public func setPowerThresholdDB(_ thresholdDB: Float) {
+        trackingPowerThresholdRatio = pow(10.0, thresholdDB / 10.0)
+    }
+
+    public init(naturalFrequencies: [Float], sampleRate: Float, alphas: [Float], betas: [Float]? = nil, gammas: [Float]?, trackingRule: TrackingRule, thresholdDB: Float) {
         // check that frequencies and alphas have the same size
         assert(naturalFrequencies.count == alphas.count)
         
@@ -154,7 +164,9 @@ public class TrackingResonatorBankVec {
             self.gammas = vDSP.divide(self.alphas, 2.0)
             self.omGammas = vDSP.add(multiplication: (self.gammas, -1.0), 1.0)
         }
-        
+        self.trackingRule = trackingRule
+        self.trackingPowerThresholdRatio = pow(10.0, thresholdDB / 10.0)
+
         twoNumResonators = 2 * numResonators
         
         // setup resonators
@@ -182,34 +194,37 @@ public class TrackingResonatorBankVec {
         vDSP_vfill([1.0], Z.realp, 1, vDSP_Length(numResonators))
         
         let minusTwoPiOverSampleRate = -twoPi / sampleRate
-        wPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: twoNumResonators)
-        wPtr.initialize(repeating: minusTwoPiOverSampleRate)
-        W = DSPSplitComplex(realp: wPtr.baseAddress!,
-                            imagp: wPtr.baseAddress! + numResonators)
+        nwPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: twoNumResonators)
+        nwPtr.initialize(repeating: minusTwoPiOverSampleRate)
+        nW = DSPSplitComplex(realp: nwPtr.baseAddress!,
+                             imagp: nwPtr.baseAddress! + numResonators)
         
+        // calculate natural omegas
         // multiply -2 * PI / sampleRate by frequency for each resonator
-        vDSP_vmul(W.realp, 1,
+        vDSP_vmul(nW.realp, 1,
                   naturalFrequencies, 1,
-                  W.realp, 1,
+                  nW.realp, 1,
                   vDSP_Length(numResonators))
-        vDSP_vmul(W.imagp, 1,
+        vDSP_vmul(nW.imagp, 1,
                   naturalFrequencies, 1,
-                  W.imagp, 1,
+                  nW.imagp, 1,
                   vDSP_Length(numResonators))
+
+        // initialize natural omegas
+        // needed for ewma omegas tracking rule
+        naturalOmegasPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
+        memcpy(naturalOmegasPtr.baseAddress, nwPtr.baseAddress, MemoryLayout<Float>.size * numResonators)
         
         // then calculate cos and sin
         var count : Int32 = Int32(numResonators)
-        vvcosf(W.realp, W.realp, &count)
-        vvsinf(W.imagp, W.imagp, &count)
-        
-        // need this for reset
-        naturalOmegasPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
-        naturalOmegasPtr.initialize(repeating: minusTwoPiOverSampleRate)
-        // this calculation is redundant...
-        vDSP_vmul(naturalOmegasPtr.baseAddress!, 1,
-                  naturalFrequencies, 1,
-                  naturalOmegasPtr.baseAddress!, 1,
-                  vDSP_Length(numResonators))
+        vvcosf(nW.realp, nW.realp, &count)
+        vvsinf(nW.imagp, nW.imagp, &count)
+
+        // initialize W with nW
+        wPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: twoNumResonators)
+        W = DSPSplitComplex(realp: wPtr.baseAddress!,
+                            imagp: wPtr.baseAddress! + numResonators)
+        memcpy(wPtr.baseAddress, nwPtr.baseAddress, MemoryLayout<Float>.size * twoNumResonators)
         
         powersPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
         maskPtr = UnsafeMutableBufferPointer<Float>.allocate(capacity: numResonators)
@@ -228,6 +243,7 @@ public class TrackingResonatorBankVec {
         zPtr.deallocate()
         wPtr.deallocate()
         alphasSample.deallocate()
+        nwPtr.deallocate()
         naturalOmegasPtr.deallocate()
         powersPtr.deallocate()
         maskPtr.deallocate()
@@ -280,40 +296,152 @@ public class TrackingResonatorBankVec {
         // Save previous smoothed value
         _ = rrmPtr.initialize(from: rrPtr)
         
-        // Compute angle from D
-        // store in second half of dPtr
-        vDSP_zvphas(&D, 1,
-                    dPtr.baseAddress! + numResonators, 1,
-                    vDSP_Length(numResonators))
-        
-        // Compute dw angle from W
-        // store in first half of dPtr
-        vDSP_zvphas(&W, 1,
-                    dPtr.baseAddress!, 1,
-                    vDSP_Length(numResonators))
-        
-        // Add dw
-        // store in first half of dPtr
-        vDSP_vma(dPtr.baseAddress! + numResonators, 1,
-                 gammas, 1,
-                 dPtr.baseAddress!, 1,
-                 dPtr.baseAddress!, 1,
-                 vDSP_Length(numResonators))
-        
-        let trackFrequencyPowerThreshold = max(minMaxPower, accPower) / 1000.0
+//        let trackingPowerThreshold = max(minPowerThreshold, accPower * trackingPowerThresholdRatio)
+        let trackingPowerThreshold = accPower * trackingPowerThresholdRatio
 
-        // Single pass threshold and merge
-        Self.fuseThresholdAndMerge(
-            powersPtr: powersPtr,
-            dPtr: dPtr,
-            naturalOmegasPtr: naturalOmegasPtr,
-            threshold: trackFrequencyPowerThreshold)
+        switch trackingRule {
+        case .ewma: // update via omegas
+            
+            // Compute angle from D
+            // store in second half of dPtr
+            vDSP_zvphas(&D, 1,
+                        dPtr.baseAddress! + numResonators, 1,
+                        vDSP_Length(numResonators))
+            
+            // Compute dw angle from W
+            // store in first half of dPtr
+            vDSP_zvphas(&W, 1,
+                        dPtr.baseAddress!, 1,
+                        vDSP_Length(numResonators))
+            
+            // Add dw
+            // store in first half of dPtr
+            vDSP_vma(dPtr.baseAddress! + numResonators, 1,
+                     gammas, 1,
+                     dPtr.baseAddress!, 1,
+                     dPtr.baseAddress!, 1,
+                     vDSP_Length(numResonators))
+
+            // Single pass threshold and merge
+            // output is tracked or natural frequencies in first half of dPtr
+            Self.fuseThresholdAndMerge(
+                powersPtr: powersPtr,
+                dPtr: dPtr,
+                naturalOmegasPtr: naturalOmegasPtr,
+                threshold: trackingPowerThreshold)
+            // at this point the first half of dPtr contains the tracked or natural omegas,
+            
+            // Update W
+            var count : Int32 = Int32(numResonators)
+            vvcosf(W.realp, dPtr.baseAddress!, &count)
+            vvsinf(W.imagp, dPtr.baseAddress!, &count)
+            
+            break
+
+            
+        case .normalizedChord:
+            
+//            let residualMagnitudeSquared = dpc * dpc + dps * dps
+//            guard residualMagnitudeSquared > minimumResidualMagnitudeSquared,
+//                  residualMagnitudeSquared.isFinite
+//            else { return }
+//            let inverseResidualMagnitude = 1.0 / sqrt(residualMagnitudeSquared)
+//            rotateW(c: omGamma + gamma * dpc * inverseResidualMagnitude,
+//                    s: -gamma * dps * inverseResidualMagnitude)
+
+            // inverse magnitude of D
+            vDSP.squareMagnitudes(D, result: &smPtr)
+            // use reciprocal square root
+            vForce.rsqrt(smPtr, result: &rsqrtPtr)
+            // normalize
+            vDSP.multiply(D, by: rsqrtPtr, result: &D)
+            
+            // calculate error
+            // multiply both real part and imaginary part by gammas
+            vDSP_vmul(dPtr.baseAddress!, 1,
+                      gammas, 1,
+                      dPtr.baseAddress!, 1,
+                      vDSP_Length(twoNumResonators))
+
+            // real part: omGamma + gamma * dpc * inverseResidualMagnitude
+            // add 1-gamma to real part
+            vDSP_vadd(dPtr.baseAddress!, 1, // D.realp, 1,
+                      omGammas, 1,
+                      dPtr.baseAddress!, 1, // D.realp, 1,
+                      vDSP_Length(numResonators))
+            // imaginary part: -gamma * dps * inverseResidualMagnitude
+            // all done - D is already conjugate
+                        
+            // Calculate corrected Ws, store in D
+            vDSP_zvmul(&D, 1,
+                       &W, 1,
+                       &D, 1,
+                       vDSP_Length(numResonators),
+                       1)
+
+            // Single pass threshold and merge
+            // input powers and D
+            // output W
+            Self.fuseThresholdAndMerge(powersPtr: powersPtr, D: D, nW: nW, W: W, threshold: trackingPowerThreshold)
+            
+            // Is this really necessary?
+//            // normalize W
+//            vDSP.squareMagnitudes(W, result: &smPtr)
+//            // use reciprocal square root
+//            vForce.rsqrt(smPtr, result: &rsqrtPtr)
+//            vDSP.multiply(W, by: rsqrtPtr, result: &W)
+            
+            break
+            
+        case .tangent:
+            
+//            let residualMagnitudeSquared = dpc * dpc + dps * dps
+//            guard residualMagnitudeSquared > minimumResidualMagnitudeSquared,
+//                  residualMagnitudeSquared.isFinite
+//            else { return }
+//            let inverseResidualMagnitude = 1.0 / sqrt(residualMagnitudeSquared)
+//            rotateW(c: 1.0,
+//                    s: -gamma * dps * inverseResidualMagnitude)
+
+            // inverse magnitude of D
+            vDSP.squareMagnitudes(D, result: &smPtr)
+            // use reciprocal square root
+            vForce.rsqrt(smPtr, result: &rsqrtPtr)
+            // normalize
+            vDSP.multiply(D, by: rsqrtPtr, result: &D)
+            
+            // set real part to 1.0
+            D.realp.initialize(repeating: 1.0, count: numResonators)
+            // imaginary part: -gamma * dps * inverseResidualMagnitude
+            // multiply by gamma, D is already conjugate
+            vDSP_vmul(dPtr.baseAddress!.advanced(by: numResonators), 1,
+                      gammas, 1,
+                      dPtr.baseAddress!.advanced(by: numResonators), 1,
+                      vDSP_Length(numResonators))
+            
+            // Calculate corrected Ws, store in D
+            vDSP_zvmul(&D, 1,
+                       &W, 1,
+                       &D, 1,
+                       vDSP_Length(numResonators),
+                       1)
+
+            // Single pass threshold and merge
+            // input powers and D
+            // output W
+            Self.fuseThresholdAndMerge(powersPtr: powersPtr, D: D, nW: nW, W: W, threshold: trackingPowerThreshold)
+            
+            // Is this really necessary?
+//            // normalize W
+//            vDSP.squareMagnitudes(W, result: &smPtr)
+//            // use reciprocal square root
+//            vForce.rsqrt(smPtr, result: &rsqrtPtr)
+//            vDSP.multiply(W, by: rsqrtPtr, result: &W)
+ 
+            break
+            
+        }
         
-        // Update W
-        var count : Int32 = Int32(numResonators)
-        vvcosf(W.realp, dPtr.baseAddress!, &count)
-        vvsinf(W.imagp, dPtr.baseAddress!, &count)
-                
         // Phasor
         vDSP_zvmul(&Z, 1,
                    &W, 1,
@@ -333,7 +461,7 @@ public class TrackingResonatorBankVec {
     
     /// Process a frame of samples.
     /// Apply stabilization (norm correction) at the end
-    public func update(frame: [Float]) {
+    public func update(frame: [Float], thresholdDB: Float) {
         for sample in frame {
             update(sample: sample)
         }
@@ -357,12 +485,7 @@ public class TrackingResonatorBankVec {
         var zero = Float(0.0)
         vDSP_vfill(&zero, Z.imagp, 1, vDSP_Length(numResonators))
         powersPtr.initialize(repeating: 0.0)
-        _ = wPtr[0..<numResonators].initialize(from: naturalOmegasPtr)
-        _ = wPtr[numResonators..<2*numResonators].initialize(from: naturalOmegasPtr)
-        // then calculate cos and sin
-        var count : Int32 = Int32(numResonators)
-        vvcosf(W.realp, W.realp, &count)
-        vvsinf(W.imagp, W.imagp, &count)
+        _ = wPtr.initialize(from: nwPtr)
     }
     
     public func setTimeConstant(_ tau: Float = 1.0, sampleRate: Float) {
@@ -371,6 +494,7 @@ public class TrackingResonatorBankVec {
     }
     
     // Single pass all in one
+    // apply threshold and reset
     static func fuseThresholdAndMerge(powersPtr: UnsafeMutableBufferPointer<Float>,
                                       dPtr: UnsafeMutableBufferPointer<Float>,
                                       naturalOmegasPtr: UnsafeMutableBufferPointer<Float>,
@@ -410,5 +534,58 @@ public class TrackingResonatorBankVec {
             i += 1
         }
     }
-}
+    
+    // Single pass all in one
+    // apply threshold and reset
+    static func fuseThresholdAndMerge(powersPtr: UnsafeMutableBufferPointer<Float>,
+                                      D: DSPSplitComplex, // input: tracked omegas
+                                      nW: DSPSplitComplex, // input: natural omegas
+                                      W: DSPSplitComplex, // output
+                                      threshold: Float) {
+        guard let pBase = powersPtr.baseAddress else { return }
+        let drBase = D.realp
+        let diBase = D.imagp
+        let nrBase = nW.realp
+        let niBase = nW.imagp
+        let wrBase = W.realp
+        let wiBase = W.imagp
+        
+        let count = powersPtr.count
+        let thresholdVec = SIMD8<Float>(repeating: threshold)
+        
+        var i = 0
+        while i <= count - 8 {
+            // 1. Load the three necessary pieces of data
+            let p = UnsafeRawPointer(pBase.advanced(by: i)).load(as: SIMD8<Float>.self)
+            let dr = UnsafeRawPointer(drBase.advanced(by: i)).load(as: SIMD8<Float>.self)
+            let di = UnsafeRawPointer(diBase.advanced(by: i)).load(as: SIMD8<Float>.self)
+            let nr = UnsafeRawPointer(nrBase.advanced(by: i)).load(as: SIMD8<Float>.self)
+            let ni = UnsafeRawPointer(niBase.advanced(by: i)).load(as: SIMD8<Float>.self)
 
+            // 2. The Predicate: Which values are above threshold?
+            let mask = p .>= thresholdVec
+            
+            // 3. The Ternary Select:
+            // If power >= threshold, keep d.
+            // Else, take naturalOmega.
+            let rr = nr.replacing(with: dr, where: mask)
+            let ri = ni.replacing(with: di, where: mask)
+
+            // 4. Store the result into W
+            UnsafeMutableRawPointer(wrBase.advanced(by: i))
+                .storeBytes(of: rr, as: SIMD8<Float>.self)
+            UnsafeMutableRawPointer(wiBase.advanced(by: i))
+                .storeBytes(of: ri, as: SIMD8<Float>.self)
+
+            i += 8
+        }
+        
+        // Scalar Tail
+        while i < count {
+            wrBase[i] = (pBase[i] >= threshold) ? drBase[i] : nrBase[i]
+            wiBase[i] = (pBase[i] >= threshold) ? diBase[i] : niBase[i]
+            i += 1
+        }
+    }
+
+}

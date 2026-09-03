@@ -30,11 +30,11 @@ SOFTWARE.
 
 using namespace oscillators_cpp;
 
-TrackingResonatorBank::TrackingResonatorBank(size_t numResonators, const float* naturalFrequencies, const float* alphas, const float* betas, const float* gammas, float sampleRate)
+TrackingResonatorBank::TrackingResonatorBank(size_t numResonators, const float* naturalFrequencies, float sampleRate, const float* alphas, const float* betas, const float* gammas, TrackingRule trackingRule, float thresholdDB)
 : m_sampleRate(sampleRate), m_sigma(1.0), m_omSigma(0.0)  {
     m_resonators.reserve(numResonators);
     for (size_t i=0; i<numResonators; ++i) {
-        m_resonators.emplace_back(std::make_unique<TrackingResonator>(naturalFrequencies[i], alphas[i], betas[i], gammas[i], sampleRate));
+        m_resonators.emplace_back(std::make_unique<TrackingResonator>(naturalFrequencies[i], sampleRate, alphas[i], betas[i], gammas[i], trackingRule, thresholdDB));
     }
     m_dispatchQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
     m_accPower.store(0.0001, std::memory_order_relaxed);
@@ -93,6 +93,12 @@ void TrackingResonatorBank::getPhases(float *dest, size_t size) {
 void TrackingResonatorBank::getDeltaPhases(float *dest, size_t size) {
     for (size_t i=0; i<std::min(size, m_resonators.size()); ++i) {
         dest[i]=m_resonators[i]->deltaPhase();
+    }
+}
+
+void TrackingResonatorBank::setPowerThresholdDB(float thresholdDB) {
+    for (size_t i=0; i< m_resonators.size(); ++i) {
+        m_resonators[i]->setPowerThresholdDB(thresholdDB);
     }
 }
 

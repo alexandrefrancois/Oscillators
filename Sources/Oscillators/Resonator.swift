@@ -30,99 +30,19 @@ fileprivate let instantaneousFrequencyPowerThreshold = Float(0.000001)
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// i.e. that naturally oscillates with greater amplitude at a given frequency, than at other frequencies.
-public class Resonator : Phasor, ResonatorProtocol {
-    public static func alphaHeuristic(frequency: Float, sampleRate: Float, k: Float = 1, n: Float = 1) -> Float {
-        1 - exp(-frequency / (sampleRate * k * pow(log10(1+frequency), n)))
-    }
+public class Resonator : ResonatorBase, ResonatorProtocol {
 
-    public var power: Float {
-        cc*cc + ss*ss
-    }
-    public var amplitude: Float {
-        sqrt(cc*cc + ss*ss)
-    }
-    public var phase: Float {
-        atan2(ss, cc)
-    }
-    public var phaseComps: (cos: Float, sin: Float) {
-        let mag = sqrt(cc*cc + ss*ss)
-        return (cc/mag, ss/mag)
-    }
-    public var deltaPhase: Float {
-        atan2(dps, dpc)
-    }
-    public var deltaPhaseComps: (cos: Float, sin: Float) {
-        let mag = sqrt(dps*dps + dpc*dpc)
-        return (dpc/mag, dps/mag)
-    }
+//    public init(frequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, sampleRate: Float) {
+//        super.init(frequency: frequency, sampleRate: sampleRate)
+//    }
     
-    public var instantaneousFrequency: Float {
-        if power < instantaneousFrequencyPowerThreshold {
-            return frequency
-        }
-        return frequency + atan2(dps,dpc) * sampleRate / twoPi
-    }
-    
-    public var alpha: Float {
-        didSet {
-            omAlpha = 1.0 - alpha
-        }
-    }
-    private(set) var omAlpha : Float = 0.0
-    
-    public var beta: Float {
-        didSet {
-            omBeta = 1.0 - beta
-        }
-    }
-    private(set) var omBeta : Float = 0.0
-
-    public var gamma: Float {
-        didSet {
-            omGamma = 1.0 - gamma
-        }
-    }
-    private(set) var omGamma : Float = 0.0
-
-    // complex: r = c + j s
-    private(set) var c: Float = 0.0
-    private(set) var s: Float = 0.0
-
-    // Smoothed resonator output
-    public private(set) var cc: Float = 0.0
-    public private(set) var ss: Float = 0.0
-    
-    // delta-phase components (not normalized)
-    public private(set) var dpc: Float = 0.0
-    public private(set) var dps: Float = 0.0
-    
-    public init(frequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, sampleRate: Float) {
-        self.alpha = alpha
-        self.omAlpha = 1.0 - alpha
-        self.beta = beta ?? alpha
-        self.omBeta = 1.0 - self.beta
-        self.gamma = gamma ?? alpha
-        self.omGamma = 1.0 - self.gamma
-        super.init(frequency: frequency, sampleRate: sampleRate)
-    }
-    
-    func updateWithSample(_ sample: Float) {
-        let alphaSample : Float = alpha * sample
-        c = omAlpha * c + alphaSample * Zc
-        s = omAlpha * s + alphaSample * Zs
-        // save current values
-        let lcc = cc
-        let lss = ss
-        // update
-        cc = omBeta * cc + beta * c
-        ss = omBeta * ss + beta * s
+    // override to apply smoothing here
+    override func updateDeltaPhase(lcc: Float, lss: Float) {
         // compute current * conjugate(previous)
         // the phase time derivative estimate is the arg of this complex number
         // Smoothing (EWMA) with gamma
         dpc = omGamma * dpc + gamma * (cc * lcc + ss * lss)
         dps = omGamma * dps + gamma * (ss * lcc - cc * lss)
-
-        incrementPhase()
     }
     
     public func update(sample: Float) {

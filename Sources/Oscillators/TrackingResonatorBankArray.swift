@@ -25,7 +25,7 @@ SOFTWARE.
 import Foundation
 import Atomics
 
-/// An array of independent resonator instances
+/// An array of independent tracking resonator instances
 public class TrackingResonatorBankArray {
     public static func gammasHeuristic(frequencies: [Float], sampleRate: Float, k: Float = 1, n: Float = 1) -> [Float] {
         frequencies.map { frequency in
@@ -58,34 +58,41 @@ public class TrackingResonatorBankArray {
     }
     private(set) var omSigma : Float = 0.0
     
-    // 1. Use UInt32 to store the bits of the Float
+    // Use UInt32 to store the bits of the Float
     private let _accPowerBits = ManagedAtomic<UInt32>(Float(0.0001).bitPattern)
 
     public var accPower: Float {
-        // 2. Load as UInt32 and bit-cast back to Float
+        // Load as UInt32 and bit-cast back to Float
         Float(bitPattern: _accPowerBits.load(ordering: .relaxed))
     }
     
-    public init(naturalFrequencies: [Float], alphas: [Float], betas: [Float], gammas: [Float], sampleRate: Float) {
+    // this might require a bit more care for concurrency...
+    public func setPowerThresholdDB(_ thresholdDB: Float) {
+        for resonator in resonators {
+            resonator.setPowerThresholdDB(thresholdDB)
+        }
+    }
+
+    public init(naturalFrequencies: [Float], sampleRate: Float, alphas: [Float], betas: [Float], gammas: [Float], trackingRule: TrackingRule, thresholdDB: Float) {
         assert(naturalFrequencies.count == alphas.count)
         // setup an oscillator for each frequency
         for (idx, naturalFrequency) in naturalFrequencies.enumerated() {
-            resonators.append(TrackingResonator(naturalFrequency: naturalFrequency, alpha: alphas[idx], beta: betas[idx], gamma: gammas[idx], sampleRate: sampleRate))
+            resonators.append(TrackingResonator(naturalFrequency: naturalFrequency, sampleRate: sampleRate, alpha: alphas[idx], beta: betas[idx], gamma: gammas[idx], trackingRule: trackingRule, thresholdDB: thresholdDB))
         }
     }
     
     /// A constructor that takes a function of frequency and sample rate to compute alphas
-    public init(frequencies: [Float], sampleRate: Float, k: Float = 1.0, alphaHeuristic: (Float, Float, Float) -> Float) {
+    public init(frequencies: [Float], sampleRate: Float, k: Float = 1.0, trackingRule: TrackingRule, thresholdDB: Float, alphaHeuristic: (Float, Float, Float) -> Float) {
         // setup an oscillator for each frequency
         for frequency in frequencies {
-            resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alphaHeuristic(frequency, sampleRate, k), sampleRate: sampleRate))
+            resonators.append(TrackingResonator(naturalFrequency: frequency, sampleRate: sampleRate, alpha: alphaHeuristic(frequency, sampleRate, k), trackingRule: trackingRule, thresholdDB: thresholdDB))
         }
     }
     
-    public init(alphas: [Float], sigma: Float, sampleRate: Float, frequency: Float) {
+    public init(alphas: [Float], sigma: Float, sampleRate: Float, frequency: Float, trackingRule: TrackingRule, thresholdDB: Float) {
         // setup an oscillator for each alpha
         for alpha in alphas {
-            resonators.append(TrackingResonator(naturalFrequency: frequency, alpha: alpha, sampleRate: sampleRate))
+            resonators.append(TrackingResonator(naturalFrequency: frequency, sampleRate: sampleRate, alpha: alpha, trackingRule: trackingRule, thresholdDB: thresholdDB))
         }
     }
         

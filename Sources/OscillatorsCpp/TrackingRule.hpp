@@ -1,7 +1,7 @@
 /**
 MIT License
 
-Copyright (c) 2025-2026 Alexandre R. J. Francois
+Copyright (c) 2026 Alexandre R. J. Francois
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/// An oscillator whose resonant frequency tracks the computed instantaneous frequency
-/// in response to a signal
-public protocol TrackingResonatorProtocol {
-    var naturalFrequency : Float { get }
-    var resonantFrequency : Float { get }
-    var power : Float { get }
-    var amplitude : Float { get }
-    var alpha : Float { get set }
+#ifndef TrackingRule_hpp
+#define TrackingRule_hpp
 
-    func setPowerThresholdDB(_ thresholdDB: Float)
-    
-    /// This function performs an update of the resonator amplitude from a single sample
-    func update(sample: Float, maxPower: Float)
-    
-    /// This function performs an update of the resonator amplitude from an array of samples
-    func update(samples: [Float], maxPower: Float)
-    
-    /// This function performs an update of the resonator amplitude from a buffer of samples
-    func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float)
-}
+namespace oscillators_cpp {
+
+enum class TrackingRule {
+    ewma,
+    normalizedChord,
+    tangent
+};
+
+} // namespace oscillators_cpp
+
+#endif /* TrackingRule_hpp */

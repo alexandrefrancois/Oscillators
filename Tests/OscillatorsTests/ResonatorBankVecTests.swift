@@ -34,9 +34,9 @@ final class ResonatorBankVecTests: XCTestCase {
         let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let resonatorBank = ResonatorBankVec(frequencies: frequencies,
+                                             sampleRate: sampleRate,
                                              alphas: alphas,
-                                             betas: betas,
-                                             sampleRate: sampleRate)
+                                             betas: betas)
 
         XCTAssertEqual(resonatorBank.numResonators, frequencies.count, "Number of resonators mismatch")
 
@@ -57,9 +57,9 @@ final class ResonatorBankVecTests: XCTestCase {
         let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let resonatorBank = ResonatorBankVec(frequencies: frequencies,
+                                             sampleRate: sampleRate,
                                              alphas: alphas,
-                                             betas: betas,
-                                             sampleRate: sampleRate)
+                                             betas: betas)
         
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: 1024)
         frame.initialize(repeating: 0.5, count: 1024)
@@ -78,9 +78,9 @@ final class ResonatorBankVecTests: XCTestCase {
         let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
         let resonatorBank = ResonatorBankVec(frequencies: frequencies,
+                                             sampleRate: sampleRate,
                                              alphas: alphas,
-                                             betas: betas,
-                                             sampleRate: sampleRate)
+                                             betas: betas)
         
         let frameLength = 512
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: frameLength)
@@ -107,10 +107,10 @@ final class ResonatorBankVecTests: XCTestCase {
         let beta = Float(0.5) // arbitrary beta for test
         
         let resonatorBank = ResonatorBankVec(frequencies: [frequency],
+                                             sampleRate: sampleRate,
                                              alphas: [alpha],
-                                             betas: [beta],
-                                             sampleRate: sampleRate)
-        let resonator = Resonator(frequency: frequency, alpha: alpha, beta: beta, sampleRate: sampleRate)
+                                             betas: [beta])
+        let resonator = Resonator(frequency: frequency, sampleRate: sampleRate, alpha: alpha, beta: beta)
         
         let frameLength = 256
         let frame = UnsafeMutablePointer<Float>.allocate(capacity: frameLength)
@@ -145,15 +145,15 @@ final class ResonatorBankVecTests: XCTestCase {
 
         // Swift implementation
         let resonatorBankSwift = ResonatorBankVec(frequencies: frequencies,
+                                                  sampleRate: sampleRate,
                                                   alphas: alphas,
-                                                  betas: betas,
-                                                  sampleRate: sampleRate)
+                                                  betas: betas)
         // C++ wrapper
         guard let resonatorBankCpp = ResonatorBankVecCpp(numResonators: Int32(frequencies.count),
                                                          frequencies: frequencies,
+                                                         sampleRate: sampleRate,
                                                          alphas: alphas,
-                                                         betas: betas,
-                                                         sampleRate: sampleRate) else {
+                                                         betas: betas) else {
             XCTFail("Cpp TrackingResonator could not be instantiated"); return
         }
         
@@ -178,5 +178,82 @@ final class ResonatorBankVecTests: XCTestCase {
         }
         
         frame.deallocate()
+    }
+
+    func testRawBufferStrideTreatsFrameLengthAsFrameCount() throws {
+        let frequencies = FrequenciesFixtures.frequencies
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let frameLength = 96
+        let channelSamples = SignalFixtures.makeSine(count: frameLength, freq: 440.0, sampleRate: sampleRate)
+        var interleaved = channelSamples.flatMap { [$0, Float(-0.25)] }
+
+        let swiftReference = ResonatorBankVec(
+            frequencies: frequencies,
+            sampleRate: sampleRate,
+            alphas: alphas,
+            betas: betas
+        )
+        let swiftStrided = ResonatorBankVec(
+            frequencies: frequencies,
+            sampleRate: sampleRate,
+            alphas: alphas,
+            betas: betas
+        )
+
+        channelSamples.forEach { swiftReference.update(sample: $0) }
+        interleaved.withUnsafeMutableBufferPointer { buffer in
+            swiftStrided.update(
+                frameData: buffer.baseAddress!,
+                frameLength: frameLength,
+                sampleStride: 2
+            )
+        }
+
+        for index in 0..<frequencies.count {
+            XCTAssertEqual(swiftStrided.amplitudes[index], swiftReference.amplitudes[index], accuracy: 1e-5)
+            XCTAssertEqual(swiftStrided.phases[index], swiftReference.phases[index], accuracy: 1e-5)
+        }
+
+        guard let cppReference = ResonatorBankVecCpp(
+            numResonators: Int32(frequencies.count),
+            frequencies: frequencies,
+            sampleRate: sampleRate,
+            alphas: alphas,
+            betas: betas
+        ), let cppStrided = ResonatorBankVecCpp(
+            numResonators: Int32(frequencies.count),
+            frequencies: frequencies,
+            sampleRate: sampleRate,
+            alphas: alphas,
+            betas: betas
+        ) else {
+            XCTFail("Cpp ResonatorBankVec could not be instantiated")
+            return
+        }
+
+        channelSamples.forEach { cppReference.update(sample: $0) }
+        interleaved.withUnsafeMutableBufferPointer { buffer in
+            cppStrided.update(
+                frameData: buffer.baseAddress!,
+                frameLength: Int32(frameLength),
+                sampleStride: 2
+            )
+        }
+
+        var cppReferenceAmplitudes = [Float](repeating: 0.0, count: frequencies.count)
+        var cppStridedAmplitudes = [Float](repeating: 0.0, count: frequencies.count)
+        var cppReferencePhases = [Float](repeating: 0.0, count: frequencies.count)
+        var cppStridedPhases = [Float](repeating: 0.0, count: frequencies.count)
+        cppReference.getAmplitudes(&cppReferenceAmplitudes, size: Int32(cppReferenceAmplitudes.count))
+        cppStrided.getAmplitudes(&cppStridedAmplitudes, size: Int32(cppStridedAmplitudes.count))
+        cppReference.getPhases(&cppReferencePhases, size: Int32(cppReferencePhases.count))
+        cppStrided.getPhases(&cppStridedPhases, size: Int32(cppStridedPhases.count))
+
+        for index in 0..<frequencies.count {
+            XCTAssertEqual(cppStridedAmplitudes[index], cppReferenceAmplitudes[index], accuracy: 1e-5)
+            XCTAssertEqual(cppStridedPhases[index], cppReferencePhases[index], accuracy: 1e-5)
+        }
     }
 }

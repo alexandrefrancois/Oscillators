@@ -53,7 +53,7 @@ public:
     ResonatorBank & operator=(const ResonatorBank&) = delete;
     ResonatorBank(const ResonatorBank&) = delete;
 
-    ResonatorBank(size_t numResonators, const float* frequencies, const float* alphas, const float* betas, const float* gammas, float sampleRate);
+    ResonatorBank(size_t numResonators, const float* frequencies, float sampleRate, const float* alphas, const float* betas, const float* gammas);
 #ifndef STD_CONCURRENCY
     ~ResonatorBank();
 #endif

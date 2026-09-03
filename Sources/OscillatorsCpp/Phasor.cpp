@@ -32,32 +32,58 @@ SOFTWARE.
 using namespace oscillators_cpp;
 
 Phasor::Phasor(float frequency, float sampleRate, bool angular)
-: m_omega(angular ? frequency : -twoPi*frequency/sampleRate), m_sampleRate(sampleRate),
+: m_sampleRate(sampleRate),
 m_Zc(1.0), m_Zs(0.0) {
-    updateMultiplier();
+    const float omega = angular ? frequency : -twoPi*frequency/sampleRate;
+    setW(cos(omega), sin(omega));
 }
 
-void Phasor::updateMultiplier() {
-    m_Wc = cos(m_omega);
-    m_Ws = sin(m_omega);
+void Phasor::setW(float c, float s) {
+    m_Wc = c;
+    m_Ws = s;
+    m_Wcps = m_Wc + m_Ws;
+}
+
+/// Compute new value for W
+/// W <- W * dW
+void Phasor::rotateW(float c, float s) {
+    // complex multiplication with 3 real multiplications
+    const float ac = m_Wc * c;
+    const float bd = m_Ws * s;
+    const float abcd = m_Wcps * (c + s);
+    m_Wc = ac - bd;
+    m_Ws = abcd - ac - bd;
+    m_Wcps = m_Wc + m_Ws;
+}
+
+/// Apply re-normalization correction to compensate for
+/// numerical drift, use Taylor expansion around 1 to approximate
+/// 1/sqrt(x) to reduce computational cost.
+/// This can be applied every few hundred (?) samples
+void Phasor::normalizeW() {
+    // approximation for 1 / sqrt(x) around 1 (Taylor expansion)
+    // sqrt(m_Zc*m_Zc + m_Zs*m_Zs) should be 1
+    const float k = (3.0f - m_Wc*m_Wc - m_Ws*m_Ws) / 2.0f;
+    m_Wc *= k;
+    m_Ws *= k;
     m_Wcps = m_Wc + m_Ws;
 }
 
 void Phasor::setOmega(float omega) {
-    m_omega = omega;
-    updateMultiplier();
+    setW(cos(omega), sin(omega));
 }
 
 void Phasor::setFrequency(float frequency) {
-    m_omega = -twoPi*frequency/m_sampleRate;
-    updateMultiplier();
+    const float omega = -twoPi*frequency/m_sampleRate;
+    setW(cos(omega), sin(omega));
 }
 
 void Phasor::setSampleRate(float sampleRate) {
     m_sampleRate = sampleRate;
-    updateMultiplier();
 }
 
+/// Compute next value of the phasor
+/// Z <- Z * W
 void Phasor::incrementPhase() {
     // complex multiplication with 3 real multiplications
     const float ac = m_Wc * m_Zc;
@@ -67,6 +93,9 @@ void Phasor::incrementPhase() {
     m_Zs = abcd - ac - bd;
 }
 
+/// Apply re-normalization correction to compensate for
+/// numerical drift, use Taylor expansion around 1 to approximate
+/// 1/sqrt(x) to reduce computational cost.
 void Phasor::stabilize(){
     // approximation for 1 / sqrt(x) around 1 (Taylor expansion)
     // sqrt(m_Zc*m_Zc + m_Zs*m_Zs) should be 1

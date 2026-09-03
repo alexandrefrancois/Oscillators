@@ -26,142 +26,169 @@ import Foundation
 import Accelerate
 
 fileprivate let twoPi = Float.pi * 2.0
-fileprivate let minMaxPower = Float(0.001)
+fileprivate let minPowerThreshold = Float(1e-12)
+fileprivate let minimumResidualMagnitudeSquared = Float(1e-20)
+
+public enum TrackingRule: Equatable, CaseIterable, CustomStringConvertible {
+    case ewma
+    case normalizedChord
+    case tangent
+    
+    public var description: String {
+        switch self {
+        case .ewma:
+            return "EWMA"
+        case .normalizedChord:
+            return "Chord"
+        case .tangent:
+            return "Tangent"
+        }
+    }
+}
 
 /// An oscillator that resonates with a specific frequency if present in an input signal,
 /// and adjust its resonant frequency to track the actual frequency of the signal component
-public class TrackingResonator : Phasor, TrackingResonatorProtocol {
+public class TrackingResonator : ResonatorBase, TrackingResonatorProtocol {
     public static func gammaHeuristic(frequency: Float, sampleRate: Float, k: Float = 1, n: Float = 1) -> Float {
         Resonator.alphaHeuristic(frequency: frequency, sampleRate: sampleRate, k: k, n: n) / 2.0
     }
 
-    public var power: Float {
-        cc*cc + ss*ss
-    }
-    public var amplitude: Float {
-        sqrt(cc*cc + ss*ss)
-    }
-    public var phase: Float {
-        atan2(ss, cc)
-    }
-    public var phaseComps: (cos: Float, sin: Float) {
-        let mag = sqrt(cc*cc + ss*ss)
-        return (cc/mag, ss/mag)
-    }
-    public var deltaPhase: Float {
-        atan2(dps, dpc)
-    }
-    public var deltaPhaseComps: (cos: Float, sin: Float) {
-        let mag = sqrt(dps*dps + dpc*dpc)
-        return (dpc/mag, dps/mag)
-    }
-    
-    public var alpha: Float {
-        didSet {
-            omAlpha = 1.0 - alpha
-        }
-    }
-    private(set) var omAlpha : Float = 0.0
-    
-    public var beta: Float {
-        didSet {
-            omBeta = 1.0 - beta
-        }
-    }
-    private(set) var omBeta : Float = 0.0
-    
-    public var gamma: Float {
-        didSet {
-            omGamma = 1.0 - gamma
-        }
-    }
-    private(set) var omGamma : Float = 0.0
-
-    private(set) var trackFrequencyPowerThreshold = Float(0.001)
-    
-    // complex: r = c + j s
-    private(set) var c: Float = 0.0
-    private(set) var s: Float = 0.0
-
-    // Smoothed resonator output
-    public private(set) var cc: Float = 0.0
-    public private(set) var ss: Float = 0.0
-    
-    // delta-phase components (not normalized)
-    public private(set) var dpc: Float = 1.0
-    public private(set) var dps: Float = 0.0
-    
     public var resonantFrequency: Float {
         frequency
     }
     
-    public private(set) var naturalFrequency: Float
+    // Changing the natural frequency will most likely require to set alpha, beta and gamma accordingly
     public func setNaturalFrequency(_ naturalFrequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil){
-        self.naturalFrequency = naturalFrequency
+        let naturalOmega = -naturalFrequency / sampleRateOverTwoPi
+        setNaturalW(c: cos(naturalOmega), s: sin(naturalOmega))
         self.alpha = alpha
         self.beta = beta ?? alpha
         self.gamma = gamma ?? alpha
     }
-    
-    public init(naturalFrequency: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, sampleRate: Float) {
-        self.naturalFrequency = naturalFrequency
-        self.alpha = alpha
-        self.omAlpha = 1.0 - alpha
-        self.beta = beta ?? alpha
-        self.omBeta = 1.0 - self.beta
-        self.gamma = gamma ?? alpha
-        self.omGamma = 1.0 - self.gamma
-        super.init(frequency: naturalFrequency, sampleRate: sampleRate)
+
+    public var naturalFrequency: Float {
+        get {
+            -atan2(naturalWs, naturalWc) * sampleRateOverTwoPi
+        }
     }
     
-    func updateWithSample(_ sample: Float) {
-        let alphaSample : Float = alpha * sample
-        c = omAlpha * c + alphaSample * Zc
-        s = omAlpha * s + alphaSample * Zs
+    public var naturalOmega: Float {
+        get {
+            atan2(naturalWs, naturalWc)
+        }
+    }
+    
+    var naturalWc: Float
+    var naturalWs: Float
+    
+    private(set) var trackingPowerThresholdRatio = Float(0.001)
+    public func setPowerThresholdDB(_ thresholdDB: Float) {
+        trackingPowerThresholdRatio = pow(10.0, thresholdDB / 10.0)
+    }
+
+    private(set) var trackingPowerThreshold = Float(0.001)
+    private typealias ApplyTrackingRuleFunc = () -> Void
+    private var applyTrackingRule: ApplyTrackingRuleFunc? = nil
+    
+    public init(naturalFrequency: Float, sampleRate: Float, alpha: Float, beta: Float? = nil, gamma: Float? = nil, trackingRule: TrackingRule, thresholdDB: Float) {
+        let naturalOmega = -naturalFrequency / (sampleRate / twoPi)
+        self.naturalWc = cos(naturalOmega)
+        self.naturalWs = sin(naturalOmega)
+        self.trackingPowerThresholdRatio = pow(10.0, thresholdDB / 10.0)
+        super.init(frequency: naturalFrequency, sampleRate: sampleRate, alpha: alpha, beta: beta, gamma: gamma)
+        switch trackingRule {
+        case .ewma:
+            applyTrackingRule = applyEWMATracking
+        case .normalizedChord:
+            // Normalized interpolation on the unit circle between identity and the
+            // conjugate residual rotation. Near lock it is first-order equivalent
+            // to applying omega -= gamma * deltaPhase.
+            applyTrackingRule = applyChordCorrectionTracking
+        case .tangent:
+            // Normalized residual quadrature is a signed local adaptation signal
+            // that moves the phasor multiplier tangentially on the unit circle.
+            applyTrackingRule = applyTangentCorrectionTracking
+        }
+    }
+        
+    func updateTracking() {
+        if power > trackingPowerThreshold {
+            applyTrackingRule?()
+        } else {
+            restoreNaturalW()
+        }
+    }
+    
+    /// Apply EWMA to correct W
+    func applyEWMATracking() {
+        let omega = atan2(Ws, Wc) - gamma * atan2(dps, dpc)
+        setW(c: cos(omega), s: sin(omega))
+    }
+    
+    /// Normalized interpolation on the unit circle between identity and the
+    /// conjugate residual rotation. Near lock it is first-order equivalent
+    /// to applying omega -= gamma * deltaPhase.
+    func applyChordCorrectionTracking() {
+        let residualMagnitudeSquared = dpc * dpc + dps * dps
+        guard residualMagnitudeSquared > minimumResidualMagnitudeSquared,
+              residualMagnitudeSquared.isFinite
+        else { return }
+        let inverseResidualMagnitude = 1.0 / sqrt(residualMagnitudeSquared)
+        rotateW(c: omGamma + gamma * dpc * inverseResidualMagnitude,
+                s: -gamma * dps * inverseResidualMagnitude)
+    }
+
+    /// Normalized residual quadrature is a signed local adaptation signal
+    /// that moves the phasor multiplier tangentially on the unit circle.
+    func applyTangentCorrectionTracking() {
+        let residualMagnitudeSquared = dpc * dpc + dps * dps
+        guard residualMagnitudeSquared > minimumResidualMagnitudeSquared,
+              residualMagnitudeSquared.isFinite
+        else { return }
+        let inverseResidualMagnitude = 1.0 / sqrt(residualMagnitudeSquared)
+        rotateW(c: 1.0,
+                s: -gamma * dps * inverseResidualMagnitude)
+    }
+
+    override func updateWithSample(_ sample: Float) {
         // save current values
         let lcc = cc
         let lss = ss
-        // update
-        cc = omBeta * cc + beta * c
-        ss = omBeta * ss + beta * s
-        
-        // compute current * conjugate(previous)
-        // the phase time derivative estimate is the arg of this complex number
-        // no need to smoothe here
-        dpc = cc * lcc + ss * lss
-        dps = ss * lcc - cc * lss
-        
-        // Update tracking
-        if power > trackFrequencyPowerThreshold {
-            // This is an EWMA with parameter gamma
-            omega -= gamma * atan2(dps, dpc)
-        } else {
-            // go back to natural frequency
-            self.frequency = naturalFrequency
-        }
-        
+        updateResonatorWithSample(sample)
+        updateDeltaPhase(lcc: lcc, lss: lss)
+        updateTracking()
         incrementPhase()
     }
-    
+        
     public func update(sample: Float, maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / Float(1000.0)
+        trackingPowerThreshold = maxPower * trackingPowerThresholdRatio
+//        trackingPowerThreshold = max(minPowerThreshold, trackingPowerThreshold)
         updateWithSample(sample)
-        stabilize() // this is overkill but necessary
+        stabilize()
     }
     
     public func update(samples: [Float], maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / Float(1000.0)
+        trackingPowerThreshold = maxPower * trackingPowerThresholdRatio
         for sample in samples {
             updateWithSample(sample)
         }
-        stabilize() // this is overkill but necessary
+        stabilize()
     }
 
     public func update(frameData: UnsafeMutablePointer<Float>, frameLength: Int, sampleStride: Int, maxPower: Float = 0.25) {
-        trackFrequencyPowerThreshold = max(minMaxPower, maxPower) / Float(1000.0)
+        trackingPowerThreshold = maxPower * trackingPowerThresholdRatio
         for sampleIndex in stride(from: 0, to: sampleStride * frameLength, by: sampleStride) {
             updateWithSample(frameData[sampleIndex])
         }
-        stabilize() // this is overkill but necessary
+        stabilize()
+    }
+    
+    func setNaturalW(c: Float, s: Float) {
+        naturalWc = c
+        naturalWs = s
+    }
+
+    func restoreNaturalW() {
+        setW(c: naturalWc, s: naturalWs)
     }
 }

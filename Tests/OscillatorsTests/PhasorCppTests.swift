@@ -25,17 +25,12 @@ SOFTWARE.
 import XCTest
 @testable import OscillatorsCpp
 
-fileprivate let epsilon : Float = 0.0001
-fileprivate let twoPi = Float.pi * 2.0
-
 final class PhasorCppTests: XCTestCase {
-    
     func testConstructor() throws {
         let phasor = PhasorCpp(frequency: 440.5, sampleRate: AudioFixtures.defaultSampleRate, angular: false)
         guard let oscillator = phasor else { return XCTAssert(false, "PhasorCpp could not be instantiated") }
         
-        XCTAssertEqual(oscillator.frequency(), 440.5, accuracy: epsilon)
+        XCTAssertEqual(oscillator.frequency(), 440.5)
         XCTAssertEqual(oscillator.sampleRate(), AudioFixtures.defaultSampleRate)
     }
-    
 }

@@ -26,17 +26,20 @@ import XCTest
 @testable import Oscillators
 import OscillatorsCpp
 
-fileprivate let epsilon : Float = 0.000001
-
 final class TrackingResonatorTests: XCTestCase {
-    
+    private let epsilon : Float = 1e-7
+    private let thresholdDB: Float = -60.0
+
     func testConstructor() throws {
         let resonator = TrackingResonator(naturalFrequency: 440.0,
+                                          sampleRate: AudioFixtures.defaultSampleRate,
                                           alpha: DynamicsFixtures.defaultAlpha,
                                           beta: DynamicsFixtures.defaultBeta,
                                           gamma: DynamicsFixtures.defaultGamma,
-                                          sampleRate: AudioFixtures.defaultSampleRate)
+                                          trackingRule: .ewma,
+                                          thresholdDB: thresholdDB)
         
+        XCTAssertEqual(resonator.naturalFrequency, 440.0)
         XCTAssertEqual(resonator.alpha, DynamicsFixtures.defaultAlpha)
         XCTAssertEqual(resonator.beta, DynamicsFixtures.defaultBeta)
         XCTAssertEqual(resonator.gamma, DynamicsFixtures.defaultGamma)
@@ -45,10 +48,12 @@ final class TrackingResonatorTests: XCTestCase {
     func testSetAlpha() throws {
         var alpha: Float = 0.99
         let resonator = TrackingResonator(naturalFrequency: 440.0,
+                                          sampleRate: AudioFixtures.defaultSampleRate,
                                           alpha: alpha,
                                           beta: alpha,
                                           gamma: alpha,
-                                          sampleRate: AudioFixtures.defaultSampleRate)
+                                          trackingRule: .ewma,
+                                          thresholdDB: thresholdDB)
         XCTAssertEqual(resonator.alpha, alpha)
         XCTAssertEqual(resonator.omAlpha, 1.0-alpha)
 
@@ -61,10 +66,12 @@ final class TrackingResonatorTests: XCTestCase {
     func testSetBeta() throws {
         let alpha: Float = 0.99
         let resonator = TrackingResonator(naturalFrequency: 440.0,
+                                          sampleRate: AudioFixtures.defaultSampleRate,
                                           alpha: alpha,
                                           beta: alpha,
                                           gamma: alpha,
-                                          sampleRate: AudioFixtures.defaultSampleRate)
+                                          trackingRule: .ewma,
+                                          thresholdDB: thresholdDB)
         XCTAssertEqual(resonator.beta, alpha)
         XCTAssertEqual(resonator.omBeta, 1.0-alpha)
 
@@ -77,10 +84,12 @@ final class TrackingResonatorTests: XCTestCase {
     func testSetGama() throws {
         let alpha: Float = 0.99
         let resonator = TrackingResonator(naturalFrequency: 440.0,
+                                          sampleRate: AudioFixtures.defaultSampleRate,
                                           alpha: alpha,
                                           beta: alpha,
                                           gamma: alpha,
-                                          sampleRate: AudioFixtures.defaultSampleRate)
+                                          trackingRule: .ewma,
+                                          thresholdDB: thresholdDB)
         XCTAssertEqual(resonator.gamma, alpha)
         XCTAssertEqual(resonator.omGamma, 1.0-alpha)
 
@@ -92,10 +101,12 @@ final class TrackingResonatorTests: XCTestCase {
 
     func testUpdateWithSample() throws {
         let resonator = TrackingResonator(naturalFrequency: 440.0,
+                                          sampleRate: AudioFixtures.defaultSampleRate,
                                           alpha: 1.0,
                                           beta: 1.0,
                                           gamma: 1.0,
-                                          sampleRate: AudioFixtures.defaultSampleRate)
+                                          trackingRule: .ewma,
+                                          thresholdDB: thresholdDB)
         let expectedC = resonator.Zc
         let expectedS = resonator.Zs
         resonator.updateWithSample(1.0)
@@ -110,7 +121,7 @@ final class TrackingResonatorTests: XCTestCase {
     
     func testImpulseResponse() {
         let N = 128
-        let resonator = TrackingResonator(naturalFrequency: 440.0, alpha: 0.9, beta: 0.9, gamma: 0.9, sampleRate: AudioFixtures.defaultSampleRate)
+        let resonator = TrackingResonator(naturalFrequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: 0.9, beta: 0.9, gamma: 0.9, trackingRule: .ewma, thresholdDB: thresholdDB)
         let impulse = SignalFixtures.makeImpulse(count: N)
         var outputs = [Float]()
         for x in impulse {
@@ -125,7 +136,7 @@ final class TrackingResonatorTests: XCTestCase {
     
     func testStepResponse() {
         let N = 128
-        let resonator = TrackingResonator(naturalFrequency: 440.0, alpha: 0.95, beta: 0.95, gamma: 0.95, sampleRate: AudioFixtures.defaultSampleRate)
+        let resonator = TrackingResonator(naturalFrequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: 0.95, beta: 0.95, gamma: 0.95, trackingRule: .ewma, thresholdDB: thresholdDB)
         let step = SignalFixtures.makeStep(count: N, value: 1.0)
         var outputs = [Float]()
         for x in step {
@@ -141,7 +152,7 @@ final class TrackingResonatorTests: XCTestCase {
         let N = 256
         let f0: Float = 440.0
         let sr: Float = AudioFixtures.defaultSampleRate
-        let resonator = TrackingResonator(naturalFrequency: f0, alpha: 0.95, beta: 0.95, gamma: 0.95, sampleRate: sr)
+        let resonator = TrackingResonator(naturalFrequency: f0, sampleRate: sr, alpha: 0.95, beta: 0.95, gamma: 0.95, trackingRule: .ewma, thresholdDB: thresholdDB)
         let sine = SignalFixtures.makeSine(count: N, freq: f0, sampleRate: sr)
         var outputs = [Float]()
         for x in sine {
@@ -154,7 +165,7 @@ final class TrackingResonatorTests: XCTestCase {
     
     func testResonatorConvergence() {
         let N = 200
-        let resonator = TrackingResonator(naturalFrequency: 440.0, alpha: 0.7, beta: 0.7, gamma: 0.7, sampleRate: AudioFixtures.defaultSampleRate)
+        let resonator = TrackingResonator(naturalFrequency: 440.0, sampleRate: AudioFixtures.defaultSampleRate, alpha: 0.7, beta: 0.7, gamma: 0.7, trackingRule: .ewma, thresholdDB: thresholdDB)
         let step = SignalFixtures.makeStep(count: N, value: 1.0)
         for x in step { resonator.updateWithSample(x) }
         let amp_prev = resonator.amplitude
@@ -173,8 +184,8 @@ final class TrackingResonatorTests: XCTestCase {
         let alpha: Float = 0.9, beta: Float = 0.9, gamma: Float = 0.9
         let sr: Float = AudioFixtures.defaultSampleRate
         let input = SignalFixtures.makeSine(count: N, freq: f0, sampleRate: sr)
-        let swiftRes = TrackingResonator(naturalFrequency: f0, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sr)
-        guard let cppRes = TrackingResonatorCpp(naturalFrequency: f0, alpha: alpha, beta: beta, gamma: gamma, sampleRate: sr) else {
+        let swiftRes = TrackingResonator(naturalFrequency: f0, sampleRate: sr, alpha: alpha, beta: beta, gamma: gamma, trackingRule: .ewma, thresholdDB: thresholdDB)
+        guard let cppRes = TrackingResonatorCpp(naturalFrequency: f0, sampleRate: sr, alpha: alpha, beta: beta, gamma: gamma, trackingRule: TrackingRuleCpp.EWMA, thresholdDB: thresholdDB) else {
             XCTFail("Cpp TrackingResonator could not be instantiated"); return
         }
         for x in input {
@@ -184,5 +195,79 @@ final class TrackingResonatorTests: XCTestCase {
             XCTAssertEqual(swiftRes.s, cppRes.s(), accuracy: epsilon)
         }
     }
-}
 
+    func testRawBufferStrideTreatsFrameLengthAsFrameCount() {
+        let frameLength = 96
+        let f0: Float = 440.0
+        let alpha: Float = 0.9, beta: Float = 0.9, gamma: Float = 0.9
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let channelSamples = SignalFixtures.makeSine(count: frameLength, freq: f0, sampleRate: sampleRate)
+        var interleaved = channelSamples.flatMap { [$0, Float(-0.25)] }
+
+        let swiftReference = TrackingResonator(
+            naturalFrequency: f0,
+            sampleRate: sampleRate,
+            alpha: alpha,
+            beta: beta,
+            gamma: gamma,
+            trackingRule: .ewma,
+            thresholdDB: thresholdDB
+        )
+        let swiftStrided = TrackingResonator(
+            naturalFrequency: f0,
+            sampleRate: sampleRate,
+            alpha: alpha,
+            beta: beta,
+            gamma: gamma,
+            trackingRule: .ewma,
+            thresholdDB: thresholdDB
+        )
+
+        swiftReference.update(samples: channelSamples, maxPower: 1.0)
+        interleaved.withUnsafeMutableBufferPointer { buffer in
+            swiftStrided.update(
+                frameData: buffer.baseAddress!,
+                frameLength: frameLength,
+                sampleStride: 2,
+                maxPower: 1.0
+            )
+        }
+
+        XCTAssertEqual(swiftStrided.amplitude, swiftReference.amplitude, accuracy: 1e-5)
+        XCTAssertEqual(swiftStrided.phase, swiftReference.phase, accuracy: 1e-5)
+
+        guard let cppReference = TrackingResonatorCpp(
+            naturalFrequency: f0,
+            sampleRate: sampleRate,
+            alpha: alpha,
+            beta: beta,
+            gamma: gamma,
+            trackingRule: TrackingRuleCpp.EWMA,
+            thresholdDB: thresholdDB
+        ), let cppStrided = TrackingResonatorCpp(
+            naturalFrequency: f0,
+            sampleRate: sampleRate,
+            alpha: alpha,
+            beta: beta,
+            gamma: gamma,
+            trackingRule: TrackingRuleCpp.EWMA,
+            thresholdDB: thresholdDB
+        ) else {
+            XCTFail("Cpp TrackingResonator could not be instantiated")
+            return
+        }
+
+        channelSamples.forEach { cppReference.update(sample: $0, maxPower: 1.0) }
+        interleaved.withUnsafeMutableBufferPointer { buffer in
+            cppStrided.update(
+                frameData: buffer.baseAddress!,
+                frameLength: Int32(frameLength),
+                sampleStride: 2,
+                maxPower: 1.0
+            )
+        }
+
+        XCTAssertEqual(cppStrided.amplitude(), cppReference.amplitude(), accuracy: 1e-5)
+        XCTAssertEqual(cppStrided.phase(), cppReference.phase(), accuracy: 1e-5)
+    }
+}

@@ -33,29 +33,39 @@ fileprivate let twoPi = Float.pi * 2.0
 open class Phasor : PhasorProtocol {
     public var frequency: Float {
         get {
-            -omega * sampleRateOverTwoPi
+            -atan2(Ws, Wc) * sampleRateOverTwoPi
         }
         set {
-            omega = -newValue / sampleRateOverTwoPi
-            updateMultiplier()
-        }
-    }
-    
-    public var sampleRate: Float {
-        didSet {
-            sampleRateOverTwoPi = sampleRate / twoPi
-            updateMultiplier()
+            let omega = -newValue / sampleRateOverTwoPi
+            setW(c: cos(omega), s: sin(omega))
         }
     }
     
     /// Angular velocity
     /// omega = -2 pi frequency / sample rate
-    public var omega: Float { // this is the angular velocity,
-        didSet {
-            updateMultiplier()
+    public var omega: Float {
+        get {
+            atan2(Ws, Wc)
+        }
+        set {
+            setW(c: cos(newValue), s: sin(newValue))
         }
     }
+    
     internal var sampleRateOverTwoPi: Float // this is the angular velocity,
+    public var sampleRate: Float {
+        didSet {
+            sampleRateOverTwoPi = sampleRate / twoPi
+        }
+    }
+    
+    public var magnitudeSq: Float {
+        Zc*Zc + Zs*Zs
+    }
+    
+    public var magnitude: Float {
+        sqrt(Zc*Zc + Zs*Zs)
+    }
 
     // Phasor variables
     // Phasor: Z = Zc + i Zs
@@ -66,26 +76,50 @@ open class Phasor : PhasorProtocol {
     internal var Ws : Float = 0.0
     internal var Wcps : Float = 0.0 // pre-computed Oc + Os
 
+    private var stabilizeCounter: Int = 0
+    
     init(omega: Float, sampleRate: Float) {
         self.sampleRate = sampleRate
         self.sampleRateOverTwoPi = sampleRate / twoPi
-        self.omega = omega
-        updateMultiplier()
+        setW(c: cos(omega), s: sin(omega))
     }
 
     init(frequency: Float, sampleRate: Float) {
         self.sampleRate = sampleRate
         self.sampleRateOverTwoPi = sampleRate / twoPi
-        self.omega = -frequency / self.sampleRateOverTwoPi
-        updateMultiplier()
+        let omega = -frequency / self.sampleRateOverTwoPi
+        setW(c: cos(omega), s: sin(omega))
     }
 
-    func updateMultiplier() {
-        Wc = cos(omega)
-        Ws = sin(omega)
+    internal func setW(c: Float, s: Float) {
+        Wc = c
+        Ws = s
         Wcps = Wc + Ws
     }
-        
+
+    /// Compute new value for W
+    /// W <- W * dW
+    internal func rotateW(c: Float, s: Float) {
+        // complex multiplication with 3 real multiplications
+        let ac = Wc*c
+        let bd = Ws*s
+        let abcd = (Wcps) * (c+s)
+        Wc = ac - bd
+        Ws = abcd - ac - bd
+        Wcps = Wc + Ws
+    }
+
+    /// Apply re-normalization correction to compensate for
+    /// numerical drift, use Taylor expansion around 1 to approximate
+    /// 1/sqrt(x) to reduce computational cost.
+    /// This can be applied every few hundred (?) samples
+    internal func normalizeW() {
+        let k = (Float(3.0) - Wc*Wc - Ws*Ws) / Float(2.0)
+        Wc *= k
+        Ws *= k
+        Wcps = Wc + Ws
+    }
+
     /// Compute next value of the phasor
     /// Z <- Z * W
     internal func incrementPhase() {
@@ -100,11 +134,19 @@ open class Phasor : PhasorProtocol {
     /// Apply re-normalization correction to compensate for
     /// numerical drift, use Taylor expansion around 1 to approximate
     /// 1/sqrt(x) to reduce computational cost.
-    /// This can be applied every few hundred (?) samples
     internal func stabilize() {
         let k = (Float(3.0) - Zc*Zc - Zs*Zs) / Float(2.0)
         Zc *= k
         Zs *= k
     }
     
+    internal func stabilizeIfNeeded() -> Int {
+        let errorSquare = abs(Float(1.0) - Zc*Zc + Zs*Zs)
+        stabilizeCounter = stabilizeCounter + 1
+        if errorSquare > 1e-5 {
+            stabilize()
+            stabilizeCounter = 0
+        }
+        return stabilizeCounter
+    }
 }

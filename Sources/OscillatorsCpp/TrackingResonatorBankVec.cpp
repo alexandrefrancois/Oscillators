@@ -485,8 +485,6 @@ void TrackingResonatorBankVec::thresholdAndMerge(const float* powers,
                                                  float threshold) {
     // Create a vector where all 4 lanes contain the threshold
     float32x4_t thresholdVec = vdupq_n_f32(threshold);
-    float32x4_t vOne = vdupq_n_f32(1.0f);
-    float32x4_t vZero = vdupq_n_f32(0.0f);
     
     int i = 0;
     // Process 4 floats at a time (128-bit NEON registers)
@@ -524,8 +522,6 @@ void TrackingResonatorBankVec::thresholdAndMerge(const float* powers,
                                                  float threshold) {
     // Create a vector where all 4 lanes contain the threshold
     float32x4_t thresholdVec = vdupq_n_f32(threshold);
-    float32x4_t vOne = vdupq_n_f32(1.0f);
-    float32x4_t vZero = vdupq_n_f32(0.0f);
     
     int i = 0;
     // Process 4 floats at a time (128-bit NEON registers)
@@ -556,8 +552,8 @@ void TrackingResonatorBankVec::thresholdAndMerge(const float* powers,
     // Scalar tail for remaining elements
     for (; i < count; ++i) {
         bool isAbove = (powers[i] >= threshold);
-        D->realp[i] = isAbove ? D->realp[i] : nW->realp[i];
-        D->imagp[i] = isAbove ? D->imagp[i] : nW->imagp[i];
+        W->realp[i] = isAbove ? D->realp[i] : nW->realp[i];
+        W->imagp[i] = isAbove ? D->imagp[i] : nW->imagp[i];
     }
 }
 
@@ -653,8 +649,8 @@ void TrackingResonatorBankVec::thresholdAndMerge(const float* powers,
     // Scalar tail for remaining elements
     for (; i < count; ++i) {
         bool isAbove = (powers[i] >= threshold);
-        D->realp[i] = isAbove ? D->realp[i] : nW->realp[i];
-        D->imagp[i] = isAbove ? D->imagp[i] : nW->imagp[i];
+        W->realp[i] = isAbove ? D->realp[i] : nW->realp[i];
+        W->imagp[i] = isAbove ? D->imagp[i] : nW->imagp[i];
         mask[i] = isAbove ? 1.0f : 0.0f;
     }
 }

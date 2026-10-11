@@ -117,7 +117,6 @@ TrackingResonatorBankVec::TrackingResonatorBankVec(size_t numResonators, const f
 
     // Initialize W with nW
     m_w.resize(m_twoNumResonators);
-    DSPSplitComplex W = {m_w.data(), m_w.data() + m_numResonators};
     memcpy(m_w.data(), m_nw.data(), m_twoNumResonators * sizeof(float));
 
     m_powers.resize(m_numResonators);
@@ -175,8 +174,6 @@ void TrackingResonatorBankVec::getPowers(float *dest, size_t size) {
     {
         throw std::out_of_range("Buffer passed to getPowers() is not large enough");
     }
-    //    DSPSplitComplex R = {m_rr.data(), m_rr.data() + m_numResonators};
-    //    vDSP_zvmags(&R, 1, dest, 1, m_numResonators);
     memcpy(dest, m_powers.data(), m_numResonators * sizeof(float));
 }
 
@@ -185,8 +182,6 @@ void TrackingResonatorBankVec::getAmplitudes(float *dest, size_t size) {
     {
         throw std::out_of_range("Buffer passed to getAmplitudes() is not large enough");
     }
-//    DSPSplitComplex R = {m_rr.data(), m_rr.data() + m_numResonators};
-//    vDSP_zvmags(&R, 1, dest, 1, m_numResonators);
     int count = static_cast<int>(m_numResonators);
     vvsqrtf(dest, m_powers.data(), &count);
 }
@@ -532,8 +527,6 @@ void TrackingResonatorBankVec::thresholdAndMerge(const float* powers,
         float32x4_t di = vld1q_f32(D->imagp + i);
         float32x4_t nr = vld1q_f32(nW->realp + i);
         float32x4_t ni = vld1q_f32(nW->imagp + i);
-        float32x4_t wr = vld1q_f32(W->realp + i);
-        float32x4_t wi = vld1q_f32(W->imagp + i);
         
         // 2. Compare: returns a bitmask (all 1s if true, all 0s if false)
         // vcgeq = Vector Compare Greater than or Equal
@@ -624,8 +617,6 @@ void TrackingResonatorBankVec::thresholdAndMerge(const float* powers,
         float32x4_t di = vld1q_f32(D->imagp + i);
         float32x4_t nr = vld1q_f32(nW->realp + i);
         float32x4_t ni = vld1q_f32(nW->imagp + i);
-        float32x4_t wr = vld1q_f32(W->realp + i);
-        float32x4_t wi = vld1q_f32(W->imagp + i);
         
         // 2. Compare: returns a bitmask (all 1s if true, all 0s if false)
         // vcgeq = Vector Compare Greater than or Equal

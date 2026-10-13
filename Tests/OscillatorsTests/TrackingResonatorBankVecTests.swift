@@ -173,6 +173,80 @@ final class TrackingResonatorBankVecTests: XCTestCase {
         }
     }
 
+    func testNormalizedRulesStayFiniteForSilentInput() {
+        let frequencies = FrequenciesFixtures.frequencies
+        let sampleRate = AudioFixtures.defaultSampleRate
+        let alphas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let betas = ResonatorBankArray.alphasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let gammas = TrackingResonatorBankArray.gammasHeuristic(frequencies: frequencies, sampleRate: sampleRate, k: 1.0)
+        let frameLength = 128
+        let silentFrame = [Float](repeating: 0.0, count: frameLength)
+        let rulePairs: [(swift: TrackingRule, cpp: TrackingRuleCpp)] = [
+            (.normalizedChord, .normalizedChord),
+            (.tangent, .tangent),
+        ]
+
+        for rulePair in rulePairs {
+            let swiftBank = TrackingResonatorBankVec(
+                naturalFrequencies: frequencies,
+                sampleRate: sampleRate,
+                alphas: alphas,
+                betas: betas,
+                gammas: gammas,
+                trackingRule: rulePair.swift,
+                thresholdDB: thresholdDB
+            )
+            swiftBank.update(frame: silentFrame, thresholdDB: thresholdDB)
+
+            XCTAssertTrue(swiftBank.powers.allSatisfy { $0.isFinite })
+            XCTAssertTrue(swiftBank.amplitudes.allSatisfy { $0.isFinite })
+            XCTAssertTrue(swiftBank.phases.allSatisfy { $0.isFinite })
+            let swiftResonantFrequencies = swiftBank.resonantFrequencies
+            XCTAssertTrue(swiftResonantFrequencies.allSatisfy { $0.isFinite })
+            for index in frequencies.indices {
+                XCTAssertEqual(swiftResonantFrequencies[index], frequencies[index], accuracy: 1e-3)
+            }
+
+            guard let cppBank = TrackingResonatorBankVecCpp(
+                numResonators: Int32(frequencies.count),
+                naturalFrequencies: frequencies,
+                sampleRate: sampleRate,
+                alphas: alphas,
+                betas: betas,
+                gammas: gammas,
+                trackingRule: rulePair.cpp,
+                thresholdDB: thresholdDB
+            ) else {
+                XCTFail("Cpp TrackingResonatorBankVec could not be instantiated")
+                return
+            }
+
+            var mutableSilentFrame = silentFrame
+            cppBank.update(
+                frameData: &mutableSilentFrame,
+                frameLength: Int32(frameLength),
+                sampleStride: 1
+            )
+
+            var cppPowers = [Float](repeating: 0.0, count: frequencies.count)
+            var cppAmplitudes = [Float](repeating: 0.0, count: frequencies.count)
+            var cppPhases = [Float](repeating: 0.0, count: frequencies.count)
+            var cppResonantFrequencies = [Float](repeating: 0.0, count: frequencies.count)
+            cppBank.getPowers(&cppPowers, size: Int32(cppPowers.count))
+            cppBank.getAmplitudes(&cppAmplitudes, size: Int32(cppAmplitudes.count))
+            cppBank.getPhases(&cppPhases, size: Int32(cppPhases.count))
+            cppBank.getResonantFrequencies(&cppResonantFrequencies, size: Int32(cppResonantFrequencies.count))
+
+            XCTAssertTrue(cppPowers.allSatisfy { $0.isFinite })
+            XCTAssertTrue(cppAmplitudes.allSatisfy { $0.isFinite })
+            XCTAssertTrue(cppPhases.allSatisfy { $0.isFinite })
+            XCTAssertTrue(cppResonantFrequencies.allSatisfy { $0.isFinite })
+            for index in frequencies.indices {
+                XCTAssertEqual(cppResonantFrequencies[index], frequencies[index], accuracy: 1e-3)
+            }
+        }
+    }
+
     func testRawBufferStrideTreatsFrameLengthAsFrameCount() {
         let frequencies = FrequenciesFixtures.frequencies
         let sampleRate = AudioFixtures.defaultSampleRate

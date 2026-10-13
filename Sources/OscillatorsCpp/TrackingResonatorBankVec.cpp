@@ -205,8 +205,11 @@ void TrackingResonatorBankVec::getDeltaPhases(float *dest, size_t size) {
 }
 
 void TrackingResonatorBankVec::update(const float sample) {
+    const float lowThreshold = 1e-20f;
+    const float highThreshold = 1.0f;
+
     vDSP_vsmul(m_alphas.data(), 1, &sample, m_alphasSample.data(), 1, m_twoNumResonators);
-        
+    
     // resonator
     vDSP_vmma(m_r.data(), 1,
               m_omAlphas.data(), 1,
@@ -214,7 +217,7 @@ void TrackingResonatorBankVec::update(const float sample) {
               m_alphasSample.data(), 1,
               m_r.data(), 1,
               m_twoNumResonators);
-
+    
     // Smoothing with betas
     vDSP_vmma(m_rr.data(), 1,
               m_omBetas.data(), 1,
@@ -222,7 +225,6 @@ void TrackingResonatorBankVec::update(const float sample) {
               m_betas.data(), 1,
               m_rr.data(), 1,
               m_twoNumResonators);
- 
     
     // Compute squared magnitudes
     DSPSplitComplex R = {m_rr.data(), m_rr.data() + m_numResonators};
@@ -236,9 +238,9 @@ void TrackingResonatorBankVec::update(const float sample) {
               &maxPower,
               m_numResonators);
     m_accPower = (m_omSigma * m_accPower) + (m_sigma * maxPower);
-
+    
     // Update phase derivatives
-    // actually compute the opposite so that we can justs add later
+    // actually compute the opposite so that we can just add later
     DSPSplitComplex Rm = {m_rrm.data(), m_rrm.data() + m_numResonators};
     DSPSplitComplex D = {m_d.data(), m_d.data() + m_numResonators};
     vDSP_zvmul(&R, 1,
@@ -246,7 +248,7 @@ void TrackingResonatorBankVec::update(const float sample) {
                &D, 1,
                m_numResonators,
                -1);
-    
+
     // Save previous smoothed value
     memcpy(m_rrm.data(), m_rr.data(), m_twoNumResonators * sizeof(float));
     
@@ -306,6 +308,11 @@ void TrackingResonatorBankVec::update(const float sample) {
 
             // inverse magnitude of D
             vDSP_zvmags(&D, 1, m_sm.data(), 1, m_numResonators);
+            // Prevent division by 0
+            vDSP_vclip(m_sm.data(), 1,
+                       &lowThreshold, &highThreshold,
+                       m_sm.data(), 1,
+                       m_numResonators);
             // use reciprocal square root
             vvrsqrtf(m_rsqrt.data(), m_sm.data(), &count);
             // normalize
@@ -368,11 +375,16 @@ void TrackingResonatorBankVec::update(const float sample) {
 
             // inverse magnitude of D
             vDSP_zvmags(&D, 1, m_sm.data(), 1, m_numResonators);
+            // Prevent division by 0
+            vDSP_vclip(m_sm.data(), 1,
+                       &lowThreshold, &highThreshold,
+                       m_sm.data(), 1,
+                       m_numResonators);
             // use reciprocal square root
             vvrsqrtf(m_rsqrt.data(), m_sm.data(), &count);
             // normalize
             vDSP_zrvmul(&D, 1, m_rsqrt.data(), 1, &D, 1, m_numResonators);
-
+            
             // set real part to 1.0
             vDSP_vfill(&one, m_d.data(), 1, m_numResonators);
             // imaginary part: -gamma * dps * inverseResidualMagnitude
@@ -381,7 +393,7 @@ void TrackingResonatorBankVec::update(const float sample) {
                       m_gammas.data(), 1,
                       m_d.data() + m_numResonators, 1,
                       vDSP_Length(m_numResonators));
-            
+
             // Calculate corrected Ws, store in D
             vDSP_zvmul(&D, 1,
                        &W, 1,
@@ -411,7 +423,7 @@ void TrackingResonatorBankVec::update(const float sample) {
         }
             break;
     }
-    
+
     // phasor
     DSPSplitComplex Z = {m_z.data(), m_z.data() + m_numResonators};
     vDSP_zvmul(&Z, 1,

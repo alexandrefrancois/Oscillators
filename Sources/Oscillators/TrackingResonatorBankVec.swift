@@ -29,6 +29,7 @@ import simd
 fileprivate let twoPi = Float.pi * 2.0
 fileprivate let minPowerThreshold = Float(1e-6)
 fileprivate let minimumResidualMagnitudeSquared = Float(1e-20)
+fileprivate let clipRange = Float(1.0e-20)...Float(1.0)
 
 /// A bank of independent tracking resonators implemented as a single array, computations use the Accelerate framework with manual memory management (unsafe pointers)
 public class TrackingResonatorBankVec {
@@ -351,6 +352,8 @@ public class TrackingResonatorBankVec {
 
             // inverse magnitude of D
             vDSP.squareMagnitudes(D, result: &smPtr)
+            // Prevent division by 0
+            vDSP.clip(smPtr, to: clipRange, result: &smPtr)
             // use reciprocal square root
             vForce.rsqrt(smPtr, result: &rsqrtPtr)
             // normalize
@@ -405,6 +408,8 @@ public class TrackingResonatorBankVec {
 
             // inverse magnitude of D
             vDSP.squareMagnitudes(D, result: &smPtr)
+            // Prevent division by 0
+            vDSP.clip(smPtr, to: clipRange, result: &smPtr)
             // use reciprocal square root
             vForce.rsqrt(smPtr, result: &rsqrtPtr)
             // normalize

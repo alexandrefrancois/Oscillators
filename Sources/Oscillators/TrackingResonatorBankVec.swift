@@ -257,7 +257,7 @@ public class TrackingResonatorBankVec {
     func update(sample: Float) {
         var sampleVar = sample
         vDSP_vsmul(alphas, 1, &sampleVar, alphasSample.baseAddress!, 1, vDSP_Length(twoNumResonators));
-        
+                
         // Resonator
         vDSP_vmma(rPtr.baseAddress!, 1,
                   omAlphas, 1,
@@ -387,12 +387,11 @@ public class TrackingResonatorBankVec {
             // output W
             Self.fuseThresholdAndMerge(powersPtr: powersPtr, D: D, nW: nW, W: W, threshold: trackingPowerThreshold)
             
-            // Is this really necessary?
-//            // normalize W
-//            vDSP.squareMagnitudes(W, result: &smPtr)
-//            // use reciprocal square root
-//            vForce.rsqrt(smPtr, result: &rsqrtPtr)
-//            vDSP.multiply(W, by: rsqrtPtr, result: &W)
+            // normalize W
+            vDSP.squareMagnitudes(W, result: &smPtr)
+            // use reciprocal square root
+            vForce.rsqrt(smPtr, result: &rsqrtPtr)
+            vDSP.multiply(W, by: rsqrtPtr, result: &W)
             
             break
             
@@ -436,12 +435,11 @@ public class TrackingResonatorBankVec {
             // output W
             Self.fuseThresholdAndMerge(powersPtr: powersPtr, D: D, nW: nW, W: W, threshold: trackingPowerThreshold)
             
-            // Is this really necessary?
-//            // normalize W
-//            vDSP.squareMagnitudes(W, result: &smPtr)
-//            // use reciprocal square root
-//            vForce.rsqrt(smPtr, result: &rsqrtPtr)
-//            vDSP.multiply(W, by: rsqrtPtr, result: &W)
+            // normalize W
+            vDSP.squareMagnitudes(W, result: &smPtr)
+            // use reciprocal square root
+            vForce.rsqrt(smPtr, result: &rsqrtPtr)
+            vDSP.multiply(W, by: rsqrtPtr, result: &W)
  
             break
             

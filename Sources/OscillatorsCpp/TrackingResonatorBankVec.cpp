@@ -352,14 +352,12 @@ void TrackingResonatorBankVec::update(const float sample) {
                               trackFrequencyPowerThreshold
                               );
                         
-            // Is this really necessary?
-//            // normalize W
-//            // inverse magnitude of D
-//            vDSP_zvmags(&W, 1, m_sm.data(), 1, m_numResonators);
-//            // use reciprocal square root
-//            vvrsqrtf(m_rsqrt.data(), m_sm.data(), &count);
-//            // normalize
-//            vDSP_zrvmul(&W, 1, m_rsqrt.data(), 1, &W, 1, m_numResonators);
+            // normalize W
+            vDSP_zvmags(&W, 1, m_sm.data(), 1, m_numResonators);
+            // use reciprocal square root
+            vvrsqrtf(m_rsqrt.data(), m_sm.data(), &count);
+            // normalize
+            vDSP_zrvmul(&W, 1, m_rsqrt.data(), 1, &W, 1, m_numResonators);
         }
             break;
             
@@ -412,14 +410,12 @@ void TrackingResonatorBankVec::update(const float sample) {
                               trackFrequencyPowerThreshold
                               );
                         
-            // Is this really necessary?
-//            // normalize W
-//            // inverse magnitude of D
-//            vDSP_zvmags(&W, 1, m_sm.data(), 1, m_numResonators);
-//            // use reciprocal square root
-//            vvrsqrtf(m_rsqrt.data(), m_sm.data(), &count);
-//            // normalize
-//            vDSP_zrvmul(&W, 1, m_rsqrt.data(), 1, &W, 1, m_numResonators);
+            // normalize W
+            vDSP_zvmags(&W, 1, m_sm.data(), 1, m_numResonators);
+            // use reciprocal square root
+            vvrsqrtf(m_rsqrt.data(), m_sm.data(), &count);
+            // normalize
+            vDSP_zrvmul(&W, 1, m_rsqrt.data(), 1, &W, 1, m_numResonators);
         }
             break;
     }
